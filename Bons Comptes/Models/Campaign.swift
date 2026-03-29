@@ -31,16 +31,16 @@ struct Campaign: Identifiable, Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(title, forKey: .title)
-        try container.encode(description, forKey: .description)
-        try container.encode(location, forKey: .location)
+        if !description.isEmpty { try container.encode(description, forKey: .description) }
+        if !location.isEmpty { try container.encode(location, forKey: .location) }
         try container.encode(currency, forKey: .currency)
         try container.encode(createdAt, forKey: .createdAt)
-        try container.encode(creatorName, forKey: .creatorName)
+        if !creatorName.isEmpty { try container.encode(creatorName, forKey: .creatorName) }
         try container.encode(participantIDs, forKey: .participantIDs)
         try container.encode(expenseIDs, forKey: .expenseIDs)
         try container.encode(reimbursementIDs, forKey: .reimbursementIDs)
-        try container.encode(isArchived, forKey: .isArchived)
-        try container.encode(isClosed, forKey: .isClosed)
+        if isArchived { try container.encode(isArchived, forKey: .isArchived) }
+        if isClosed { try container.encode(isClosed, forKey: .isClosed) }
         // shareCode intentionally not encoded
     }
 

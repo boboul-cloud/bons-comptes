@@ -16,6 +16,7 @@ class CampaignStore: ObservableObject {
     @Published var reimbursements: [Reimbursement] = []
     @Published var categories: [ExpenseCategory] = []
     @Published var paymentMethods: [PaymentMethod] = []
+    var lastImportError = ""
 
     private let saveKey = "BonsComptes_Data"
 
@@ -41,8 +42,8 @@ class CampaignStore: ObservableObject {
         var participants: [Participant]
         var expenses: [Expense]
         var reimbursements: [Reimbursement]
-        var categories: [ExpenseCategory]
-        var paymentMethods: [PaymentMethod]
+        var categories: [ExpenseCategory]?
+        var paymentMethods: [PaymentMethod]?
     }
 
     func saveData() {
@@ -149,8 +150,8 @@ class CampaignStore: ObservableObject {
         participants = decoded.participants
         expenses = decoded.expenses
         reimbursements = decoded.reimbursements
-        categories = decoded.categories
-        paymentMethods = decoded.paymentMethods
+        categories = decoded.categories ?? ExpenseCategory.defaults
+        paymentMethods = decoded.paymentMethods ?? PaymentMethod.defaults
         saveData()
         return true
     }
@@ -166,8 +167,8 @@ class CampaignStore: ObservableObject {
         participants = decoded.participants
         expenses = decoded.expenses
         reimbursements = decoded.reimbursements
-        categories = decoded.categories
-        paymentMethods = decoded.paymentMethods
+        categories = decoded.categories ?? ExpenseCategory.defaults
+        paymentMethods = decoded.paymentMethods ?? PaymentMethod.defaults
     }
 
     // MARK: - Campaign CRUD
@@ -409,27 +410,57 @@ class CampaignStore: ObservableObject {
     }
 
     func webURL(for campaign: Campaign) -> String {
+        let campaignExpenses = expensesFor(campaign: campaign)
+        let campaignReimbs = reimbursementsFor(campaign: campaign)
+        // Only include categories/paymentMethods actually used
+        let usedCatIDs = Set(campaignExpenses.compactMap { $0.categoryID })
+        let usedPmIDs = Set(campaignReimbs.compactMap { $0.paymentMethodID })
         let data = AppData(
             campaigns: [campaign],
             participants: participantsFor(campaign: campaign),
-            expenses: expensesFor(campaign: campaign),
-            reimbursements: reimbursementsFor(campaign: campaign),
-            categories: categories,
-            paymentMethods: paymentMethods
+            expenses: campaignExpenses,
+            reimbursements: campaignReimbs,
+            categories: categories.filter { usedCatIDs.contains($0.id) },
+            paymentMethods: paymentMethods.filter { usedPmIDs.contains($0.id) }
         )
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
         guard let jsonData = try? encoder.encode(data) else { return Self.webBaseURL }
+
+        // Strip redundant data to reduce URL size
+        guard var dict = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else { return Self.webBaseURL }
+        if var campaigns = dict["campaigns"] as? [[String: Any]], !campaigns.isEmpty {
+            campaigns[0].removeValue(forKey: "expenseIDs")
+            campaigns[0].removeValue(forKey: "reimbursementIDs")
+            campaigns[0].removeValue(forKey: "participantIDs")
+            dict["campaigns"] = campaigns
+        }
+        if var expenses = dict["expenses"] as? [[String: Any]] {
+            for i in expenses.indices { expenses[i].removeValue(forKey: "campaignID") }
+            dict["expenses"] = expenses
+        }
+        if var reimbs = dict["reimbursements"] as? [[String: Any]] {
+            for i in reimbs.indices { reimbs[i].removeValue(forKey: "campaignID") }
+            dict["reimbursements"] = reimbs
+        }
+        if let cats = dict["categories"] as? [Any], cats.isEmpty { dict.removeValue(forKey: "categories") }
+        if let pms = dict["paymentMethods"] as? [Any], pms.isEmpty { dict.removeValue(forKey: "paymentMethods") }
+
+        // UUID indexing: replace 36-char UUIDs with "$0", "$1" etc.
+        dict = Self.compactUUIDs(dict)
+
+        guard let compactData = try? JSONSerialization.data(withJSONObject: dict, options: [.sortedKeys]) else { return Self.webBaseURL }
+
         // Compress with raw DEFLATE (compatible with web's deflate-raw)
-        if let compressed = Self.rawDeflateCompress(jsonData) {
+        if let compressed = Self.rawDeflateCompress(compactData) {
             let base64 = compressed.base64EncodedString()
                 .replacingOccurrences(of: "+", with: "-")
                 .replacingOccurrences(of: "/", with: "_")
                 .replacingOccurrences(of: "=", with: "")
             return Self.webBaseURL + "#z" + base64
         }
-        let base64 = jsonData.base64EncodedString()
+        let base64 = compactData.base64EncodedString()
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
@@ -437,7 +468,13 @@ class CampaignStore: ObservableObject {
     }
 
     func importJSON(_ jsonString: String) -> Bool {
-        guard let data = jsonString.data(using: .utf8) else { return false }
+        lastImportError = ""
+        guard var data = jsonString.data(using: .utf8) else {
+            lastImportError = "String→Data failed"
+            return false
+        }
+        // Expand UUID indices ($0, $1...) if present
+        data = Self.expandUUIDs(data)
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
@@ -449,12 +486,21 @@ class CampaignStore: ObservableObject {
             if let date = f.date(from: str) { return date }
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid date: \(str)")
         }
-        guard let appData = try? decoder.decode(AppData.self, from: data) else { return false }
-        return mergeAppData(appData)
+        do {
+            let appData = try decoder.decode(AppData.self, from: data)
+            return mergeAppData(appData)
+        } catch {
+            lastImportError = "\(error)"
+            return false
+        }
     }
 
     func importFromFragment(_ hash: String) -> Bool {
-        guard !hash.isEmpty else { return false }
+        lastImportError = ""
+        guard !hash.isEmpty else {
+            lastImportError = "Fragment vide"
+            return false
+        }
 
         let jsonData: Data?
         if hash.hasPrefix("z") {
@@ -487,6 +533,76 @@ class CampaignStore: ObservableObject {
     func importFromURL(_ url: URL) -> Bool {
         guard let fragment = url.fragment, !fragment.isEmpty else { return false }
         return importFromFragment(fragment)
+    }
+
+    // MARK: - UUID Indexing (compress UUIDs to "$0", "$1" etc.)
+
+    private static let uuidRegex = try! NSRegularExpression(
+        pattern: "^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$",
+        options: .caseInsensitive
+    )
+
+    private static func isUUID(_ s: String) -> Bool {
+        s.count == 36 && uuidRegex.firstMatch(in: s, range: NSRange(s.startIndex..., in: s)) != nil
+    }
+
+    static func compactUUIDs(_ input: [String: Any]) -> [String: Any] {
+        var uuids: [String] = []
+        var uuidMap: [String: Int] = [:]
+
+        func idx(_ u: String) -> String {
+            if let i = uuidMap[u] { return "$\(i)" }
+            let i = uuids.count
+            uuidMap[u] = i
+            uuids.append(u)
+            return "$\(i)"
+        }
+
+        func compact(_ obj: Any) -> Any {
+            if let s = obj as? String { return isUUID(s) ? idx(s) : s }
+            if let arr = obj as? [Any] { return arr.map { compact($0) } }
+            if let dict = obj as? [String: Any] {
+                var result: [String: Any] = [:]
+                for (k, v) in dict {
+                    let newKey = isUUID(k) ? idx(k) : k
+                    result[newKey] = compact(v)
+                }
+                return result
+            }
+            return obj
+        }
+
+        var result = compact(input) as! [String: Any]
+        result["_u"] = uuids
+        return result
+    }
+
+    static func expandUUIDs(_ data: Data) -> Data {
+        guard var dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let uuids = dict["_u"] as? [String] else { return data }
+        dict.removeValue(forKey: "_u")
+
+        func expand(_ obj: Any) -> Any {
+            if let s = obj as? String, s.hasPrefix("$"), let i = Int(s.dropFirst(1)), i < uuids.count {
+                return uuids[i]
+            }
+            if let arr = obj as? [Any] { return arr.map { expand($0) } }
+            if let dict = obj as? [String: Any] {
+                var result: [String: Any] = [:]
+                for (k, v) in dict {
+                    let newKey: String
+                    if k.hasPrefix("$"), let i = Int(k.dropFirst(1)), i < uuids.count {
+                        newKey = uuids[i]
+                    } else { newKey = k }
+                    result[newKey] = expand(v)
+                }
+                return result
+            }
+            return obj
+        }
+
+        let expanded = expand(dict) as! [String: Any]
+        return (try? JSONSerialization.data(withJSONObject: expanded)) ?? data
     }
 
     // MARK: - Raw DEFLATE helpers (compatible with web's deflate-raw)
@@ -534,14 +650,36 @@ class CampaignStore: ObservableObject {
     }
 
     private func mergeAppData(_ appData: AppData) -> Bool {
-        for p in appData.participants {
+        // Reconstruct missing ID lists (stripped for compact URL sharing)
+        var fixedAppData = appData
+        let campaignIDs = Set(fixedAppData.campaigns.map { $0.id })
+        for i in fixedAppData.campaigns.indices {
+            let cid = fixedAppData.campaigns[i].id
+            if fixedAppData.campaigns[i].participantIDs.isEmpty {
+                fixedAppData.campaigns[i].participantIDs = fixedAppData.participants.map { $0.id }
+            }
+            if fixedAppData.campaigns[i].expenseIDs.isEmpty {
+                fixedAppData.campaigns[i].expenseIDs = fixedAppData.expenses.map { $0.id }
+            }
+            if fixedAppData.campaigns[i].reimbursementIDs.isEmpty {
+                fixedAppData.campaigns[i].reimbursementIDs = fixedAppData.reimbursements.map { $0.id }
+            }
+            // Fix expenses/reimbursements missing campaignID
+            for j in fixedAppData.expenses.indices where !campaignIDs.contains(fixedAppData.expenses[j].campaignID) {
+                fixedAppData.expenses[j].campaignID = cid
+            }
+            for j in fixedAppData.reimbursements.indices where !campaignIDs.contains(fixedAppData.reimbursements[j].campaignID) {
+                fixedAppData.reimbursements[j].campaignID = cid
+            }
+        }
+        for p in fixedAppData.participants {
             if let idx = participants.firstIndex(where: { $0.id == p.id }) {
                 participants[idx] = p
             } else {
                 participants.append(p)
             }
         }
-        for c in appData.campaigns {
+        for c in fixedAppData.campaigns {
             if let idx = campaigns.firstIndex(where: { $0.id == c.id }) {
                 // Merge IDs lists (union)
                 var merged = c
@@ -553,26 +691,26 @@ class CampaignStore: ObservableObject {
                 campaigns.append(c)
             }
         }
-        for e in appData.expenses {
+        for e in fixedAppData.expenses {
             if let idx = expenses.firstIndex(where: { $0.id == e.id }) {
                 expenses[idx] = e
             } else {
                 expenses.append(e)
             }
         }
-        for r in appData.reimbursements {
+        for r in fixedAppData.reimbursements {
             if let idx = reimbursements.firstIndex(where: { $0.id == r.id }) {
                 reimbursements[idx] = r
             } else {
                 reimbursements.append(r)
             }
         }
-        for cat in appData.categories {
+        for cat in fixedAppData.categories ?? [] {
             if !categories.contains(where: { $0.id == cat.id }) {
                 categories.append(cat)
             }
         }
-        for pm in appData.paymentMethods {
+        for pm in fixedAppData.paymentMethods ?? [] {
             if !paymentMethods.contains(where: { $0.id == pm.id }) {
                 paymentMethods.append(pm)
             }

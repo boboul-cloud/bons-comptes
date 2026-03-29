@@ -584,8 +584,24 @@ function stateToCompactJSON() {
     categories: state.categories.filter(c => usedCatIDs.has(c.id)),
     paymentMethods: state.paymentMethods.filter(m => usedPmIDs.has(m.id))
   };
+  // UUID indexing: replace UUIDs with "$0", "$1" etc.
+  const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const uuids = []; const uuidMap = {};
+  function idx(u) { if (!(u in uuidMap)) { uuidMap[u] = uuids.length; uuids.push(u); } return '$' + uuidMap[u]; }
+  function compact(obj) {
+    if (typeof obj === 'string') return uuidRe.test(obj) ? idx(obj) : obj;
+    if (Array.isArray(obj)) return obj.map(compact);
+    if (obj && typeof obj === 'object') {
+      const r = {};
+      for (const [k, v] of Object.entries(obj)) { r[uuidRe.test(k) ? idx(k) : k] = compact(v); }
+      return r;
+    }
+    return obj;
+  }
+  const compactData = compact(data);
+  compactData._u = uuids;
   // Strip null/empty values to reduce size
-  return JSON.stringify(data, (k, v) => {
+  return JSON.stringify(compactData, (k, v) => {
     if (v === null || v === '' || (typeof v === 'object' && !Array.isArray(v) && v !== null && Object.keys(v).length === 0)) return undefined;
     return v;
   });
@@ -598,9 +614,29 @@ async function generateShareURL() {
 }
 
 // ===== Load Data =====
+function expandUUIDs(data) {
+  if (!data._u) return data;
+  const uuids = data._u; delete data._u;
+  const refRe = /^\$(\d+)$/;
+  function expand(obj) {
+    if (typeof obj === 'string') { const m = obj.match(refRe); return m ? uuids[parseInt(m[1])] : obj; }
+    if (Array.isArray(obj)) return obj.map(expand);
+    if (obj && typeof obj === 'object') {
+      const r = {};
+      for (const [k, v] of Object.entries(obj)) {
+        const m = k.match(refRe); r[m ? uuids[parseInt(m[1])] : k] = expand(v);
+      }
+      return r;
+    }
+    return obj;
+  }
+  return expand(data);
+}
+
 function loadData(jsonStr) {
   try {
-    const data = JSON.parse(jsonStr);
+    let data = JSON.parse(jsonStr);
+    data = expandUUIDs(data);
     if (!data.campaigns || !data.campaigns.length) throw new Error('No campaign');
     state.campaign = data.campaigns[0];
     state.participants = data.participants || [];

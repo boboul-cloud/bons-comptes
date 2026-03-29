@@ -11,6 +11,7 @@ struct ImportCampaignSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var inputText = ""
     @State private var clipboardStatus: ClipboardStatus = .checking
+    @State private var errorMessage = ""
 
     enum ClipboardStatus {
         case checking, found, empty
@@ -28,6 +29,18 @@ struct ImportCampaignSheet: View {
                         importButton
                     } else if clipboardStatus == .empty {
                         emptyAction
+                    }
+                    if !errorMessage.isEmpty {
+                        ScrollView {
+                            Text(errorMessage)
+                                .font(.system(.caption2, design: .monospaced))
+                                .foregroundColor(.red)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(10)
+                                .background(Color.red.opacity(0.1))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                        .frame(maxHeight: 200)
                     }
                     Spacer()
                 }
@@ -124,10 +137,8 @@ struct ImportCampaignSheet: View {
     }
 
     private func readClipboard() {
-        if let url = UIPasteboard.general.url, let fragment = url.fragment, !fragment.isEmpty {
-            inputText = url.absoluteString
-            clipboardStatus = .found
-        } else if let clipboard = UIPasteboard.general.string, !clipboard.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        // Always prefer string — UIPasteboard.general.url can truncate long fragments
+        if let clipboard = UIPasteboard.general.string, !clipboard.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             inputText = clipboard.trimmingCharacters(in: .whitespacesAndNewlines)
             clipboardStatus = .found
         } else {
@@ -137,12 +148,12 @@ struct ImportCampaignSheet: View {
 
     private func doImport() {
         let input = inputText
+        errorMessage = ""
         let success: Bool
 
         if input.contains("#"), let hashIndex = input.firstIndex(of: "#") {
             let fragment = String(input[input.index(after: hashIndex)...])
             if !fragment.isEmpty {
-                // Pass fragment directly — avoid URL round-trip that can corrupt data
                 success = store.importFromFragment(fragment)
             } else {
                 success = store.importJSON(input)
@@ -152,7 +163,13 @@ struct ImportCampaignSheet: View {
         } else {
             success = store.importJSON(input)
         }
-        importResult = success
-        dismiss()
+
+        if success {
+            importResult = true
+            dismiss()
+        } else {
+            importResult = false
+            errorMessage = "Échec: \(store.lastImportError)\nDonnées: \(input.count) chars"
+        }
     }
 }

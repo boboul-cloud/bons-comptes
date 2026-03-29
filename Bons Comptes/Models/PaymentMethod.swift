@@ -23,6 +23,14 @@ struct PaymentMethod: Identifiable, Codable, Hashable {
         self.isDefault = isDefault
     }
 
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        icon = try c.decodeIfPresent(String.self, forKey: .icon) ?? "banknote"
+        isDefault = try c.decodeIfPresent(Bool.self, forKey: .isDefault) ?? false
+    }
+
     static var defaults: [PaymentMethod] {
         [
             PaymentMethod(name: NSLocalizedString("payment_cash", comment: ""), icon: "banknote", isDefault: true),
