@@ -986,6 +986,7 @@ function showIdentityPicker() {
 
 function selectIdentity(id) {
   currentUserID = id;
+  identityLocked = true;
   closeModal();
   render();
 }
