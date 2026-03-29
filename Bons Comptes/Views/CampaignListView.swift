@@ -11,6 +11,7 @@ struct CampaignListView: View {
     @State private var showingImport = false
     @State private var importCode = ""
     @State private var showArchived = false
+    @State private var importResult: Bool?
 
     var filteredCampaigns: [Campaign] {
         store.campaigns.filter { $0.isArchived == showArchived }
@@ -86,18 +87,16 @@ struct CampaignListView: View {
             .sheet(isPresented: $showingAddCampaign) {
                 AddCampaignView()
             }
-            .alert(NSLocalizedString("import_campaign", comment: ""), isPresented: $showingImport) {
-                TextField(NSLocalizedString("paste_json_or_url", comment: ""), text: $importCode)
-                Button(NSLocalizedString("import_button", comment: "")) {
-                    let input = importCode.trimmingCharacters(in: .whitespacesAndNewlines)
-                    if let url = URL(string: input), (url.scheme == "bonscomptes" || url.scheme == "https" || url.fragment != nil) {
-                        _ = store.importFromURL(url)
-                    } else {
-                        _ = store.importJSON(input)
-                    }
-                    importCode = ""
-                }
-                Button(NSLocalizedString("cancel", comment: ""), role: .cancel) { }
+            .sheet(isPresented: $showingImport) {
+                ImportCampaignSheet(store: store, importResult: $importResult)
+            }
+            .alert(
+                importResult == true
+                    ? NSLocalizedString("import_success", comment: "")
+                    : NSLocalizedString("import_error", comment: ""),
+                isPresented: Binding(get: { importResult != nil }, set: { if !$0 { importResult = nil } })
+            ) {
+                Button("OK") { importResult = nil }
             }
         }
     }

@@ -194,4 +194,6 @@
 "settled" = "soldé";
 "import_success" = "Données importées avec succès !";
 "import_error" = "Erreur lors de l'import";
+"import_desc" = "Collez un lien web ou des données JSON pour importer une campagne.";
+"paste_clipboard" = "Coller depuis le presse-papier";
 "open_in_app" = "Ouvrir dans l'app";

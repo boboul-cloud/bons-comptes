@@ -194,4 +194,6 @@
 "settled" = "settled";
 "import_success" = "Data imported successfully!";
 "import_error" = "Import error";
+"import_desc" = "Paste a web link or JSON data to import a campaign.";
+"paste_clipboard" = "Paste from clipboard";
 "open_in_app" = "Open in app";
