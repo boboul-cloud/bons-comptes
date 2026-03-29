@@ -39,8 +39,8 @@ struct AboutView: View {
                         Divider()
 
                         infoRow(icon: "person.fill", label: NSLocalizedString("developer_label", comment: ""), value: "Robert Oulhen")
-                        infoRow(icon: "envelope.fill", label: NSLocalizedString("contact_label", comment: ""), value: "bob.oulhen@gmail.com")
-                        infoRow(icon: "globe", label: NSLocalizedString("website_label", comment: ""), value: "boboul-cloud.github.io")
+                        linkRow(icon: "envelope.fill", label: NSLocalizedString("contact_label", comment: ""), value: "bob.oulhen@gmail.com", url: URL(string: "mailto:bob.oulhen@gmail.com")!)
+                        linkRow(icon: "globe", label: NSLocalizedString("website_label", comment: ""), value: "boboul-cloud.github.io", url: URL(string: "https://boboul-cloud.github.io/bons-comptes/app.html")!)
                     }
                     .cardStyle()
                 }
@@ -62,6 +62,23 @@ struct AboutView: View {
                 Text(value).font(.subheadline)
             }
             Spacer()
+        }
+    }
+
+    func linkRow(icon: String, label: String, value: String, url: URL) -> some View {
+        Link(destination: url) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle().fill(AppTheme.primary.opacity(0.1)).frame(width: 36, height: 36)
+                    Image(systemName: icon).font(.caption).foregroundColor(AppTheme.primary)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(label).font(.caption).foregroundColor(.secondary)
+                    Text(value).font(.subheadline).foregroundColor(AppTheme.primary)
+                }
+                Spacer()
+                Image(systemName: "arrow.up.right").font(.caption2).foregroundColor(.secondary)
+            }
         }
     }
 }
