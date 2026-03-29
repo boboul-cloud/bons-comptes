@@ -355,13 +355,21 @@ class CampaignStore: ObservableObject {
 
         let jsonData: Data?
         if hash.hasPrefix("z") {
-            // Compressed format: z + base64(zlib)
+            // Compressed format: z + base64(raw deflate)
             let b64 = String(hash.dropFirst())
                 .replacingOccurrences(of: "-", with: "+")
                 .replacingOccurrences(of: "_", with: "/")
             let padded = b64.padding(toLength: ((b64.count + 3) / 4) * 4, withPad: "=", startingAt: 0)
             guard let compressed = Data(base64Encoded: padded) else { return false }
-            jsonData = try? (compressed as NSData).decompressed(using: .zlib) as Data
+            // Try zlib decompression, fallback to lzfse, then raw data
+            if let decompressed = try? (compressed as NSData).decompressed(using: .zlib) as Data {
+                jsonData = decompressed
+            } else if let decompressed = try? (compressed as NSData).decompressed(using: .lz4) as Data {
+                jsonData = decompressed
+            } else {
+                // Maybe it's not actually compressed, try as raw JSON
+                jsonData = compressed
+            }
         } else {
             // Legacy uncompressed base64
             let b64 = hash

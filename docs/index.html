@@ -400,7 +400,7 @@ const pmIcons = {
 // ===== URL Encoding (with zlib compression) =====
 async function compressBytes(bytes) {
   try {
-    const cs = new CompressionStream('deflate');
+    const cs = new CompressionStream('deflate-raw');
     const writer = cs.writable.getWriter();
     writer.write(bytes);
     writer.close();
@@ -420,7 +420,7 @@ async function compressBytes(bytes) {
 }
 
 async function decompressBytes(bytes) {
-  const formats = ['deflate', 'deflate-raw'];
+  const formats = ['deflate-raw', 'deflate'];
   for (const fmt of formats) {
     try {
       const ds = new DecompressionStream(fmt);
