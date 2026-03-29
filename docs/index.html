@@ -363,6 +363,10 @@ const T = {
     owes: "doit", is_owed: "est créditeur", settled: "équilibré",
     partial: "Partiel", payment_method: "Moyen de paiement",
     delete_confirm: "Supprimer ?", deleted: "Supprimé",
+    cannot_delete_expense: "Vous n'avez pas créé cette dépense, vous ne pouvez pas la supprimer.",
+    cannot_delete_reimb: "Vous n'avez pas effectué ce règlement, vous ne pouvez pas le supprimer.",
+    who_are_you: "Qui êtes-vous ?",
+    select_identity: "Sélectionnez votre nom pour continuer",
     total_reimbursed: "Total remboursé", new_expense_added: "Dépense ajoutée !",
     new_reimb_added: "Remboursement ajouté !", description: "Description",
     share_options: "Options de partage", view_share: "Partage & Export",
@@ -390,6 +394,10 @@ const T = {
     owes: "owes", is_owed: "is owed", settled: "settled",
     partial: "Partial", payment_method: "Payment method",
     delete_confirm: "Delete?", deleted: "Deleted",
+    cannot_delete_expense: "You didn't create this expense, you can't delete it.",
+    cannot_delete_reimb: "You didn't make this reimbursement, you can't delete it.",
+    who_are_you: "Who are you?",
+    select_identity: "Select your name to continue",
     total_reimbursed: "Total reimbursed", new_expense_added: "Expense added!",
     new_reimb_added: "Reimbursement added!", description: "Description",
     share_options: "Share options", view_share: "Share & Export",
@@ -404,6 +412,7 @@ function t(key) { return T[lang][key] || T.fr[key] || key; }
 // ===== State =====
 let state = { campaign: null, participants: [], expenses: [], reimbursements: [], categories: [], paymentMethods: [] };
 let currentTab = 'expenses';
+let currentUserID = null;
 
 // Category icons mapping
 const catIcons = {
@@ -948,6 +957,33 @@ async function loadFromURL() {
 function showApp() {
   document.getElementById('landing').classList.add('hidden');
   document.getElementById('app').classList.add('active');
+  if (!currentUserID && state.participants.length > 0) {
+    showIdentityPicker();
+  } else {
+    render();
+  }
+}
+
+function showIdentityPicker() {
+  const parts = state.participants.filter(p => state.campaign.participantIDs.includes(p.id));
+  document.getElementById('modal').innerHTML = `
+    <h3 style="text-align:center;margin-bottom:4px">${t('who_are_you')}</h3>
+    <p style="text-align:center;color:var(--text2);font-size:13px;margin-bottom:16px">${t('select_identity')}</p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${parts.map(p => `
+        <button onclick="selectIdentity('${p.id}')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:2px solid var(--border);border-radius:12px;background:var(--card);cursor:pointer;font-size:15px;transition:all .2s">
+          <span style="font-size:24px">${p.avatarEmoji||'👤'}</span>
+          <span style="font-weight:600">${esc(p.name)}</span>
+        </button>
+      `).join('')}
+    </div>
+  `;
+  openModal();
+}
+
+function selectIdentity(id) {
+  currentUserID = id;
+  closeModal();
   render();
 }
 
@@ -963,8 +999,10 @@ function renderHeader() {
   const c = state.campaign;
   const total = totalExpenses();
   const parts = state.participants.filter(p => c.participantIDs.includes(p.id));
+  const currentUser = currentUserID ? state.participants.find(p => p.id === currentUserID) : null;
   document.getElementById('header').innerHTML = `
     <div class="header-actions">
+      ${currentUser ? `<button onclick="showIdentityPicker()" title="${esc(currentUser.name)}" style="font-size:13px;opacity:0.85">${currentUser.avatarEmoji||'👤'} ${esc(currentUser.name)}</button>` : ''}
       ${c.managerPhone ? `<button onclick="sendUpdate()" title="${t('send_update')}">📩</button>` : ''}
       <button onclick="showShareModal()" title="${t('view_share')}">📤</button>
     </div>
@@ -1047,7 +1085,7 @@ function renderExpenses() {
         <div class="expense-amount-value" style="color:var(--negative)">${e.amount.toFixed(2)} ${esc(state.campaign.currency)}</div>
         <div class="expense-amount-date">${dateStr}</div>
       </div>
-      <button class="delete-btn" onclick="deleteExpense('${e.id}')">🗑️</button>
+      <button class="delete-btn" onclick="deleteExpense('${e.id}')" ${currentUserID && e.paidByID !== currentUserID ? 'style="opacity:0.25"' : ''} title="${currentUserID && e.paidByID !== currentUserID ? t('cannot_delete_expense') : t('delete_confirm')}">🗑️</button>
     </div></div>`;
   }).join('');
 }
@@ -1071,7 +1109,7 @@ function renderReimbursements() {
         <div class="expense-amount-value" style="color:var(--positive)">${r.amount.toFixed(2)} ${esc(state.campaign.currency)}</div>
         <div class="expense-amount-date">${dateStr}</div>
       </div>
-      <button class="delete-btn" onclick="deleteReimbursement('${r.id}')">🗑️</button>
+      <button class="delete-btn" onclick="deleteReimbursement('${r.id}')" ${currentUserID && r.fromID !== currentUserID ? 'style="opacity:0.25"' : ''} title="${currentUserID && r.fromID !== currentUserID ? t('cannot_delete_reimb') : t('delete_confirm')}">🗑️</button>
     </div></div>`;
   }).join('');
 }
@@ -1460,6 +1498,11 @@ function saveReimbursement() {
 }
 
 function deleteExpense(id) {
+  const e = state.expenses.find(x => x.id === id);
+  if (e && currentUserID && e.paidByID !== currentUserID) {
+    showToast(t('cannot_delete_expense'));
+    return;
+  }
   state.expenses = state.expenses.filter(e => e.id !== id);
   state.campaign.expenseIDs = state.campaign.expenseIDs.filter(eid => eid !== id);
   updateURLHash();
@@ -1468,6 +1511,11 @@ function deleteExpense(id) {
 }
 
 function deleteReimbursement(id) {
+  const r = state.reimbursements.find(x => x.id === id);
+  if (r && currentUserID && r.fromID !== currentUserID) {
+    showToast(t('cannot_delete_reimb'));
+    return;
+  }
   state.reimbursements = state.reimbursements.filter(r => r.id !== id);
   state.campaign.reimbursementIDs = state.campaign.reimbursementIDs.filter(rid => rid !== id);
   updateURLHash();
