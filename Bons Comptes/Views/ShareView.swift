@@ -150,7 +150,7 @@ struct ShareView: View {
                                 }
 
                                 ForEach(participantsWithPhone) { p in
-                                    Button(action: { sendSMS(to: [p.phone]) }) {
+                                    Button(action: { sendSMS(toParticipant: p) }) {
                                         HStack(spacing: 14) {
                                             AvatarView(p.avatarEmoji, size: 40)
                                             VStack(alignment: .leading, spacing: 2) {
@@ -221,6 +221,15 @@ struct ShareView: View {
             .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         let recipients = phones.joined(separator: ",")
         if let url = URL(string: "sms://open?addresses=\(recipients)&body=\(body)") {
+            UIApplication.shared.open(url)
+        }
+    }
+
+    func sendSMS(toParticipant participant: Participant) {
+        let link = store.webURL(for: campaign, participantID: participant.id)
+        let body = String(format: NSLocalizedString("sms_campaign_body", comment: ""), campaign.title, link)
+            .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        if let url = URL(string: "sms://open?addresses=\(participant.phone)&body=\(body)") {
             UIApplication.shared.open(url)
         }
     }

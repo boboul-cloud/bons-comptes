@@ -413,6 +413,7 @@ function t(key) { return T[lang][key] || T.fr[key] || key; }
 let state = { campaign: null, participants: [], expenses: [], reimbursements: [], categories: [], paymentMethods: [] };
 let currentTab = 'expenses';
 let currentUserID = null;
+let identityLocked = false;
 
 // Category icons mapping
 const catIcons = {
@@ -1002,7 +1003,7 @@ function renderHeader() {
   const currentUser = currentUserID ? state.participants.find(p => p.id === currentUserID) : null;
   document.getElementById('header').innerHTML = `
     <div class="header-actions">
-      ${currentUser ? `<button onclick="showIdentityPicker()" title="${esc(currentUser.name)}" style="font-size:13px;opacity:0.85">${currentUser.avatarEmoji||'👤'} ${esc(currentUser.name)}</button>` : ''}
+      ${currentUser ? (identityLocked ? `<span title="${esc(currentUser.name)}" style="font-size:13px;opacity:0.85">${currentUser.avatarEmoji||'👤'} ${esc(currentUser.name)}</span>` : `<button onclick="showIdentityPicker()" title="${esc(currentUser.name)}" style="font-size:13px;opacity:0.85">${currentUser.avatarEmoji||'👤'} ${esc(currentUser.name)}</button>`) : ''}
       ${c.managerPhone ? `<button onclick="sendUpdate()" title="${t('send_update')}">📩</button>` : ''}
       <button onclick="showShareModal()" title="${t('view_share')}">📤</button>
     </div>
@@ -1526,7 +1527,7 @@ function deleteReimbursement(id) {
 async function updateURLHash() {
   const v2 = stateToV2();
   const encoded = await encodeData(v2);
-  history.replaceState(null, '', '#' + encoded);
+  history.replaceState(null, '', window.location.search + '#' + encoded);
 }
 
 // ===== Utils =====
@@ -1553,7 +1554,18 @@ function copyJSON() {
 // ===== Init =====
 window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('landingDesc').textContent = t('landing_desc');
+  const urlParams = new URLSearchParams(window.location.search);
+  const meParam = urlParams.get('me');
+  if (meParam) {
+    currentUserID = meParam;
+    identityLocked = true;
+  }
   if (await loadFromURL()) {
+    // Validate locked identity exists in participants
+    if (identityLocked && !state.participants.find(p => p.id === currentUserID)) {
+      currentUserID = null;
+      identityLocked = false;
+    }
     // Show import banner on iOS
     if (isIOS() && window.location.hash) {
       const banner = document.getElementById('appBanner');

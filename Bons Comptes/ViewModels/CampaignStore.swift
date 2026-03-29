@@ -427,6 +427,15 @@ class CampaignStore: ObservableObject {
         return Self.webBaseURL + "#" + base64
     }
 
+    func webURL(for campaign: Campaign, participantID: UUID) -> String {
+        let base = webURL(for: campaign)
+        let dashless = Self.dashlessUUID(participantID)
+        if let hashIndex = base.firstIndex(of: "#") {
+            return String(base[..<hashIndex]) + "?me=\(dashless)" + String(base[hashIndex...])
+        }
+        return base + "?me=\(dashless)"
+    }
+
     // MARK: - V3 Compact Format (pipe-delimited with UUIDs for merge)
 
     private static func dashlessUUID(_ id: UUID) -> String {
