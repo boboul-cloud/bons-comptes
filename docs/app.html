@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bons Comptes — Partagez vos dépenses simplement</title>
+<meta name="description" content="Bons Comptes : l'app gratuite pour partager les dépenses entre amis, en famille ou entre collègues. Simple, équitable, sans inscription.">
+<meta property="og:title" content="Bons Comptes — Partagez vos dépenses simplement">
+<meta property="og:description" content="L'app gratuite pour partager les dépenses entre amis. Simple, équitable, sans inscription.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://boboul-cloud.github.io/bons-comptes/app.html">
+<style>
+:root {
+  --primary: #6C5CE7;
+  --primary-light: #A29BFE;
+  --primary-dark: #4834D4;
+  --accent: #00CEC9;
+  --positive: #00B894;
+  --negative: #E17055;
+  --warning: #FDCB6E;
+  --info: #74B9FF;
+  --bg: #F8F9FD;
+  --card: #FFFFFF;
+  --text: #2D3436;
+  --text2: #636E72;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg); color: var(--text); overflow-x: hidden;
+}
+
+/* Nav */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 16px 24px; display: flex; align-items: center; justify-content: space-between;
+  background: rgba(248,249,253,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(108,92,231,0.08);
+  transition: background 0.3s;
+}
+.nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+.nav-logo { width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 14px; }
+.nav-name { font-size: 18px; font-weight: 700; }
+.nav-links { display: flex; align-items: center; gap: 24px; }
+.nav-links a { text-decoration: none; color: var(--text2); font-size: 14px; font-weight: 600; transition: color 0.3s; }
+.nav-links a:hover { color: var(--primary); }
+.lang-toggle { background: var(--primary); color: #fff; border: none; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; transition: transform 0.3s; }
+.lang-toggle:hover { transform: scale(1.05); }
+
+/* Hero */
+.hero {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 100px 24px 60px; position: relative; overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; top: -200px; right: -200px;
+  width: 600px; height: 600px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(108,92,231,0.12) 0%, transparent 70%);
+}
+.hero::after {
+  content: ''; position: absolute; bottom: -150px; left: -150px;
+  width: 500px; height: 500px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,206,201,0.1) 0%, transparent 70%);
+}
+.hero-content { max-width: 600px; text-align: center; position: relative; z-index: 1; }
+.hero-icon {
+  width: 120px; height: 120px; border-radius: 28px; margin: 0 auto 32px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 52px; color: #fff; font-weight: 800;
+  box-shadow: 0 20px 60px rgba(108,92,231,0.3);
+  animation: float 3s ease-in-out infinite;
+}
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.hero h1 { font-size: 48px; font-weight: 800; line-height: 1.1; margin-bottom: 16px; }
+.hero h1 span { background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hero p { font-size: 18px; color: var(--text2); line-height: 1.6; margin-bottom: 32px; }
+.hero-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 10px; padding: 14px 28px;
+  border: none; border-radius: 50px; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all 0.3s; text-decoration: none;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff;
+  box-shadow: 0 8px 24px rgba(108,92,231,0.3);
+}
+.btn-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(108,92,231,0.4); }
+.btn-outline { background: #fff; color: var(--primary); border: 2px solid var(--primary-light); }
+.btn-outline:hover { background: var(--primary); color: #fff; }
+
+/* Features */
+.features { padding: 80px 24px; max-width: 1100px; margin: 0 auto; }
+.section-title { text-align: center; margin-bottom: 48px; }
+.section-title h2 { font-size: 36px; font-weight: 800; margin-bottom: 12px; }
+.section-title p { font-size: 16px; color: var(--text2); max-width: 500px; margin: 0 auto; }
+.features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+.feature-card {
+  background: var(--card); border-radius: 20px; padding: 32px;
+  box-shadow: 0 4px 24px rgba(108,92,231,0.06);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.feature-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(108,92,231,0.12); }
+.feature-icon {
+  width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center;
+  justify-content: center; font-size: 26px; margin-bottom: 16px;
+}
+.feature-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.feature-card p { font-size: 14px; color: var(--text2); line-height: 1.6; }
+
+/* How it works */
+.how { padding: 80px 24px; background: linear-gradient(180deg, #fff 0%, var(--bg) 100%); }
+.how-inner { max-width: 900px; margin: 0 auto; }
+.steps { display: flex; gap: 32px; margin-top: 48px; flex-wrap: wrap; justify-content: center; }
+.step {
+  flex: 1; min-width: 220px; max-width: 280px; text-align: center; position: relative;
+}
+.step-num {
+  width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 800; color: #fff;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+}
+.step h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.step p { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+/* Phone mockup */
+.mockup-section { padding: 80px 24px; text-align: center; }
+.mockup-container { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; margin-top: 48px; }
+.phone-mockup {
+  width: 260px; height: 520px; border-radius: 36px; position: relative;
+  background: #1a1a2e; padding: 12px; box-shadow: 0 24px 60px rgba(0,0,0,0.15);
+}
+.phone-screen {
+  width: 100%; height: 100%; border-radius: 26px; overflow: hidden;
+  background: var(--bg);
+}
+.mock-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  padding: 32px 16px 24px; text-align: center; color: #fff;
+}
+.mock-header .mock-title { font-size: 14px; font-weight: 700; }
+.mock-header .mock-amount { font-size: 28px; font-weight: 800; margin-top: 8px; }
+.mock-header .mock-meta { font-size: 10px; opacity: 0.7; margin-top: 4px; }
+.mock-body { padding: 12px; }
+.mock-card {
+  background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.mock-dot { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.mock-card-info { flex: 1; }
+.mock-card-title { font-size: 11px; font-weight: 700; }
+.mock-card-sub { font-size: 9px; color: var(--text2); margin-top: 2px; }
+.mock-card-amount { font-size: 12px; font-weight: 700; text-align: right; }
+
+/* Web app section */
+.webapp { padding: 80px 24px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; text-align: center; }
+.webapp h2 { font-size: 36px; font-weight: 800; margin-bottom: 12px; }
+.webapp p { font-size: 16px; opacity: 0.85; max-width: 500px; margin: 0 auto 32px; line-height: 1.6; }
+.webapp .btn { background: #fff; color: var(--primary); }
+.webapp .btn:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.2); }
+
+/* Footer */
+.footer { padding: 40px 24px; text-align: center; background: #fff; border-top: 1px solid rgba(108,92,231,0.08); }
+.footer-links { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+.footer-links a { color: var(--text2); text-decoration: none; font-size: 13px; font-weight: 600; transition: color 0.3s; }
+.footer-links a:hover { color: var(--primary); }
+.footer-copy { font-size: 12px; color: var(--text2); }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .hero h1 { font-size: 32px; }
+  .hero p { font-size: 15px; }
+  .nav-links { gap: 12px; }
+  .nav-links a.hide-mobile { display: none; }
+  .section-title h2 { font-size: 28px; }
+  .features-grid { grid-template-columns: 1fr; }
+  .phone-mockup { width: 220px; height: 440px; }
+}
+
+/* Animations */
+.fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.fade-in.visible { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+  <a href="#" class="nav-brand">
+    <div class="nav-logo">€$</div>
+    <span class="nav-name">Bons Comptes</span>
+  </a>
+  <div class="nav-links">
+    <a href="#features" class="hide-mobile" data-i18n="nav_features">Fonctionnalités</a>
+    <a href="#how" class="hide-mobile" data-i18n="nav_how">Comment ça marche</a>
+    <a href="index.html" data-i18n="nav_webapp">App Web</a>
+    <button class="lang-toggle" onclick="toggleLang()">EN</button>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-content fade-in">
+    <div class="hero-icon">€$</div>
+    <h1 data-i18n="hero_title"><span>Partagez</span> vos dépenses simplement</h1>
+    <p data-i18n="hero_desc">L'application gratuite pour gérer les dépenses entre amis, en famille ou entre collègues. Équitable, intuitive, sans inscription.</p>
+    <div class="hero-buttons">
+      <a href="index.html" class="btn btn-primary">
+        <span>🌐</span> <span data-i18n="hero_webapp">Ouvrir l'app web</span>
+      </a>
+      <a href="#features" class="btn btn-outline">
+        <span>✨</span> <span data-i18n="hero_discover">Découvrir</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features" id="features">
+  <div class="section-title fade-in">
+    <h2 data-i18n="features_title">Tout ce qu'il vous faut</h2>
+    <p data-i18n="features_desc">Des outils simples et puissants pour ne plus jamais se prendre la tête avec les comptes.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card fade-in">
+      <div class="feature-icon" style="background:rgba(108,92,231,0.1)">💰</div>
+      <h3 data-i18n="f1_title">Gestion des dépenses</h3>
+      <p data-i18n="f1_desc">Ajoutez vos dépenses en un clic. Répartition égale, par montant ou par pourcentage entre les participants.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-icon" style="background:rgba(0,184,148,0.1)">🤝</div>
+      <h3 data-i18n="f2_title">Remboursements intelligents</h3>
+      <p data-i18n="f2_desc">L'app calcule automatiquement qui doit combien à qui, en minimisant le nombre de transactions.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-icon" style="background:rgba(0,206,201,0.1)">📊</div>
+      <h3 data-i18n="f3_title">Soldes en temps réel</h3>
+      <p data-i18n="f3_desc">Visualisez les soldes de chaque participant avec des barres de progression colorées et intuitives.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-icon" style="background:rgba(225,112,85,0.1)">🏷️</div>
+      <h3 data-i18n="f4_title">Catégories & moyens de paiement</h3>
+      <p data-i18n="f4_desc">Classez vos dépenses par catégorie et suivez les remboursements par moyen de paiement.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-icon" style="background:rgba(116,185,255,0.1)">🔗</div>
+      <h3 data-i18n="f5_title">Partage facile</h3>
+      <p data-i18n="f5_desc">Partagez vos campagnes via un code, un lien web ou un export JSON. Accessible depuis n'importe quel navigateur.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-icon" style="background:rgba(253,203,110,0.1)">🔒</div>
+      <h3 data-i18n="f6_title">100% privé</h3>
+      <p data-i18n="f6_desc">Toutes vos données restent sur votre appareil. Aucun compte, aucun serveur, aucune collecte de données.</p>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="how" id="how">
+  <div class="how-inner">
+    <div class="section-title fade-in">
+      <h2 data-i18n="how_title">Comment ça marche</h2>
+      <p data-i18n="how_desc">3 étapes pour en finir avec les comptes entre amis.</p>
+    </div>
+    <div class="steps">
+      <div class="step fade-in">
+        <div class="step-num">1</div>
+        <h3 data-i18n="step1_title">Créez une campagne</h3>
+        <p data-i18n="step1_desc">Donnez un nom, ajoutez les participants et c'est parti.</p>
+      </div>
+      <div class="step fade-in">
+        <div class="step-num">2</div>
+        <h3 data-i18n="step2_title">Ajoutez les dépenses</h3>
+        <p data-i18n="step2_desc">Chaque participant enregistre ses dépenses et choisit la répartition.</p>
+      </div>
+      <div class="step fade-in">
+        <div class="step-num">3</div>
+        <h3 data-i18n="step3_title">Équilibrez les comptes</h3>
+        <p data-i18n="step3_desc">L'app calcule les remboursements optimaux. Plus de prise de tête !</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Phone Mockups -->
+<section class="mockup-section">
+  <div class="section-title fade-in">
+    <h2 data-i18n="screens_title">Un design moderne</h2>
+    <p data-i18n="screens_desc">Une interface épurée et intuitive, pensée pour mobile.</p>
+  </div>
+  <div class="mockup-container fade-in">
+    <!-- Mockup 1: Campaign Dashboard -->
+    <div class="phone-mockup">
+      <div class="phone-screen">
+        <div class="mock-header">
+          <div class="mock-title">🏖️ Vacances Été 2026</div>
+          <div class="mock-amount">1 247,50 €</div>
+          <div class="mock-meta">👥 5 participants · 📋 12 dépenses</div>
+        </div>
+        <div class="mock-body">
+          <div class="mock-card">
+            <div class="mock-dot" style="background:rgba(225,112,85,0.12)">🍽️</div>
+            <div class="mock-card-info"><div class="mock-card-title">Restaurant La Plage</div><div class="mock-card-sub">Payé par Alice · 5 pers.</div></div>
+            <div class="mock-card-amount" style="color:var(--negative)">85,00 €</div>
+          </div>
+          <div class="mock-card">
+            <div class="mock-dot" style="background:rgba(225,112,85,0.12)">🚗</div>
+            <div class="mock-card-info"><div class="mock-card-title">Essence A7</div><div class="mock-card-sub">Payé par Bob · 3 pers.</div></div>
+            <div class="mock-card-amount" style="color:var(--negative)">62,30 €</div>
+          </div>
+          <div class="mock-card">
+            <div class="mock-dot" style="background:rgba(225,112,85,0.12)">🛒</div>
+            <div class="mock-card-info"><div class="mock-card-title">Courses Carrefour</div><div class="mock-card-sub">Payé par Clara · 5 pers.</div></div>
+            <div class="mock-card-amount" style="color:var(--negative)">113,40 €</div>
+          </div>
+          <div class="mock-card">
+            <div class="mock-dot" style="background:rgba(225,112,85,0.12)">🏨</div>
+            <div class="mock-card-info"><div class="mock-card-title">Airbnb (3 nuits)</div><div class="mock-card-sub">Payé par David · 5 pers.</div></div>
+            <div class="mock-card-amount" style="color:var(--negative)">450,00 €</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mockup 2: Balances -->
+    <div class="phone-mockup">
+      <div class="phone-screen">
+        <div class="mock-header" style="background:linear-gradient(135deg, var(--accent), #00B5B0)">
+          <div class="mock-title">📊 Soldes</div>
+          <div class="mock-amount" style="font-size:22px">Vacances Été 2026</div>
+          <div class="mock-meta">Tout le monde à jour !</div>
+        </div>
+        <div class="mock-body">
+          <div class="mock-card">
+            <div class="mock-dot" style="background:linear-gradient(135deg, var(--primary-light), var(--primary))">👩</div>
+            <div class="mock-card-info"><div class="mock-card-title">Alice</div><div class="mock-card-sub" style="color:var(--negative)">doit 45,20 €</div></div>
+            <div style="flex:1"><div style="height:6px;background:#eee;border-radius:3px;overflow:hidden"><div style="width:60%;height:100%;background:var(--negative);border-radius:3px"></div></div></div>
+          </div>
+          <div class="mock-card">
+            <div class="mock-dot" style="background:linear-gradient(135deg, var(--primary-light), var(--primary))">👨</div>
+            <div class="mock-card-info"><div class="mock-card-title">Bob</div><div class="mock-card-sub" style="color:var(--negative)">doit 23,10 €</div></div>
+            <div style="flex:1"><div style="height:6px;background:#eee;border-radius:3px;overflow:hidden"><div style="width:30%;height:100%;background:var(--negative);border-radius:3px"></div></div></div>
+          </div>
+          <div class="mock-card">
+            <div class="mock-dot" style="background:linear-gradient(135deg, var(--primary-light), var(--primary))">👩</div>
+            <div class="mock-card-info"><div class="mock-card-title">Clara</div><div class="mock-card-sub" style="color:var(--positive)">créditeur +12,50 €</div></div>
+            <div style="flex:1"><div style="height:6px;background:#eee;border-radius:3px;overflow:hidden"><div style="width:20%;height:100%;background:var(--positive);border-radius:3px"></div></div></div>
+          </div>
+          <div class="mock-card">
+            <div class="mock-dot" style="background:linear-gradient(135deg, var(--primary-light), var(--primary))">👨</div>
+            <div class="mock-card-info"><div class="mock-card-title">David</div><div class="mock-card-sub" style="color:var(--positive)">créditeur +55,80 €</div></div>
+            <div style="flex:1"><div style="height:6px;background:#eee;border-radius:3px;overflow:hidden"><div style="width:75%;height:100%;background:var(--positive);border-radius:3px"></div></div></div>
+          </div>
+          <div class="mock-card" style="background:var(--bg)">
+            <div class="mock-dot" style="background:linear-gradient(135deg, var(--primary-light), var(--primary))">🧑</div>
+            <div class="mock-card-info"><div class="mock-card-title">Emma</div><div class="mock-card-sub" style="color:var(--positive)">équilibré ✓</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Web App CTA -->
+<section class="webapp">
+  <div class="fade-in">
+    <h2 data-i18n="webapp_title">Aussi sur le web</h2>
+    <p data-i18n="webapp_desc">Pas besoin d'installer l'app ! Ouvrez un lien partagé directement dans votre navigateur pour consulter et modifier les dépenses.</p>
+    <a href="index.html" class="btn">🌐 <span data-i18n="webapp_btn">Accéder à l'app web</span></a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-links">
+    <a href="privacy.html" data-i18n="footer_privacy">Confidentialité</a>
+    <a href="terms.html" data-i18n="footer_terms">Conditions d'utilisation</a>
+    <a href="legal.html" data-i18n="footer_legal">Mentions légales</a>
+    <a href="https://github.com/boboul-cloud/bons-comptes">GitHub</a>
+  </div>
+  <p class="footer-copy">© 2026 Robert Oulhen — Bons Comptes</p>
+</footer>
+
+<script>
+// i18n
+const T = {
+  fr: {
+    nav_features: "Fonctionnalités", nav_how: "Comment ça marche", nav_webapp: "App Web",
+    hero_title: "<span>Partagez</span> vos dépenses simplement",
+    hero_desc: "L'application gratuite pour gérer les dépenses entre amis, en famille ou entre collègues. Équitable, intuitive, sans inscription.",
+    hero_webapp: "Ouvrir l'app web", hero_discover: "Découvrir",
+    features_title: "Tout ce qu'il vous faut",
+    features_desc: "Des outils simples et puissants pour ne plus se prendre la tête avec les comptes.",
+    f1_title: "Gestion des dépenses", f1_desc: "Ajoutez vos dépenses en un clic. Répartition égale, par montant ou par pourcentage entre les participants.",
+    f2_title: "Remboursements intelligents", f2_desc: "L'app calcule automatiquement qui doit combien à qui, en minimisant le nombre de transactions.",
+    f3_title: "Soldes en temps réel", f3_desc: "Visualisez les soldes de chaque participant avec des barres de progression colorées et intuitives.",
+    f4_title: "Catégories & moyens de paiement", f4_desc: "Classez vos dépenses par catégorie et suivez les remboursements par moyen de paiement.",
+    f5_title: "Partage facile", f5_desc: "Partagez vos campagnes via un code, un lien web ou un export JSON. Accessible depuis n'importe quel navigateur.",
+    f6_title: "100% privé", f6_desc: "Toutes vos données restent sur votre appareil. Aucun compte, aucun serveur, aucune collecte de données.",
+    how_title: "Comment ça marche", how_desc: "3 étapes pour en finir avec les comptes entre amis.",
+    step1_title: "Créez une campagne", step1_desc: "Donnez un nom, ajoutez les participants et c'est parti.",
+    step2_title: "Ajoutez les dépenses", step2_desc: "Chaque participant enregistre ses dépenses et choisit la répartition.",
+    step3_title: "Équilibrez les comptes", step3_desc: "L'app calcule les remboursements optimaux. Plus de prise de tête !",
+    screens_title: "Un design moderne", screens_desc: "Une interface épurée et intuitive, pensée pour mobile.",
+    webapp_title: "Aussi sur le web", webapp_desc: "Pas besoin d'installer l'app ! Ouvrez un lien partagé directement dans votre navigateur pour consulter et modifier les dépenses.",
+    webapp_btn: "Accéder à l'app web",
+    footer_privacy: "Confidentialité", footer_terms: "Conditions d'utilisation", footer_legal: "Mentions légales",
+  },
+  en: {
+    nav_features: "Features", nav_how: "How it works", nav_webapp: "Web App",
+    hero_title: "<span>Share</span> expenses effortlessly",
+    hero_desc: "The free app to manage shared expenses with friends, family, or colleagues. Fair, intuitive, no sign-up required.",
+    hero_webapp: "Open web app", hero_discover: "Discover",
+    features_title: "Everything you need",
+    features_desc: "Simple yet powerful tools so you never stress about splitting bills again.",
+    f1_title: "Expense management", f1_desc: "Add expenses in one tap. Split equally, by amount, or by percentage among participants.",
+    f2_title: "Smart settlements", f2_desc: "The app automatically calculates who owes whom, minimizing the number of transactions.",
+    f3_title: "Real-time balances", f3_desc: "View each participant's balance with colorful and intuitive progress bars.",
+    f4_title: "Categories & payment methods", f4_desc: "Organize expenses by category and track reimbursements by payment method.",
+    f5_title: "Easy sharing", f5_desc: "Share campaigns via a code, a web link, or a JSON export. Accessible from any browser.",
+    f6_title: "100% private", f6_desc: "All your data stays on your device. No account, no server, no data collection.",
+    how_title: "How it works", how_desc: "3 steps to settle expenses with friends.",
+    step1_title: "Create a campaign", step1_desc: "Name it, add participants, and you're set.",
+    step2_title: "Add expenses", step2_desc: "Each participant logs their expenses and chooses how to split.",
+    step3_title: "Settle up", step3_desc: "The app calculates optimal reimbursements. No more headaches!",
+    screens_title: "Modern design", screens_desc: "A clean and intuitive interface, designed for mobile.",
+    webapp_title: "Also on the web", webapp_desc: "No need to install the app! Open a shared link directly in your browser to view and edit expenses.",
+    webapp_btn: "Access web app",
+    footer_privacy: "Privacy Policy", footer_terms: "Terms of Use", footer_legal: "Legal Notices",
+  }
+};
+
+let lang = (navigator.language || 'fr').startsWith('en') ? 'en' : 'fr';
+
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (T[lang][key]) {
+      if (key === 'hero_title') el.innerHTML = T[lang][key];
+      else el.textContent = T[lang][key];
+    }
+  });
+  document.querySelector('.lang-toggle').textContent = lang === 'fr' ? 'EN' : 'FR';
+  document.documentElement.lang = lang;
+
+  // Update legal footer links
+  const privLink = lang === 'en' ? 'privacy-en.html' : 'privacy.html';
+  const termsLink = lang === 'en' ? 'terms-en.html' : 'terms.html';
+  const legalLink = lang === 'en' ? 'legal-en.html' : 'legal.html';
+  const footerLinks = document.querySelectorAll('.footer-links a');
+  footerLinks[0].href = privLink;
+  footerLinks[1].href = termsLink;
+  footerLinks[2].href = legalLink;
+}
+
+function toggleLang() {
+  lang = lang === 'fr' ? 'en' : 'fr';
+  applyLang();
+}
+
+// Scroll animations
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+
+document.addEventListener('DOMContentLoaded', () => {
+  applyLang();
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+});
+</script>
+</body>
+</html>
