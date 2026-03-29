@@ -1063,7 +1063,7 @@ async function showShareModal() {
     const url = await generateShareURL();
     window._shareURL = url;
     const phone = managerPhone.replace(/\s/g, '');
-    const smsBody = encodeURIComponent('Bons Comptes – ' + state.campaign.title + '\n' + url);
+    const smsBody = encodeURIComponent(url);
     document.getElementById('modal').innerHTML = `
       <div class="modal-header"><div class="modal-handle"></div><div class="modal-title">📤 ${t('view_share')}</div></div>
       <div class="modal-body">
@@ -1258,7 +1258,7 @@ function deleteReimbursement(id) {
 }
 
 async function updateURLHash() {
-  const json = stateToJSON();
+  const json = stateToCompactJSON();
   const encoded = await encodeData(json);
   history.replaceState(null, '', '#' + encoded);
 }
@@ -1298,7 +1298,7 @@ async function showUpdateNotif(msgKey) {
   document.querySelectorAll('.update-notif').forEach(e => e.remove());
   const url = await generateShareURL();
   const phone = managerPhone.replace(/\s/g, '');
-  const smsBody = encodeURIComponent('Bons Comptes – ' + state.campaign.title + '\n' + url);
+  const smsBody = encodeURIComponent(url);
   const notif = document.createElement('div');
   notif.className = 'update-notif';
   notif.innerHTML = `
