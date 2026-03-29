@@ -49,7 +49,16 @@ struct ContentView: View {
             }
         }
         .onOpenURL { url in
-            importSuccess = store.importFromURL(url)
+            if url.host == "paste" || url.path == "paste" {
+                // Web "Open in app" copies JSON to clipboard then opens bonscomptes://paste
+                if let clipboard = UIPasteboard.general.string {
+                    importSuccess = store.importJSON(clipboard)
+                } else {
+                    importSuccess = false
+                }
+            } else {
+                importSuccess = store.importFromURL(url)
+            }
             showImportResult = true
             selectedTab = 0
         }

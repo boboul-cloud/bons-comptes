@@ -924,21 +924,30 @@ function showAddReimbursement() {
   openModal();
 }
 
-async function generateAppURL() {
+function openInApp() {
   const json = stateToJSON();
-  const encoded = await encodeData(json);
-  return 'bonscomptes://import#' + encoded;
+  navigator.clipboard.writeText(json).then(() => {
+    window.location.href = 'bonscomptes://paste';
+  }).catch(() => {
+    // Fallback: copy via textarea
+    const ta = document.createElement('textarea');
+    ta.value = json;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    window.location.href = 'bonscomptes://paste';
+  });
 }
 
 async function showShareModal() {
   const url = await generateShareURL();
-  const appURL = await generateAppURL();
   document.getElementById('modal').innerHTML = `
     <div class="modal-header"><div class="modal-handle"></div><div class="modal-title">📤 ${t('view_share')}</div></div>
     <div class="modal-body">
       <div class="share-code">${esc(state.campaign.shareCode)}</div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
-        <a href="${appURL}" class="btn btn-positive" style="width:100%;justify-content:center;text-decoration:none">📱 ${t('open_in_app')}</a>
+        <button class="btn btn-positive" style="width:100%;justify-content:center" onclick="openInApp()">📱 ${t('open_in_app')}</button>
         <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="copyToClipboard('${esc(url)}','${t('link_copied')}')">🔗 ${t('copy_link')}</button>
         <button class="btn btn-accent" style="width:100%;justify-content:center" onclick="copyJSON()">📋 ${t('copy_json')}</button>
       </div>
