@@ -12,6 +12,7 @@ struct CampaignListView: View {
     @State private var importCode = ""
     @State private var showArchived = false
     @State private var importResult: Bool?
+    @State private var showingBackups = false
 
     var filteredCampaigns: [Campaign] {
         store.campaigns.filter { $0.isArchived == showArchived }
@@ -23,59 +24,24 @@ struct CampaignListView: View {
             ZStack {
                 AppTheme.backgroundGradient.ignoresSafeArea()
 
-                if filteredCampaigns.isEmpty {
-                    emptyState
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 16) {
-                            ForEach(Array(filteredCampaigns.enumerated()), id: \.element.id) { index, campaign in
-                                NavigationLink(destination: CampaignDetailView(campaign: campaign)) {
-                                    CampaignCardView(campaign: campaign)
-                                }
-                                .buttonStyle(.plain)
-                                .animatedAppear(delay: Double(index) * 0.08)
-                                .contextMenu {
-                                    Button(role: .destructive) {
-                                        withAnimation { store.deleteCampaign(campaign) }
-                                    } label: {
-                                        Label(NSLocalizedString("delete", comment: ""), systemImage: "trash")
-                                    }
-                                    Button {
-                                        store.archiveCampaign(campaign)
-                                    } label: {
-                                        Label(NSLocalizedString("archive_campaign", comment: ""), systemImage: "archivebox")
-                                    }
-                                }
-                            }
+                ScrollView {
+                    LazyVStack(spacing: 16) {
+                        actionButtons
+                            .padding(.horizontal)
+
+                        if filteredCampaigns.isEmpty {
+                            emptyState
+                        } else {
+                            campaignList
                         }
-                        .padding(.horizontal)
-                        .padding(.top, 8)
-                        .padding(.bottom, 20)
                     }
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                    .padding(.bottom, 20)
                 }
             }
             .navigationTitle(NSLocalizedString("app_title", comment: ""))
             .toolbar(content: {
-                ToolbarItem(placement: .topBarLeading) {
-                    Menu {
-                        Button(action: {
-                            withAnimation(.spring()) { showArchived.toggle() }
-                        }) {
-                            Label(
-                                showArchived
-                                    ? NSLocalizedString("show_active", comment: "")
-                                    : NSLocalizedString("show_archived", comment: ""),
-                                systemImage: showArchived ? "tray.full" : "archivebox"
-                            )
-                        }
-                        Button(action: { showingImport = true }) {
-                            Label(NSLocalizedString("import_campaign", comment: ""), systemImage: "square.and.arrow.down")
-                        }
-                    } label: {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                            .foregroundColor(AppTheme.primary)
-                    }
-                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: { showingAddCampaign = true }) {
                         Image(systemName: "plus.circle.fill")
@@ -90,6 +56,9 @@ struct CampaignListView: View {
             .sheet(isPresented: $showingImport) {
                 ImportCampaignSheet(store: store, importResult: $importResult)
             }
+            .sheet(isPresented: $showingBackups) {
+                BackupListView()
+            }
             .alert(
                 importResult == true
                     ? NSLocalizedString("import_success", comment: "")
@@ -98,6 +67,64 @@ struct CampaignListView: View {
             ) {
                 Button("OK") { importResult = nil }
             }
+        }
+    }
+
+    var campaignList: some View {
+        ForEach(Array(filteredCampaigns.enumerated()), id: \.element.id) { index, campaign in
+            NavigationLink(destination: CampaignDetailView(campaign: campaign)) {
+                CampaignCardView(campaign: campaign)
+            }
+            .buttonStyle(.plain)
+            .animatedAppear(delay: Double(index) * 0.08)
+            .contextMenu {
+                Button(role: .destructive) {
+                    withAnimation { store.deleteCampaign(campaign) }
+                } label: {
+                    Label(NSLocalizedString("delete", comment: ""), systemImage: "trash")
+                }
+                Button {
+                    store.archiveCampaign(campaign)
+                } label: {
+                    Label(NSLocalizedString("archive_campaign", comment: ""), systemImage: "archivebox")
+                }
+            }
+        }
+    }
+
+    var actionButtons: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                actionCapsule(icon: "clock.arrow.circlepath", label: NSLocalizedString("backups_title", comment: ""), fg: AppTheme.primary, bg: AppTheme.primary.opacity(0.12)) {
+                    showingBackups = true
+                }
+
+                actionCapsule(icon: "square.and.arrow.down", label: NSLocalizedString("import_campaign", comment: ""), fg: AppTheme.accent, bg: AppTheme.accent.opacity(0.12)) {
+                    showingImport = true
+                }
+
+                actionCapsule(
+                    icon: showArchived ? "play.circle" : "checkmark.circle",
+                    label: showArchived ? NSLocalizedString("show_active", comment: "") : NSLocalizedString("show_archived", comment: ""),
+                    fg: showArchived ? AppTheme.positive : .secondary,
+                    bg: showArchived ? AppTheme.positive.opacity(0.12) : Color.secondary.opacity(0.1)
+                ) {
+                    withAnimation(.spring()) { showArchived.toggle() }
+                }
+            }
+        }
+    }
+
+    func actionCapsule(icon: String, label: String, fg: Color, bg: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon).font(.subheadline)
+                Text(label).font(.subheadline).fontWeight(.medium)
+            }
+            .foregroundColor(fg)
+            .padding(.horizontal, 16).padding(.vertical, 10)
+            .background(bg)
+            .clipShape(Capsule())
         }
     }
 
@@ -197,4 +224,14 @@ struct CampaignCardView: View {
                 .foregroundColor(.primary)
         }
     }
+}
+
+struct ShareSheetView: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }

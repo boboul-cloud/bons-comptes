@@ -10,20 +10,28 @@ struct ImportCampaignSheet: View {
     @Binding var importResult: Bool?
     @Environment(\.dismiss) private var dismiss
     @State private var inputText = ""
+    @State private var clipboardStatus: ClipboardStatus = .checking
+
+    enum ClipboardStatus {
+        case checking, found, empty
+    }
 
     var body: some View {
         NavigationStack {
             ZStack {
                 AppTheme.backgroundGradient.ignoresSafeArea()
-                ScrollView {
-                    VStack(spacing: 20) {
-                        headerSection
-                        pasteButton
-                        textFieldSection
+                VStack(spacing: 24) {
+                    Spacer()
+                    statusIcon
+                    statusMessage
+                    if clipboardStatus == .found {
                         importButton
+                    } else if clipboardStatus == .empty {
+                        emptyAction
                     }
-                    .padding()
+                    Spacer()
                 }
+                .padding()
             }
             .navigationTitle(NSLocalizedString("import_campaign", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
@@ -33,57 +41,48 @@ struct ImportCampaignSheet: View {
                         .foregroundColor(AppTheme.primary)
                 }
             })
+            .onAppear {
+                readClipboard()
+            }
         }
     }
 
-    private var headerSection: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "square.and.arrow.down.fill")
-                .font(.system(size: 40))
-                .foregroundStyle(AppTheme.headerGradient)
-            Text(NSLocalizedString("import_desc", comment: ""))
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+    private var statusIcon: some View {
+        Image(systemName: clipboardStatus == .found ? "doc.on.clipboard.fill" : "clipboard")
+            .font(.system(size: 48))
+            .foregroundStyle(clipboardStatus == .found ? AnyShapeStyle(AppTheme.headerGradient) : AnyShapeStyle(Color.secondary.opacity(0.5)))
+    }
+
+    private var statusMessage: some View {
+        VStack(spacing: 8) {
+            Text(clipboardStatus == .found
+                 ? NSLocalizedString("clipboard_ready", comment: "")
+                 : NSLocalizedString("clipboard_empty", comment: ""))
+                .font(.headline)
+                .foregroundColor(clipboardStatus == .found ? .primary : .secondary)
                 .multilineTextAlignment(.center)
-        }
-        .padding(.top, 8)
-    }
-
-    private var pasteButton: some View {
-        Button(action: {
-            if let clipboard = UIPasteboard.general.string {
-                inputText = clipboard
+            if clipboardStatus == .found {
+                Text(clipboardPreview)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+                    .truncationMode(.middle)
             }
-        }) {
-            HStack(spacing: 10) {
-                Image(systemName: "doc.on.clipboard")
-                Text(NSLocalizedString("paste_clipboard", comment: ""))
-                    .fontWeight(.semibold)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(AppTheme.primary.opacity(0.1))
-            .foregroundColor(AppTheme.primary)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
 
-    private var textFieldSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(NSLocalizedString("paste_json_or_url", comment: ""))
-                .font(.caption)
-                .foregroundColor(.secondary)
-            TextEditor(text: $inputText)
-                .font(.system(.caption, design: .monospaced))
-                .frame(minHeight: 120)
-                .padding(8)
-                .background(Color(.systemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(AppTheme.primary.opacity(0.2), lineWidth: 1)
-                )
+    private var clipboardPreview: String {
+        let text = inputText
+        if text.hasPrefix("http") {
+            if text.contains("#") {
+                return NSLocalizedString("clipboard_link_ok", comment: "")
+            } else {
+                return NSLocalizedString("clipboard_link_no_data", comment: "")
+            }
+        } else if text.hasPrefix("{") {
+            return "JSON"
         }
+        return String(text.prefix(80))
     }
 
     private var importButton: some View {
@@ -97,18 +96,66 @@ struct ImportCampaignSheet: View {
             .padding(.vertical, 16)
             .background {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(inputText.isEmpty ? AnyShapeStyle(Color.gray.opacity(0.3)) : AnyShapeStyle(AppTheme.headerGradient))
+                    .fill(AnyShapeStyle(AppTheme.headerGradient))
             }
             .foregroundColor(.white)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
-        .disabled(inputText.isEmpty)
+    }
+
+    private var emptyAction: some View {
+        VStack(spacing: 12) {
+            Text(NSLocalizedString("clipboard_hint", comment: ""))
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+            Button(action: { readClipboard() }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "arrow.clockwise")
+                    Text(NSLocalizedString("retry", comment: ""))
+                        .fontWeight(.medium)
+                }
+                .foregroundColor(AppTheme.primary)
+                .padding(.horizontal, 24).padding(.vertical, 12)
+                .background(AppTheme.primary.opacity(0.1))
+                .clipShape(Capsule())
+            }
+        }
+    }
+
+    private func readClipboard() {
+        // Try URL first (preserves fragment better on iOS)
+        if let url = UIPasteboard.general.url, let fragment = url.fragment, !fragment.isEmpty {
+            inputText = url.absoluteString
+            clipboardStatus = .found
+        } else if let clipboard = UIPasteboard.general.string, !clipboard.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            inputText = clipboard.trimmingCharacters(in: .whitespacesAndNewlines)
+            clipboardStatus = .found
+        } else {
+            clipboardStatus = .empty
+        }
     }
 
     private func doImport() {
-        let input = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let input = inputText
         let success: Bool
-        if let url = URL(string: input), url.scheme == "bonscomptes" || url.scheme == "https" || url.fragment != nil {
+
+        // If it's a URL with a fragment, extract fragment manually for reliability
+        if input.contains("#"), let hashIndex = input.firstIndex(of: "#") {
+            let fragment = String(input[input.index(after: hashIndex)...])
+            if !fragment.isEmpty {
+                // Build a clean URL with the fragment
+                let baseURL = String(input[..<hashIndex])
+                if let url = URL(string: baseURL + "#" + fragment) {
+                    success = store.importFromURL(url)
+                } else {
+                    // Fallback: treat fragment as encoded data directly
+                    success = store.importFromURL(URL(string: "bonscomptes://import#" + fragment)!)
+                }
+            } else {
+                success = store.importJSON(input)
+            }
+        } else if let url = URL(string: input), url.scheme == "bonscomptes" {
             success = store.importFromURL(url)
         } else {
             success = store.importJSON(input)

@@ -13,6 +13,7 @@ struct CampaignDetailView: View {
     @State private var showingParticipants = false
     @State private var showingBalance = false
     @State private var showingShare = false
+    @State private var showingCloseAlert = false
     @State private var selectedTab = 0
 
     var body: some View {
@@ -22,6 +23,19 @@ struct CampaignDetailView: View {
 
             ScrollView {
                 VStack(spacing: 20) {
+                    if campaign.isClosed {
+                        HStack {
+                            Image(systemName: "lock.fill")
+                            Text(NSLocalizedString("campaign_closed_banner", comment: ""))
+                                .font(.subheadline).fontWeight(.medium)
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(AppTheme.negative.opacity(0.85))
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .padding(.horizontal)
+                    }
                     heroHeader.animatedAppear()
                     quickActions.animatedAppear(delay: 0.1)
                     statsRow.animatedAppear(delay: 0.15)
@@ -53,6 +67,15 @@ struct CampaignDetailView: View {
         }
         .sheet(isPresented: $showingBalance) { BalanceView(campaign: campaign) }
         .sheet(isPresented: $showingShare) { ShareView(campaign: campaign) }
+        .alert(NSLocalizedString("close_campaign_title", comment: ""), isPresented: $showingCloseAlert) {
+            Button(NSLocalizedString("cancel", comment: ""), role: .cancel) {}
+            Button(NSLocalizedString("close_confirm", comment: ""), role: .destructive) {
+                store.closeCampaign(campaign)
+                refreshCampaign()
+            }
+        } message: {
+            Text(NSLocalizedString("close_campaign_message", comment: ""))
+        }
     }
 
     func refreshCampaign() {
@@ -69,7 +92,7 @@ struct CampaignDetailView: View {
                     if !campaign.location.isEmpty {
                         Label(campaign.location, systemImage: "mappin.and.ellipse").font(.caption).foregroundColor(.white.opacity(0.85))
                     }
-                    Label(campaign.shareCode, systemImage: "link").font(.system(.caption, design: .monospaced)).foregroundColor(.white.opacity(0.85))
+                    Label("\(store.participantsFor(campaign: campaign).count) \(NSLocalizedString("participants_count", comment: ""))", systemImage: "person.2").font(.caption).foregroundColor(.white.opacity(0.85))
                 }
             }
         }
@@ -82,7 +105,17 @@ struct CampaignDetailView: View {
                 quickActionButton(icon: "person.3.fill", label: NSLocalizedString("participants_count", comment: ""), color: AppTheme.primary) { showingParticipants = true }
                 quickActionButton(icon: "chart.pie.fill", label: NSLocalizedString("balance_title", comment: ""), color: AppTheme.accent) { showingBalance = true }
                 quickActionButton(icon: "square.and.arrow.up.fill", label: NSLocalizedString("share_campaign", comment: ""), color: AppTheme.info) { showingShare = true }
-                quickActionButton(icon: "archivebox.fill", label: NSLocalizedString("archive_campaign", comment: ""), color: AppTheme.warning) {
+                if campaign.isClosed {
+                    quickActionButton(icon: "lock.open.fill", label: NSLocalizedString("reopen_campaign", comment: ""), color: AppTheme.positive) {
+                        store.reopenCampaign(campaign)
+                        refreshCampaign()
+                    }
+                } else {
+                    quickActionButton(icon: "lock.fill", label: NSLocalizedString("close_campaign", comment: ""), color: AppTheme.negative) {
+                        showingCloseAlert = true
+                    }
+                }
+                quickActionButton(icon: "checkmark.circle.fill", label: NSLocalizedString("archive_campaign", comment: ""), color: AppTheme.positive) {
                     store.archiveCampaign(campaign)
                     refreshCampaign()
                 }
@@ -162,7 +195,9 @@ struct CampaignDetailView: View {
 
     var floatingButton: some View {
         Group {
-            if selectedTab == 0 {
+            if campaign.isClosed {
+                EmptyView()
+            } else if selectedTab == 0 {
                 Button(action: { showingAddExpense = true }) {
                     Label(NSLocalizedString("add_expense", comment: ""), systemImage: "plus.circle.fill")
                         .font(.subheadline).fontWeight(.semibold).foregroundColor(.white)

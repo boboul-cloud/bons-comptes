@@ -4,12 +4,28 @@
 /* Campaign */
 "no_campaigns" = "No campaigns";
 "no_campaigns_desc" = "Create your first expense-sharing campaign";
-"show_active" = "Show active";
-"show_archived" = "Show archived";
-"import_campaign" = "Import a campaign";
+"show_active" = "Active";
+"show_archived" = "Finished";
+"import_campaign" = "Import";
+"save_local" = "Save";
+"saved_feedback" = "Saved!";
+"backups_title" = "Backups";
+"create_backup" = "Create a backup";
+"no_backups" = "No backups";
+"restore_backup_title" = "Restore this backup?";
+"restore_backup_message" = "All current data will be replaced by the backup data. This action cannot be undone.";
+"restore_confirm" = "Restore";
+"restore_success" = "Backup restored successfully";
+"restore_error" = "Error restoring backup";
 "paste_json" = "Paste JSON data";
 "paste_json_or_url" = "Paste JSON or web link";
 "import_button" = "Import";
+"clipboard_ready" = "Data found in clipboard";
+"clipboard_empty" = "Clipboard is empty";
+"clipboard_hint" = "Copy a web link or JSON data before importing";
+"clipboard_link_ok" = "Web link with data detected";
+"clipboard_link_no_data" = "⚠️ Web link without data — use the Copy button on the website";
+"retry" = "Retry";
 "cancel" = "Cancel";
 "new_campaign" = "New Campaign";
 "campaign_info" = "Information";
@@ -35,7 +51,13 @@
 "manage_participants" = "Manage participants";
 "view_balance" = "View balances";
 "share_campaign" = "Share campaign";
-"archive_campaign" = "Archive campaign";
+"archive_campaign" = "Mark as finished";
+"close_campaign" = "Close";
+"reopen_campaign" = "Reopen";
+"close_campaign_title" = "Close campaign";
+"close_campaign_message" = "A closed campaign cannot be modified (no new expenses or reimbursements). You can reopen it at any time.";
+"close_confirm" = "Close and save";
+"campaign_closed_banner" = "Campaign closed — read only";
 "no_expenses" = "No expenses";
 "no_reimbursements" = "No reimbursements";
 "paid_by" = "Paid by";
@@ -95,18 +117,18 @@
 "balance_title" = "Balances & Settlement";
 
 /* Share */
-"share_code_section" = "Share code";
-"share_code_instructions" = "Share this code to allow others to access this campaign";
+"share_link_title" = "Share Campaign";
+"share_link_desc" = "Send this link so others can view and edit the campaign from a browser or the app.";
+"share_button" = "Share";
+"copy_button" = "Copy";
 "copied" = "Copied!";
-"copy_code" = "Copy code";
 "export_data" = "Export data";
 "view_json" = "View JSON data";
+"view_summary" = "View text summary";
+"share_pdf" = "Share PDF summary";
+"view_pdf" = "View PDF summary";
 "share_json" = "Share JSON data";
 "share_summary" = "Share text summary";
-"web_access_section" = "Web Access";
-"web_access_desc" = "Share a web link so anyone can view and edit the campaign from a browser.";
-"share_web_link" = "Share web link";
-"copy_web_link" = "Copy web link";
 "web_deploy_hint" = "Compatible with GitHub Pages, Netlify, Vercel...";
 
 /* Settings */

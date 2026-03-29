@@ -4,12 +4,28 @@
 /* Campaign */
 "no_campaigns" = "Aucune campagne";
 "no_campaigns_desc" = "Créez votre première campagne de partage de frais";
-"show_active" = "Voir actives";
-"show_archived" = "Voir archivées";
-"import_campaign" = "Importer une campagne";
+"show_active" = "En cours";
+"show_archived" = "Terminées";
+"import_campaign" = "Importer";
+"save_local" = "Sauvegarder";
+"saved_feedback" = "Sauvegardé !";
+"backups_title" = "Sauvegardes";
+"create_backup" = "Créer une sauvegarde";
+"no_backups" = "Aucune sauvegarde";
+"restore_backup_title" = "Restaurer cette sauvegarde ?";
+"restore_backup_message" = "Toutes les données actuelles seront remplacées par celles de la sauvegarde. Cette action est irréversible.";
+"restore_confirm" = "Restaurer";
+"restore_success" = "Sauvegarde restaurée avec succès";
+"restore_error" = "Erreur lors de la restauration";
 "paste_json" = "Coller les données JSON";
 "paste_json_or_url" = "Coller JSON ou lien web";
 "import_button" = "Importer";
+"clipboard_ready" = "Données trouvées dans le presse-papiers";
+"clipboard_empty" = "Presse-papiers vide";
+"clipboard_hint" = "Copiez un lien web ou des données JSON avant d'importer";
+"clipboard_link_ok" = "Lien web avec données détecté";
+"clipboard_link_no_data" = "⚠️ Lien web sans données — utilisez le bouton Copier du site";
+"retry" = "Réessayer";
 "cancel" = "Annuler";
 "new_campaign" = "Nouvelle campagne";
 "campaign_info" = "Informations";
@@ -35,7 +51,13 @@
 "manage_participants" = "Gérer les participants";
 "view_balance" = "Voir les soldes";
 "share_campaign" = "Partager la campagne";
-"archive_campaign" = "Archiver la campagne";
+"archive_campaign" = "Terminer la campagne";
+"close_campaign" = "Clore";
+"reopen_campaign" = "Rouvrir";
+"close_campaign_title" = "Clore la campagne";
+"close_campaign_message" = "Une campagne close ne peut plus être modifiée (pas de nouvelles dépenses ni remboursements). Vous pourrez la rouvrir à tout moment.";
+"close_confirm" = "Clore et sauvegarder";
+"campaign_closed_banner" = "Campagne close — lecture seule";
 "no_expenses" = "Aucune dépense";
 "no_reimbursements" = "Aucun remboursement";
 "paid_by" = "Payé par";
@@ -95,18 +117,18 @@
 "balance_title" = "Soldes & Équilibre";
 
 /* Share */
-"share_code_section" = "Code de partage";
-"share_code_instructions" = "Partagez ce code pour permettre à d'autres d'accéder à cette campagne";
+"share_link_title" = "Partager la campagne";
+"share_link_desc" = "Envoyez ce lien pour que d'autres puissent voir et modifier la campagne depuis un navigateur ou l'app.";
+"share_button" = "Partager";
+"copy_button" = "Copier";
 "copied" = "Copié !";
-"copy_code" = "Copier le code";
 "export_data" = "Exporter les données";
 "view_json" = "Voir les données JSON";
+"view_summary" = "Voir le résumé texte";
+"share_pdf" = "Partager le résumé PDF";
+"view_pdf" = "Voir le résumé PDF";
 "share_json" = "Partager les données JSON";
 "share_summary" = "Partager un résumé texte";
-"web_access_section" = "Accès Web";
-"web_access_desc" = "Partagez un lien web pour que n'importe qui puisse voir et modifier la campagne depuis un navigateur.";
-"share_web_link" = "Partager le lien web";
-"copy_web_link" = "Copier le lien web";
 "web_deploy_hint" = "Compatible GitHub Pages, Netlify, Vercel...";
 
 /* Settings */

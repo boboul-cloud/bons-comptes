@@ -249,10 +249,7 @@ body {
 
 /* Share Panel */
 .share-section { padding: 16px; }
-.share-code {
-  font-size: 32px; font-weight: 800; letter-spacing: 6px; font-family: monospace;
-  color: var(--primary); text-align: center; padding: 16px;
-}
+
 
 /* Responsive */
 @media(max-width: 400px) {
@@ -651,7 +648,6 @@ function renderHeader() {
     <div class="header-meta">
       <span>👥 ${parts.length} ${t('participants')}</span>
       <span>📋 ${campaignExpenses().length} ${t('expense_count')}</span>
-      <span>🔗 ${esc(c.shareCode)}</span>
     </div>
   `;
 }
@@ -945,8 +941,7 @@ async function showShareModal() {
   document.getElementById('modal').innerHTML = `
     <div class="modal-header"><div class="modal-handle"></div><div class="modal-title">📤 ${t('view_share')}</div></div>
     <div class="modal-body">
-      <div class="share-code">${esc(state.campaign.shareCode)}</div>
-      <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
+      <div style="display:flex;flex-direction:column;gap:10px">
         <button class="btn btn-positive" style="width:100%;justify-content:center" onclick="openInApp()">📱 ${t('open_in_app')}</button>
         <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="copyToClipboard('${esc(url)}','${t('link_copied')}')">🔗 ${t('copy_link')}</button>
         <button class="btn btn-accent" style="width:100%;justify-content:center" onclick="copyJSON()">📋 ${t('copy_json')}</button>
@@ -1040,10 +1035,10 @@ function fillReimb(fromID, toID, amount) {
 function saveExpense() {
   const amount = parseFloat(document.getElementById('expAmount').value);
   const title = document.getElementById('expTitle').value.trim();
-  if (!amount || amount <= 0 || !title || !selectedPaidByID) return toast('Remplissez tous les champs');
+  if (!amount || amount <= 0 || !title || !selectedPaidByID) return showToast('Remplissez tous les champs');
 
   const splitAmongIDs = [...document.querySelectorAll('#expSplitAmong .chip.selected')].map(e => e.dataset.id);
-  if (!splitAmongIDs.length) return toast('Sélectionnez au moins un participant');
+  if (!splitAmongIDs.length) return showToast('Sélectionnez au moins un participant');
 
   let customSplits = {};
   if (selectedSplitType !== 'equal') {

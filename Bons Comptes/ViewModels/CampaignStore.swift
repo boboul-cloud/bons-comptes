@@ -6,6 +6,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import Compression
 
 @MainActor
 class CampaignStore: ObservableObject {
@@ -61,6 +62,103 @@ class CampaignStore: ObservableObject {
         }
     }
 
+    func createBackup() -> URL? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd_HHmmss"
+        let name = "BonsComptes_\(formatter.string(from: Date())).json"
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted
+            let encoded = try encoder.encode(AppData(
+                campaigns: campaigns,
+                participants: participants,
+                expenses: expenses,
+                reimbursements: reimbursements,
+                categories: categories,
+                paymentMethods: paymentMethods
+            ))
+            try encoded.write(to: url)
+            return url
+        } catch {
+            print("Backup error: \(error)")
+            return nil
+        }
+    }
+
+    // MARK: - Internal Backups
+
+    struct BackupInfo: Identifiable {
+        let id = UUID()
+        let name: String
+        let date: Date
+        let url: URL
+        let size: Int64
+    }
+
+    private var backupsDirectory: URL {
+        let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Backups", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }
+
+    func saveInternalBackup() -> Bool {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd_HH'h'mm"
+        let name = "Backup_\(formatter.string(from: Date())).json"
+        let url = backupsDirectory.appendingPathComponent(name)
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted
+            let encoded = try encoder.encode(AppData(
+                campaigns: campaigns,
+                participants: participants,
+                expenses: expenses,
+                reimbursements: reimbursements,
+                categories: categories,
+                paymentMethods: paymentMethods
+            ))
+            try encoded.write(to: url)
+            return true
+        } catch {
+            print("Internal backup error: \(error)")
+            return false
+        }
+    }
+
+    func listBackups() -> [BackupInfo] {
+        let fm = FileManager.default
+        guard let files = try? fm.contentsOfDirectory(at: backupsDirectory, includingPropertiesForKeys: [.fileSizeKey, .creationDateKey]) else { return [] }
+        return files
+            .filter { $0.pathExtension == "json" }
+            .compactMap { url in
+                let attrs = try? fm.attributesOfItem(atPath: url.path)
+                let size = attrs?[.size] as? Int64 ?? 0
+                let date = attrs?[.creationDate] as? Date ?? Date()
+                let name = url.deletingPathExtension().lastPathComponent
+                return BackupInfo(name: name, date: date, url: url, size: size)
+            }
+            .sorted { $0.date > $1.date }
+    }
+
+    func restoreBackup(_ backup: BackupInfo) -> Bool {
+        guard let data = try? Data(contentsOf: backup.url),
+              let decoded = try? JSONDecoder().decode(AppData.self, from: data) else { return false }
+        campaigns = decoded.campaigns
+        participants = decoded.participants
+        expenses = decoded.expenses
+        reimbursements = decoded.reimbursements
+        categories = decoded.categories
+        paymentMethods = decoded.paymentMethods
+        saveData()
+        return true
+    }
+
+    func deleteBackup(_ backup: BackupInfo) {
+        try? FileManager.default.removeItem(at: backup.url)
+    }
+
     func loadData() {
         guard let data = try? Data(contentsOf: savePath),
               let decoded = try? JSONDecoder().decode(AppData.self, from: data) else { return }
@@ -96,6 +194,20 @@ class CampaignStore: ObservableObject {
     func archiveCampaign(_ campaign: Campaign) {
         if let idx = campaigns.firstIndex(where: { $0.id == campaign.id }) {
             campaigns[idx].isArchived = true
+            saveData()
+        }
+    }
+
+    func closeCampaign(_ campaign: Campaign) {
+        if let idx = campaigns.firstIndex(where: { $0.id == campaign.id }) {
+            campaigns[idx].isClosed = true
+            saveData()
+        }
+    }
+
+    func reopenCampaign(_ campaign: Campaign) {
+        if let idx = campaigns.firstIndex(where: { $0.id == campaign.id }) {
+            campaigns[idx].isClosed = false
             saveData()
         }
     }
@@ -316,8 +428,8 @@ class CampaignStore: ObservableObject {
         encoder.outputFormatting = [.sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
         guard let jsonData = try? encoder.encode(data) else { return Self.webBaseURL }
-        // Compress with zlib to reduce URL length
-        if let compressed = try? (jsonData as NSData).compressed(using: .zlib) as Data {
+        // Compress with raw DEFLATE (compatible with web's deflate-raw)
+        if let compressed = Self.rawDeflateCompress(jsonData) {
             let base64 = compressed.base64EncodedString()
                 .replacingOccurrences(of: "+", with: "-")
                 .replacingOccurrences(of: "/", with: "_")
@@ -334,7 +446,17 @@ class CampaignStore: ObservableObject {
     func importJSON(_ jsonString: String) -> Bool {
         guard let data = jsonString.data(using: .utf8) else { return false }
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+        // Handle both ISO 8601 with and without fractional seconds (web uses .000Z)
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let str = try container.decode(String.self)
+            let f = ISO8601DateFormatter()
+            f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = f.date(from: str) { return date }
+            f.formatOptions = [.withInternetDateTime]
+            if let date = f.date(from: str) { return date }
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid date: \(str)")
+        }
         guard let appData = try? decoder.decode(AppData.self, from: data) else { return false }
         return mergeAppData(appData)
     }
@@ -361,13 +483,13 @@ class CampaignStore: ObservableObject {
                 .replacingOccurrences(of: "_", with: "/")
             let padded = b64.padding(toLength: ((b64.count + 3) / 4) * 4, withPad: "=", startingAt: 0)
             guard let compressed = Data(base64Encoded: padded) else { return false }
-            // Try zlib decompression, fallback to lzfse, then raw data
-            if let decompressed = try? (compressed as NSData).decompressed(using: .zlib) as Data {
+            // Decompress raw DEFLATE
+            if let decompressed = Self.rawDeflateDecompress(compressed) {
                 jsonData = decompressed
-            } else if let decompressed = try? (compressed as NSData).decompressed(using: .lz4) as Data {
+            } else if let decompressed = try? (compressed as NSData).decompressed(using: .zlib) as Data {
+                // Legacy: full zlib format from old iOS versions
                 jsonData = decompressed
             } else {
-                // Maybe it's not actually compressed, try as raw JSON
                 jsonData = compressed
             }
         } else {
@@ -380,6 +502,42 @@ class CampaignStore: ObservableObject {
         }
         guard let jsonData, let jsonString = String(data: jsonData, encoding: .utf8) else { return false }
         return importJSON(jsonString)
+    }
+
+    // MARK: - Raw DEFLATE helpers (compatible with web's deflate-raw)
+
+    static func rawDeflateCompress(_ data: Data) -> Data? {
+        let sourceSize = data.count
+        let destinationSize = sourceSize + 512
+        let destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: destinationSize)
+        defer { destinationBuffer.deallocate() }
+        let compressedSize = data.withUnsafeBytes { sourceBuffer -> Int in
+            guard let baseAddress = sourceBuffer.baseAddress else { return 0 }
+            return compression_encode_buffer(
+                destinationBuffer, destinationSize,
+                baseAddress.assumingMemoryBound(to: UInt8.self), sourceSize,
+                nil, COMPRESSION_ZLIB
+            )
+        }
+        guard compressedSize > 0 else { return nil }
+        return Data(bytes: destinationBuffer, count: compressedSize)
+    }
+
+    static func rawDeflateDecompress(_ data: Data) -> Data? {
+        let sourceSize = data.count
+        let destinationSize = sourceSize * 16 + 4096
+        let destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: destinationSize)
+        defer { destinationBuffer.deallocate() }
+        let decompressedSize = data.withUnsafeBytes { sourceBuffer -> Int in
+            guard let baseAddress = sourceBuffer.baseAddress else { return 0 }
+            return compression_decode_buffer(
+                destinationBuffer, destinationSize,
+                baseAddress.assumingMemoryBound(to: UInt8.self), sourceSize,
+                nil, COMPRESSION_ZLIB
+            )
+        }
+        guard decompressedSize > 0 else { return nil }
+        return Data(bytes: destinationBuffer, count: decompressedSize)
     }
 
     private func mergeAppData(_ appData: AppData) -> Bool {
