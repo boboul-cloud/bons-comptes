@@ -592,11 +592,52 @@ function stateToJSON() {
 function stateToCompactJSON() {
   const usedCatIDs = new Set(state.expenses.map(e => e.categoryID).filter(Boolean));
   const usedPmIDs = new Set(state.reimbursements.map(r => r.paymentMethodID).filter(Boolean));
+  // Strip redundant fields from campaign (reconstructed on import)
+  const camp = {...state.campaign};
+  delete camp.participantIDs; delete camp.expenseIDs; delete camp.reimbursementIDs; delete camp.shareCode;
+  if (!camp.description) delete camp.description;
+  if (!camp.location) delete camp.location;
+  if (!camp.creatorName) delete camp.creatorName;
+  if (camp.isArchived === false) delete camp.isArchived;
+  if (camp.isClosed === false) delete camp.isClosed;
+  // Strip campaignID + defaults from expenses
+  const expenses = state.expenses.filter(e => e.campaignID === state.campaign.id).map(e => {
+    const o = {...e};
+    delete o.campaignID; delete o.receiptImageData;
+    if (o.splitType === 'equal') delete o.splitType;
+    if (!o.customSplits || Object.keys(o.customSplits).length === 0) delete o.customSplits;
+    if (!o.categoryID) delete o.categoryID;
+    if (!o.location) delete o.location;
+    if (!o.notes) delete o.notes;
+    if (o.date) o.date = o.date.split('T')[0]; // shorten dates
+    if (o.createdAt) delete o.createdAt;
+    return o;
+  });
+  // Strip campaignID + defaults from reimbursements
+  const reimbs = state.reimbursements.filter(r => r.campaignID === state.campaign.id).map(r => {
+    const o = {...r};
+    delete o.campaignID;
+    if (!o.notes) delete o.notes;
+    if (o.isPartial === false) delete o.isPartial;
+    if (!o.paymentMethodID) delete o.paymentMethodID;
+    if (o.date) o.date = o.date.split('T')[0];
+    if (o.createdAt) delete o.createdAt;
+    return o;
+  });
+  // Strip defaults from participants
+  const parts = state.participants.filter(p => state.campaign.participantIDs.includes(p.id)).map(p => {
+    const o = {...p};
+    if (!o.email) delete o.email;
+    if (!o.phone) delete o.phone;
+    if (o.isActive === true) delete o.isActive;
+    if (o.joinedAt) delete o.joinedAt;
+    return o;
+  });
   const data = {
-    campaigns: [state.campaign],
-    participants: state.participants.filter(p => state.campaign.participantIDs.includes(p.id)),
-    expenses: state.expenses.filter(e => e.campaignID === state.campaign.id),
-    reimbursements: state.reimbursements.filter(r => r.campaignID === state.campaign.id),
+    campaigns: [camp],
+    participants: parts,
+    expenses: expenses,
+    reimbursements: reimbs,
     categories: state.categories.filter(c => usedCatIDs.has(c.id)),
     paymentMethods: state.paymentMethods.filter(m => usedPmIDs.has(m.id))
   };
@@ -702,11 +743,14 @@ function loadData(jsonStr) {
     state.expenses = (data.expenses || []).map(e => ({
       ...e,
       campaignID: e.campaignID || cid,
-      customSplits: e.customSplits || {}
+      customSplits: e.customSplits || {},
+      splitType: e.splitType || 'equal',
+      isPartial: e.isPartial || false
     }));
     state.reimbursements = (data.reimbursements || []).map(r => ({
       ...r,
-      campaignID: r.campaignID || cid
+      campaignID: r.campaignID || cid,
+      isPartial: r.isPartial || false
     }));
     state.categories = data.categories || [];
     state.paymentMethods = data.paymentMethods || [];
