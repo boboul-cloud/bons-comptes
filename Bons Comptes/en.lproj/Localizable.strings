@@ -111,6 +111,8 @@
 "done" = "Done";
 "email_optional" = "Email (optional)";
 "add_participant_desc" = "Add a new participant to the campaign";
+"edit" = "Edit";
+"edit_participant" = "Edit participant";
 
 /* Balance */
 "summary" = "Summary";

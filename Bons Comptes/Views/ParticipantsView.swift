@@ -15,6 +15,7 @@ struct ParticipantsView: View {
     @State private var newEmail = ""
     @State private var newPhone = ""
     @State private var selectedEmoji = "🧑"
+    @State private var editingParticipant: Participant?
 
     let emojiOptions = ["🧑", "👩", "👨", "👧", "👦", "🧓", "👴", "👵", "🤴", "👸", "🦸", "🧙", "🎅", "🤠", "👻"]
 
@@ -51,6 +52,7 @@ struct ParticipantsView: View {
                                 let balance = store.balanceFor(participant: participant, in: campaign)
                                 let displayBalance = -balance
 
+                                Button(action: { editingParticipant = participant }) {
                                 HStack(spacing: 14) {
                                     AvatarView(participant.avatarEmoji, size: 48)
 
@@ -63,6 +65,10 @@ struct ParticipantsView: View {
                                                     .foregroundColor(AppTheme.warning)
                                                     .font(.caption2)
                                             }
+                                        }
+                                        if !participant.phone.isEmpty {
+                                            Label(participant.phone, systemImage: "phone")
+                                                .font(.caption2).foregroundColor(.secondary)
                                         }
                                         if !participant.email.isEmpty {
                                             Label(participant.email, systemImage: "envelope")
@@ -86,9 +92,16 @@ struct ParticipantsView: View {
                                             .foregroundColor(.secondary)
                                     }
                                 }
+                                }
+                                .buttonStyle(.plain)
                                 .cardStyle()
                                 .animatedAppear(delay: Double(index) * 0.05)
                                 .contextMenu {
+                                    Button {
+                                        editingParticipant = participant
+                                    } label: {
+                                        Label(NSLocalizedString("edit", comment: ""), systemImage: "pencil")
+                                    }
                                     if abs(balance) < 0.01 && participant.name != campaign.creatorName {
                                         Button(role: .destructive) {
                                             withAnimation { store.removeParticipant(participant, from: &campaign) }
@@ -137,6 +150,13 @@ struct ParticipantsView: View {
                 Button(NSLocalizedString("cancel", comment: ""), role: .cancel) { newName = ""; newEmail = ""; newPhone = "" }
             } message: {
                 Text(NSLocalizedString("add_participant_desc", comment: ""))
+            }
+            .sheet(item: $editingParticipant) { participant in
+                EditParticipantView(participant: participant, emojiOptions: emojiOptions) { updated in
+                    if let idx = store.participants.firstIndex(where: { $0.id == updated.id }) {
+                        store.participants[idx] = updated
+                    }
+                }
             }
         }
     }
