@@ -716,25 +716,27 @@ function stateToV2() {
   const reimbs = state.reimbursements.filter(r => r.campaignID === c.id);
   const pIdx = {}; parts.forEach((p, i) => pIdx[p.id] = i);
   const allPIDs = new Set(parts.map(p => p.id));
+  const dl = id => id.replace(/-/g, '').toLowerCase(); // dashless UUID
 
-  const lines = ['v2'];
+  const lines = ['v3'];
 
-  // Campaign: title[|currency[|description[|location[|phone]]]]
-  lines.push(trimV2([escV2(c.title), c.currency && c.currency !== 'EUR' ? c.currency : '', escV2(c.description||''), escV2(c.location||''), c.managerPhone||'']));
+  // Campaign: id|title[|currency[|description[|location[|phone]]]]
+  lines.push(trimV2([dl(c.id), escV2(c.title), c.currency && c.currency !== 'EUR' ? c.currency : '', escV2(c.description||''), escV2(c.location||''), c.managerPhone||'']));
 
-  // Participants: name[|emoji]\tname[|emoji]\t...
+  // Participants: id|name[|emoji]\tid|name[|emoji]\t...
   lines.push(parts.map(p => {
     const emoji = (!p.avatarEmoji || p.avatarEmoji === '🧑') ? '' : p.avatarEmoji;
-    return emoji ? escV2(p.name) + '|' + emoji : escV2(p.name);
+    const base = emoji ? escV2(p.name) + '|' + emoji : escV2(p.name);
+    return dl(p.id) + '|' + base;
   }).join('\t'));
 
-  // Expenses: title|amount|YYMMDD|payerIdx|splitIdxs[|splitType[|customSplits[|location[|notes]]]]
+  // Expenses: id|title|amount|YYMMDD|payerIdx|splitIdxs[|splitType[|customSplits[|location[|notes]]]]
   lines.push(exps.map(e => {
     const d = new Date(e.date);
     const yy = String(d.getFullYear()).slice(2);
     const mm = String(d.getMonth()+1).padStart(2,'0');
     const dd = String(d.getDate()).padStart(2,'0');
-    const f = [escV2(e.title), fmtNum(e.amount), yy+mm+dd, String(pIdx[e.paidByID]??0)];
+    const f = [dl(e.id), escV2(e.title), fmtNum(e.amount), yy+mm+dd, String(pIdx[e.paidByID]??0)];
     const splitSet = new Set(e.splitAmongIDs);
     if (splitSet.size === allPIDs.size && [...allPIDs].every(id => splitSet.has(id))) {
       f.push('*');
@@ -755,7 +757,7 @@ function stateToV2() {
       const yy = String(d.getFullYear()).slice(2);
       const mm = String(d.getMonth()+1).padStart(2,'0');
       const dd = String(d.getDate()).padStart(2,'0');
-      return trimV2([String(pIdx[r.fromID]??0), String(pIdx[r.toID]??0), fmtNum(r.amount), yy+mm+dd, escV2(r.notes||''), r.isPartial?'1':'']);
+      return trimV2([dl(r.id), String(pIdx[r.fromID]??0), String(pIdx[r.toID]??0), fmtNum(r.amount), yy+mm+dd, escV2(r.notes||''), r.isPartial?'1':'']);
     }).join('\t'));
   }
   return lines.join('\n');
@@ -764,54 +766,63 @@ function stateToV2() {
 function loadV2(text) {
   try {
     const lines = text.split('\n');
-    if (lines.length < 4 || lines[0] !== 'v2') return false;
+    if (lines.length < 4 || (lines[0] !== 'v2' && lines[0] !== 'v3')) return false;
+    const hasIDs = lines[0] === 'v3';
+    const o = hasIDs ? 1 : 0; // field offset for ID prefix
+    const parseID = s => /^[0-9a-f]{32}$/i.test(s) ? s.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5') : null;
+
     const cf = lines[1].split('|');
-    const campaignID = generateUUID();
+    const campaignID = hasIDs && parseID(cf[0]) ? parseID(cf[0]) : generateUUID();
     state.campaign = {
-      id: campaignID, title: cf[0]||'', currency: cf[1]||'EUR',
-      description: cf[2]||'', location: cf[3]||'', managerPhone: cf[4]||'',
+      id: campaignID, title: cf[o]||'', currency: cf[o+1]||'EUR',
+      description: cf[o+2]||'', location: cf[o+3]||'', managerPhone: cf[o+4]||'',
       isArchived: false, isClosed: false,
       participantIDs: [], expenseIDs: [], reimbursementIDs: []
     };
     state.participants = lines[2].split('\t').filter(s=>s).map(item => {
       const pf = item.split('|');
+      if (hasIDs && pf.length >= 2 && parseID(pf[0])) {
+        return { id:parseID(pf[0]), name:pf[1]||'', avatarEmoji:pf[2]||'🧑', isActive:true, email:'', phone:'' };
+      }
       return { id:generateUUID(), name:pf[0]||'', avatarEmoji:pf[1]||'🧑', isActive:true, email:'', phone:'' };
     });
     state.expenses = lines[3].split('\t').filter(s=>s).map(item => {
       const ef = item.split('|');
-      const payerIdx = parseInt(ef[3])||0;
-      const splitIdxs = ef[4]==='*' ? state.participants.map((_,i)=>i) : ef[4].split(',').map(s=>parseInt(s)).filter(n=>!isNaN(n));
-      const ds = ef[2]||'';
+      const expID = hasIDs && parseID(ef[0]) ? parseID(ef[0]) : generateUUID();
+      const payerIdx = parseInt(ef[o+3])||0;
+      const splitIdxs = ef[o+4]==='*' ? state.participants.map((_,i)=>i) : ef[o+4].split(',').map(s=>parseInt(s)).filter(n=>!isNaN(n));
+      const ds = ef[o+2]||'';
       const date = `${2000+parseInt(ds.slice(0,2))}-${ds.slice(2,4)}-${ds.slice(4,6)}`;
       let splitType='equal', customSplits={};
-      if (ef.length>5 && ef[5]) splitType = ef[5]==='c' ? 'custom' : 'percentage';
-      if (ef.length>6 && ef[6]) {
-        ef[6].split(',').forEach(pair => {
+      if (ef.length>o+5 && ef[o+5]) splitType = ef[o+5]==='c' ? 'custom' : 'percentage';
+      if (ef.length>o+6 && ef[o+6]) {
+        ef[o+6].split(',').forEach(pair => {
           const [k,v] = pair.split(':');
           const idx = parseInt(k);
           if (idx < state.participants.length) customSplits[state.participants[idx].id] = parseFloat(v);
         });
       }
       return {
-        id:generateUUID(), title:ef[0]||'', amount:parseFloat(ef[1])||0, date:date,
+        id:expID, title:ef[o]||'', amount:parseFloat(ef[o+1])||0, date:date,
         paidByID: state.participants[payerIdx]?.id||state.participants[0]?.id,
         splitAmongIDs: splitIdxs.filter(i=>i<state.participants.length).map(i=>state.participants[i].id),
         splitType:splitType, customSplits:customSplits, campaignID:campaignID,
-        location: ef[7]||'', notes: ef[8]||''
+        location: ef[o+7]||'', notes: ef[o+8]||''
       };
     });
     state.reimbursements = [];
     if (lines.length>4 && lines[4]) {
       state.reimbursements = lines[4].split('\t').filter(s=>s).map(item => {
         const rf = item.split('|');
-        const fromIdx=parseInt(rf[0])||0, toIdx=parseInt(rf[1])||0;
-        const ds = rf[3]||'';
+        const rID = hasIDs && parseID(rf[0]) ? parseID(rf[0]) : generateUUID();
+        const fromIdx=parseInt(rf[o])||0, toIdx=parseInt(rf[o+1])||0;
+        const ds = rf[o+3]||'';
         return {
-          id:generateUUID(), amount:parseFloat(rf[2])||0,
+          id:rID, amount:parseFloat(rf[o+2])||0,
           date: `${2000+parseInt(ds.slice(0,2))}-${ds.slice(2,4)}-${ds.slice(4,6)}`,
           fromID: state.participants[fromIdx]?.id||state.participants[0]?.id,
           toID: state.participants[toIdx]?.id||state.participants[0]?.id,
-          notes: rf[4]||'', isPartial: rf[5]==='1', campaignID:campaignID
+          notes: rf[o+4]||'', isPartial: rf[o+5]==='1', campaignID:campaignID
         };
       });
     }
@@ -820,7 +831,7 @@ function loadV2(text) {
     state.campaign.expenseIDs = state.expenses.map(e=>e.id);
     state.campaign.reimbursementIDs = state.reimbursements.map(r=>r.id);
     return true;
-  } catch(e) { console.error('V2 parse error:', e); return false; }
+  } catch(e) { console.error('V2/V3 parse error:', e); return false; }
 }
 
 // ===== Load Data =====
@@ -927,8 +938,8 @@ async function loadFromURL() {
   if (!hash) return false;
   const text = await decodeData(hash);
   if (!text) return false;
-  // V2 pipe-delimited format
-  if (text.startsWith('v2\n')) return loadV2(text);
+  // V2/V3 pipe-delimited format
+  if (text.startsWith('v2\n') || text.startsWith('v3\n')) return loadV2(text);
   // Legacy JSON format
   return loadData(text);
 }

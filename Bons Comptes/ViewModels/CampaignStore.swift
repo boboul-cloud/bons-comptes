@@ -427,7 +427,21 @@ class CampaignStore: ObservableObject {
         return Self.webBaseURL + "#" + base64
     }
 
-    // MARK: - V2 Compact Format (pipe-delimited, ~40% smaller than JSON)
+    // MARK: - V3 Compact Format (pipe-delimited with UUIDs for merge)
+
+    private static func dashlessUUID(_ id: UUID) -> String {
+        id.uuidString.replacingOccurrences(of: "-", with: "").lowercased()
+    }
+
+    private static func uuidFromDashless(_ s: String) -> UUID? {
+        guard s.count == 32, s.allSatisfy({ $0.isHexDigit }) else { return nil }
+        var u = s
+        u.insert("-", at: u.index(u.startIndex, offsetBy: 8))
+        u.insert("-", at: u.index(u.startIndex, offsetBy: 13))
+        u.insert("-", at: u.index(u.startIndex, offsetBy: 18))
+        u.insert("-", at: u.index(u.startIndex, offsetBy: 23))
+        return UUID(uuidString: u.uppercased())
+    }
 
     func encodeV2(for campaign: Campaign) -> String {
         let parts = participantsFor(campaign: campaign)
@@ -439,10 +453,11 @@ class CampaignStore: ObservableObject {
         df.dateFormat = "yyMMdd"
         df.locale = Locale(identifier: "en_US_POSIX")
 
-        var lines: [String] = ["v2"]
+        var lines: [String] = ["v3"]
 
-        // Campaign: title[|currency[|description[|location[|phone]]]]
+        // Campaign: id|title[|currency[|description[|location[|phone]]]]
         lines.append(Self.trimV2([
+            Self.dashlessUUID(campaign.id),
             Self.escV2(campaign.title),
             campaign.currency == "EUR" ? "" : campaign.currency,
             Self.escV2(campaign.description),
@@ -450,14 +465,15 @@ class CampaignStore: ObservableObject {
             campaign.managerPhone
         ]))
 
-        // Participants: name[|emoji]\tname[|emoji]\t...
+        // Participants: id|name[|emoji]\tid|name[|emoji]\t...
         lines.append(parts.map { p in
-            p.avatarEmoji == "🧑" ? Self.escV2(p.name) : "\(Self.escV2(p.name))|\(p.avatarEmoji)"
+            let base = p.avatarEmoji == "🧑" ? Self.escV2(p.name) : "\(Self.escV2(p.name))|\(p.avatarEmoji)"
+            return "\(Self.dashlessUUID(p.id))|\(base)"
         }.joined(separator: "\t"))
 
-        // Expenses: title|amount|YYMMDD|payerIdx|splitIdxs[|splitType[|customSplits[|location[|notes]]]]
+        // Expenses: id|title|amount|YYMMDD|payerIdx|splitIdxs[|splitType[|customSplits[|location[|notes]]]]
         lines.append(exps.map { e -> String in
-            var f = [Self.escV2(e.title), Self.fmtNum(e.amount), df.string(from: e.date), String(pIdx[e.paidByID] ?? 0)]
+            var f = [Self.dashlessUUID(e.id), Self.escV2(e.title), Self.fmtNum(e.amount), df.string(from: e.date), String(pIdx[e.paidByID] ?? 0)]
             if Set(e.splitAmongIDs) == allPIDs {
                 f.append("*")
             } else {
@@ -476,6 +492,7 @@ class CampaignStore: ObservableObject {
         if !reimbs.isEmpty {
             lines.append(reimbs.map { r -> String in
                 Self.trimV2([
+                    Self.dashlessUUID(r.id),
                     String(pIdx[r.fromID] ?? 0), String(pIdx[r.toID] ?? 0),
                     Self.fmtNum(r.amount), df.string(from: r.date),
                     Self.escV2(r.notes), r.isPartial ? "1" : ""
@@ -488,25 +505,32 @@ class CampaignStore: ObservableObject {
 
     func importV2(_ text: String) -> Bool {
         let lines = text.components(separatedBy: "\n")
-        guard lines.count >= 4, lines[0] == "v2" else { return false }
+        guard lines.count >= 4, lines[0] == "v2" || lines[0] == "v3" else { return false }
+        let hasIDs = lines[0] == "v3"
+        let o = hasIDs ? 1 : 0 // field offset for ID prefix
 
         // Campaign
         let cf = lines[1].components(separatedBy: "|")
-        let campaignID = UUID()
+        let campaignID = hasIDs ? (Self.uuidFromDashless(cf[0]) ?? UUID()) : UUID()
         var campaign = Campaign(
             id: campaignID,
-            title: cf[0],
-            description: cf.count > 2 ? cf[2] : "",
-            location: cf.count > 3 ? cf[3] : "",
-            currency: (cf.count > 1 && !cf[1].isEmpty) ? cf[1] : "EUR",
+            title: cf.count > o ? cf[o] : "",
+            description: cf.count > o + 2 ? cf[o + 2] : "",
+            location: cf.count > o + 3 ? cf[o + 3] : "",
+            currency: (cf.count > o + 1 && !cf[o + 1].isEmpty) ? cf[o + 1] : "EUR",
             creatorName: "",
-            managerPhone: cf.count > 4 ? cf[4] : ""
+            managerPhone: cf.count > o + 4 ? cf[o + 4] : ""
         )
 
         // Participants
         let parts: [Participant] = lines[2].components(separatedBy: "\t").filter { !$0.isEmpty }.map { item in
             let pf = item.components(separatedBy: "|")
-            return Participant(name: pf[0], avatarEmoji: pf.count > 1 && !pf[1].isEmpty ? pf[1] : "🧑")
+            if hasIDs && pf.count >= 2 {
+                let pid = Self.uuidFromDashless(pf[0]) ?? UUID()
+                return Participant(id: pid, name: pf[1], avatarEmoji: pf.count > 2 && !pf[2].isEmpty ? pf[2] : "🧑")
+            } else {
+                return Participant(name: pf[0], avatarEmoji: pf.count > 1 && !pf[1].isEmpty ? pf[1] : "🧑")
+            }
         }
 
         // Expenses
@@ -516,23 +540,24 @@ class CampaignStore: ObservableObject {
 
         let exps: [Expense] = lines[3].components(separatedBy: "\t").filter { !$0.isEmpty }.compactMap { item in
             let ef = item.components(separatedBy: "|")
-            guard ef.count >= 5, let amount = Double(ef[1]) else { return nil }
-            let date = df.date(from: ef[2]) ?? Date()
-            let payerIdx = Int(ef[3]) ?? 0
+            guard ef.count >= o + 5, let amount = Double(ef[o + 1]) else { return nil }
+            let expID = hasIDs ? (Self.uuidFromDashless(ef[0]) ?? UUID()) : UUID()
+            let date = df.date(from: ef[o + 2]) ?? Date()
+            let payerIdx = Int(ef[o + 3]) ?? 0
             guard payerIdx < parts.count else { return nil }
             let splitIdxs: [Int]
-            if ef[4] == "*" {
+            if ef[o + 4] == "*" {
                 splitIdxs = Array(0..<parts.count)
             } else {
-                splitIdxs = ef[4].components(separatedBy: ",").compactMap { Int($0) }
+                splitIdxs = ef[o + 4].components(separatedBy: ",").compactMap { Int($0) }
             }
             var splitType: SplitType = .equal
-            if ef.count > 5 && !ef[5].isEmpty {
-                splitType = ef[5] == "c" ? .custom : .percentage
+            if ef.count > o + 5 && !ef[o + 5].isEmpty {
+                splitType = ef[o + 5] == "c" ? .custom : .percentage
             }
             var customSplits: [UUID: Double] = [:]
-            if ef.count > 6 && !ef[6].isEmpty {
-                for pair in ef[6].components(separatedBy: ",") {
+            if ef.count > o + 6 && !ef[o + 6].isEmpty {
+                for pair in ef[o + 6].components(separatedBy: ",") {
                     let kv = pair.components(separatedBy: ":")
                     if kv.count == 2, let idx = Int(kv[0]), let val = Double(kv[1]), idx < parts.count {
                         customSplits[parts[idx].id] = val
@@ -540,12 +565,12 @@ class CampaignStore: ObservableObject {
                 }
             }
             return Expense(
-                title: ef[0], amount: amount, date: date,
+                id: expID, title: ef[o], amount: amount, date: date,
                 paidByID: parts[payerIdx].id,
                 splitAmongIDs: splitIdxs.filter { $0 < parts.count }.map { parts[$0].id },
                 splitType: splitType, customSplits: customSplits,
-                location: ef.count > 7 ? ef[7] : "",
-                notes: ef.count > 8 ? ef[8] : "",
+                location: ef.count > o + 7 ? ef[o + 7] : "",
+                notes: ef.count > o + 8 ? ef[o + 8] : "",
                 campaignID: campaignID
             )
         }
@@ -555,16 +580,17 @@ class CampaignStore: ObservableObject {
         if lines.count > 4 && !lines[4].isEmpty {
             reimbs = lines[4].components(separatedBy: "\t").filter { !$0.isEmpty }.compactMap { item in
                 let rf = item.components(separatedBy: "|")
-                guard rf.count >= 4, let amount = Double(rf[2]) else { return nil }
-                let fromIdx = Int(rf[0]) ?? 0
-                let toIdx = Int(rf[1]) ?? 0
+                guard rf.count >= o + 4, let amount = Double(rf[o + 2]) else { return nil }
+                let rID = hasIDs ? (Self.uuidFromDashless(rf[0]) ?? UUID()) : UUID()
+                let fromIdx = Int(rf[o]) ?? 0
+                let toIdx = Int(rf[o + 1]) ?? 0
                 guard fromIdx < parts.count, toIdx < parts.count else { return nil }
                 return Reimbursement(
-                    amount: amount, date: df.date(from: rf[3]) ?? Date(),
+                    id: rID, amount: amount, date: df.date(from: rf[o + 3]) ?? Date(),
                     fromID: parts[fromIdx].id, toID: parts[toIdx].id,
-                    notes: rf.count > 4 ? rf[4] : "",
+                    notes: rf.count > o + 4 ? rf[o + 4] : "",
                     campaignID: campaignID,
-                    isPartial: rf.count > 5 && rf[5] == "1"
+                    isPartial: rf.count > o + 5 && rf[o + 5] == "1"
                 )
             }
         }
@@ -659,8 +685,8 @@ class CampaignStore: ObservableObject {
         }
         guard let jsonData, let text = String(data: jsonData, encoding: .utf8) else { return false }
 
-        // Detect v2 compact format
-        if text.hasPrefix("v2\n") {
+        // Detect v2/v3 compact format
+        if text.hasPrefix("v2\n") || text.hasPrefix("v3\n") {
             return importV2(text)
         }
         // Legacy JSON format
