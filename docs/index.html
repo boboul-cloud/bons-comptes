@@ -1036,6 +1036,7 @@ function fillReimb(fromID, toID, amount) {
 
 // ===== Save =====
 function saveExpense() {
+  try {
   const amount = parseFloat(document.getElementById('expAmount').value);
   const title = document.getElementById('expTitle').value.trim();
   if (!amount || amount <= 0 || !title || !selectedPaidByID) return showToast('Remplissez tous les champs');
@@ -1077,6 +1078,7 @@ function saveExpense() {
   updateURLHash();
   render();
   showToast(t('new_expense_added'));
+  } catch(e) { alert('Erreur dépense: ' + e.message + '\n' + e.stack); }
 }
 
 function saveReimbursement() {
