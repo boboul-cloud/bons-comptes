@@ -250,15 +250,6 @@ body {
 /* Share Panel */
 .share-section { padding: 16px; }
 
-/* Update notification bar */
-.update-notif {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 150;
-  background: var(--card); padding: 16px 20px; box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
-  display: flex; align-items: center; gap: 10px; animation: slideUp 0.3s ease;
-  border-radius: 16px 16px 0 0;
-}
-@media(min-width:500px) { .update-notif { max-width: 500px; left: 50%; transform: translateX(-50%); } }
-
 
 /* Responsive */
 @media(max-width: 400px) {
@@ -354,9 +345,6 @@ const T = {
     total_reimbursed: "Total remboursé", new_expense_added: "Dépense ajoutée !",
     new_reimb_added: "Remboursement ajouté !", description: "Description",
     share_options: "Options de partage", view_share: "Partage & Export",
-    manager_phone: "N° du gestionnaire", send_to_manager: "Envoyer au gestionnaire",
-    phone_placeholder: "+33 6 12 34 56 78", phone_saved: "N° enregistré !",
-    phone_hint: "Pour envoyer les mises à jour par SMS après chaque ajout",
   },
   en: {
     load_campaign: "Load campaign",
@@ -383,9 +371,6 @@ const T = {
     total_reimbursed: "Total reimbursed", new_expense_added: "Expense added!",
     new_reimb_added: "Reimbursement added!", description: "Description",
     share_options: "Share options", view_share: "Share & Export",
-    manager_phone: "Manager's phone", send_to_manager: "Send to manager",
-    phone_placeholder: "+33 6 12 34 56 78", phone_saved: "Phone saved!",
-    phone_hint: "To send updates via SMS after each addition",
   }
 };
 
@@ -395,7 +380,6 @@ function t(key) { return T[lang][key] || T.fr[key] || key; }
 // ===== State =====
 let state = { campaign: null, participants: [], expenses: [], reimbursements: [], categories: [], paymentMethods: [] };
 let currentTab = 'expenses';
-let managerPhone = localStorage.getItem('managerPhone') || '';
 
 // Category icons mapping
 const catIcons = {
@@ -592,7 +576,7 @@ function stateToJSON() {
 function stateToCompactJSON() {
   const usedCatIDs = new Set(state.expenses.map(e => e.categoryID).filter(Boolean));
   const usedPmIDs = new Set(state.reimbursements.map(r => r.paymentMethodID).filter(Boolean));
-  // Strip redundant fields from campaign (reconstructed on import)
+  // Strip redundant fields from campaign
   const camp = {...state.campaign};
   delete camp.participantIDs; delete camp.expenseIDs; delete camp.reimbursementIDs; delete camp.shareCode;
   if (!camp.description) delete camp.description;
@@ -600,7 +584,7 @@ function stateToCompactJSON() {
   if (!camp.creatorName) delete camp.creatorName;
   if (camp.isArchived === false) delete camp.isArchived;
   if (camp.isClosed === false) delete camp.isClosed;
-  // Strip campaignID + defaults from expenses
+  // Strip defaults from expenses
   const expenses = state.expenses.filter(e => e.campaignID === state.campaign.id).map(e => {
     const o = {...e};
     delete o.campaignID; delete o.receiptImageData;
@@ -609,11 +593,11 @@ function stateToCompactJSON() {
     if (!o.categoryID) delete o.categoryID;
     if (!o.location) delete o.location;
     if (!o.notes) delete o.notes;
-    if (o.date) o.date = o.date.split('T')[0]; // shorten dates
+    if (o.date) o.date = o.date.split('T')[0];
     if (o.createdAt) delete o.createdAt;
     return o;
   });
-  // Strip campaignID + defaults from reimbursements
+  // Strip defaults from reimbursements
   const reimbs = state.reimbursements.filter(r => r.campaignID === state.campaign.id).map(r => {
     const o = {...r};
     delete o.campaignID;
@@ -1106,24 +1090,16 @@ async function showShareModal() {
   try {
     const url = await generateShareURL();
     window._shareURL = url;
-    const phone = managerPhone.replace(/\s/g, '');
-    const smsBody = encodeURIComponent(url);
     document.getElementById('modal').innerHTML = `
       <div class="modal-header"><div class="modal-handle"></div><div class="modal-title">📤 ${t('view_share')}</div></div>
       <div class="modal-body">
         <div style="display:flex;flex-direction:column;gap:10px">
-          ${phone ? `<a class="btn btn-positive" style="width:100%;justify-content:center;text-decoration:none" href="sms:${phone}&body=${smsBody}">📱 ${t('send_to_manager')}</a>` : ''}
-          <button class="btn ${phone ? 'btn-outline' : 'btn-positive'}" style="width:100%;justify-content:center" onclick="openInApp()">📱 ${t('open_in_app')}</button>
+          <button class="btn btn-positive" style="width:100%;justify-content:center" onclick="openInApp()">📱 ${t('open_in_app')}</button>
           <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="copyToClipboard(window._shareURL,'${t('link_copied')}')">🔗 ${t('copy_link')}</button>
           <button class="btn btn-accent" style="width:100%;justify-content:center" onclick="copyJSON()">📋 ${t('copy_json')}</button>
         </div>
-        <div style="margin-top:20px;padding:16px;background:#f5f5f5;border-radius:12px">
-          <label class="form-label">📱 ${t('manager_phone')}</label>
-          <div style="display:flex;gap:8px;margin-top:4px">
-            <input type="tel" class="form-input" id="managerPhoneInput" value="${esc(managerPhone)}" placeholder="${t('phone_placeholder')}" style="margin:0">
-            <button class="btn btn-sm btn-primary" onclick="saveManagerPhone()">💾</button>
-          </div>
-          <div style="font-size:11px;color:var(--text2);margin-top:6px">💡 ${t('phone_hint')}</div>
+        <div style="margin-top:20px;padding:16px;background:#f5f5f5;border-radius:12px;font-size:13px;color:var(--text2)">
+          💡 ${t('back_to_app')}
         </div>
       </div>
       <div class="modal-footer">
@@ -1251,7 +1227,7 @@ function saveExpense() {
   closeModal();
   updateURLHash();
   render();
-  showUpdateNotif('new_expense_added');
+  showToast(t('new_expense_added'));
   } catch(e) { alert('Erreur dépense: ' + e.message + '\n' + e.stack); }
 }
 
@@ -1282,7 +1258,7 @@ function saveReimbursement() {
   closeModal();
   updateURLHash();
   render();
-  showUpdateNotif('new_reimb_added');
+  showToast(t('new_reimb_added'));
 }
 
 function deleteExpense(id) {
@@ -1326,32 +1302,6 @@ function copyJSON() {
     const json = stateToJSON();
     navigator.clipboard.writeText(json).then(() => showToast(t('json_copied'))).catch(e => alert('Copie JSON échouée: ' + e.message));
   } catch(e) { alert('Erreur JSON: ' + e.message); }
-}
-
-function saveManagerPhone() {
-  const phone = document.getElementById('managerPhoneInput').value.trim();
-  managerPhone = phone;
-  if (phone) { localStorage.setItem('managerPhone', phone); }
-  else { localStorage.removeItem('managerPhone'); }
-  showToast(t('phone_saved'));
-  closeModal();
-}
-
-async function showUpdateNotif(msgKey) {
-  if (!managerPhone) { showToast(t(msgKey)); return; }
-  document.querySelectorAll('.update-notif').forEach(e => e.remove());
-  const url = await generateShareURL();
-  const phone = managerPhone.replace(/\s/g, '');
-  const smsBody = encodeURIComponent(url);
-  const notif = document.createElement('div');
-  notif.className = 'update-notif';
-  notif.innerHTML = `
-    <div style="flex:1;font-size:14px;font-weight:600">✅ ${t(msgKey)}</div>
-    <a class="btn btn-sm btn-positive" style="text-decoration:none" href="sms:${phone}&body=${smsBody}">📱 ${t('send_to_manager')}</a>
-    <button style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px;color:var(--text2)" onclick="this.parentElement.remove()">✕</button>
-  `;
-  document.body.appendChild(notif);
-  setTimeout(() => { if (notif.parentElement) notif.remove(); }, 15000);
 }
 
 // ===== Init =====
