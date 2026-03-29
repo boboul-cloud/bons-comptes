@@ -42,27 +42,6 @@ struct CampaignDetailView: View {
         }
         .navigationTitle(campaign.title)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(content: {
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button(action: { showingParticipants = true }) {
-                        Label(NSLocalizedString("manage_participants", comment: ""), systemImage: "person.3")
-                    }
-                    Button(action: { showingBalance = true }) {
-                        Label(NSLocalizedString("view_balance", comment: ""), systemImage: "chart.bar")
-                    }
-                    Button(action: { showingShare = true }) {
-                        Label(NSLocalizedString("share_campaign", comment: ""), systemImage: "square.and.arrow.up")
-                    }
-                    Divider()
-                    Button(action: { store.archiveCampaign(campaign); refreshCampaign() }) {
-                        Label(NSLocalizedString("archive_campaign", comment: ""), systemImage: "archivebox")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis.circle").foregroundColor(AppTheme.primary)
-                }
-            }
-        })
         .sheet(isPresented: $showingAddExpense) {
             AddExpenseView(campaign: campaign).onDisappear { refreshCampaign() }
         }
@@ -98,12 +77,18 @@ struct CampaignDetailView: View {
     }
 
     var quickActions: some View {
-        HStack(spacing: 12) {
-            quickActionButton(icon: "person.3.fill", label: NSLocalizedString("participants_count", comment: ""), color: AppTheme.primary) { showingParticipants = true }
-            quickActionButton(icon: "chart.pie.fill", label: NSLocalizedString("balance_title", comment: ""), color: AppTheme.accent) { showingBalance = true }
-            quickActionButton(icon: "square.and.arrow.up.fill", label: NSLocalizedString("share_campaign", comment: ""), color: AppTheme.info) { showingShare = true }
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                quickActionButton(icon: "person.3.fill", label: NSLocalizedString("participants_count", comment: ""), color: AppTheme.primary) { showingParticipants = true }
+                quickActionButton(icon: "chart.pie.fill", label: NSLocalizedString("balance_title", comment: ""), color: AppTheme.accent) { showingBalance = true }
+                quickActionButton(icon: "square.and.arrow.up.fill", label: NSLocalizedString("share_campaign", comment: ""), color: AppTheme.info) { showingShare = true }
+                quickActionButton(icon: "archivebox.fill", label: NSLocalizedString("archive_campaign", comment: ""), color: AppTheme.warning) {
+                    store.archiveCampaign(campaign)
+                    refreshCampaign()
+                }
+            }
+            .padding(.horizontal)
         }
-        .padding(.horizontal)
     }
 
     func quickActionButton(icon: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
