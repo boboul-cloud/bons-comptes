@@ -11,6 +11,8 @@ struct ContentView: View {
     @StateObject private var store = CampaignStore()
     @State private var selectedTab = 0
     @State private var showLaunch = true
+    @State private var showImportResult = false
+    @State private var importSuccess = false
 
     var body: some View {
         ZStack {
@@ -45,6 +47,19 @@ struct ContentView: View {
                     showLaunch = false
                 }
             }
+        }
+        .onOpenURL { url in
+            importSuccess = store.importFromURL(url)
+            showImportResult = true
+            selectedTab = 0
+        }
+        .alert(
+            importSuccess
+                ? NSLocalizedString("import_success", comment: "")
+                : NSLocalizedString("import_error", comment: ""),
+            isPresented: $showImportResult
+        ) {
+            Button("OK") { }
         }
     }
 }

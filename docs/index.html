@@ -366,6 +366,7 @@ const T = {
     export_updated: "Export changes",
     link_copied: "Link copied!", json_copied: "JSON copied!",
     back_to_app: "Copy the updated JSON and import it in the app.",
+    open_in_app: "Open in app",
     location: "Location", no_category: "No category",
     owes: "owes", is_owed: "is owed", settled: "settled",
     partial: "Partial", payment_method: "Payment method",
@@ -923,13 +924,21 @@ function showAddReimbursement() {
   openModal();
 }
 
+async function generateAppURL() {
+  const json = stateToJSON();
+  const encoded = await encodeData(json);
+  return 'bonscomptes://import#' + encoded;
+}
+
 async function showShareModal() {
   const url = await generateShareURL();
+  const appURL = await generateAppURL();
   document.getElementById('modal').innerHTML = `
     <div class="modal-header"><div class="modal-handle"></div><div class="modal-title">📤 ${t('view_share')}</div></div>
     <div class="modal-body">
       <div class="share-code">${esc(state.campaign.shareCode)}</div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
+        <a href="${appURL}" class="btn btn-positive" style="width:100%;justify-content:center;text-decoration:none">📱 ${t('open_in_app')}</a>
         <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="copyToClipboard('${esc(url)}','${t('link_copied')}')">🔗 ${t('copy_link')}</button>
         <button class="btn btn-accent" style="width:100%;justify-content:center" onclick="copyJSON()">📋 ${t('copy_json')}</button>
       </div>

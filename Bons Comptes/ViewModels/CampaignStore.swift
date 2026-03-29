@@ -336,26 +336,88 @@ class CampaignStore: ObservableObject {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         guard let appData = try? decoder.decode(AppData.self, from: data) else { return false }
+        return mergeAppData(appData)
+    }
 
-        for p in appData.participants where !participants.contains(where: { $0.id == p.id }) {
-            participants.append(p)
+    func importFromURL(_ url: URL) -> Bool {
+        // Handle bonscomptes:// scheme or https web URLs
+        let fragment: String?
+        if url.scheme == "bonscomptes" {
+            // bonscomptes://import#z... or bonscomptes://import#...
+            fragment = url.fragment
+        } else if let host = url.host, host.contains("github.io"), url.path.contains("bons-comptes") {
+            fragment = url.fragment
+        } else {
+            // Try treating the whole string as JSON
+            return importJSON(url.absoluteString)
         }
-        for c in appData.campaigns where !campaigns.contains(where: { $0.id == c.id }) {
-            campaigns.append(c)
-        }
-        for e in appData.expenses where !expenses.contains(where: { $0.id == e.id }) {
-            expenses.append(e)
-        }
-        for r in appData.reimbursements where !reimbursements.contains(where: { $0.id == r.id }) {
-            reimbursements.append(r)
-        }
-        for cat in appData.categories where !categories.contains(where: { $0.id == cat.id }) {
-            categories.append(cat)
-        }
-        for pm in appData.paymentMethods where !paymentMethods.contains(where: { $0.id == pm.id }) {
-            paymentMethods.append(pm)
-        }
+        guard let hash = fragment, !hash.isEmpty else { return false }
 
+        let jsonData: Data?
+        if hash.hasPrefix("z") {
+            // Compressed format: z + base64(zlib)
+            let b64 = String(hash.dropFirst())
+                .replacingOccurrences(of: "-", with: "+")
+                .replacingOccurrences(of: "_", with: "/")
+            let padded = b64.padding(toLength: ((b64.count + 3) / 4) * 4, withPad: "=", startingAt: 0)
+            guard let compressed = Data(base64Encoded: padded) else { return false }
+            jsonData = try? (compressed as NSData).decompressed(using: .zlib) as Data
+        } else {
+            // Legacy uncompressed base64
+            let b64 = hash
+                .replacingOccurrences(of: "-", with: "+")
+                .replacingOccurrences(of: "_", with: "/")
+            let padded = b64.padding(toLength: ((b64.count + 3) / 4) * 4, withPad: "=", startingAt: 0)
+            jsonData = Data(base64Encoded: padded)
+        }
+        guard let jsonData, let jsonString = String(data: jsonData, encoding: .utf8) else { return false }
+        return importJSON(jsonString)
+    }
+
+    private func mergeAppData(_ appData: AppData) -> Bool {
+        for p in appData.participants {
+            if let idx = participants.firstIndex(where: { $0.id == p.id }) {
+                participants[idx] = p
+            } else {
+                participants.append(p)
+            }
+        }
+        for c in appData.campaigns {
+            if let idx = campaigns.firstIndex(where: { $0.id == c.id }) {
+                // Merge IDs lists (union)
+                var merged = c
+                merged.participantIDs = Array(Set(campaigns[idx].participantIDs + c.participantIDs))
+                merged.expenseIDs = Array(Set(campaigns[idx].expenseIDs + c.expenseIDs))
+                merged.reimbursementIDs = Array(Set(campaigns[idx].reimbursementIDs + c.reimbursementIDs))
+                campaigns[idx] = merged
+            } else {
+                campaigns.append(c)
+            }
+        }
+        for e in appData.expenses {
+            if let idx = expenses.firstIndex(where: { $0.id == e.id }) {
+                expenses[idx] = e
+            } else {
+                expenses.append(e)
+            }
+        }
+        for r in appData.reimbursements {
+            if let idx = reimbursements.firstIndex(where: { $0.id == r.id }) {
+                reimbursements[idx] = r
+            } else {
+                reimbursements.append(r)
+            }
+        }
+        for cat in appData.categories {
+            if !categories.contains(where: { $0.id == cat.id }) {
+                categories.append(cat)
+            }
+        }
+        for pm in appData.paymentMethods {
+            if !paymentMethods.contains(where: { $0.id == pm.id }) {
+                paymentMethods.append(pm)
+            }
+        }
         saveData()
         return true
     }

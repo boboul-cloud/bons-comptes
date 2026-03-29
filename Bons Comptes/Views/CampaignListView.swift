@@ -87,9 +87,14 @@ struct CampaignListView: View {
                 AddCampaignView()
             }
             .alert(NSLocalizedString("import_campaign", comment: ""), isPresented: $showingImport) {
-                TextField(NSLocalizedString("paste_json", comment: ""), text: $importCode)
+                TextField(NSLocalizedString("paste_json_or_url", comment: ""), text: $importCode)
                 Button(NSLocalizedString("import_button", comment: "")) {
-                    _ = store.importJSON(importCode)
+                    let input = importCode.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if let url = URL(string: input), (url.scheme == "bonscomptes" || url.scheme == "https" || url.fragment != nil) {
+                        _ = store.importFromURL(url)
+                    } else {
+                        _ = store.importJSON(input)
+                    }
                     importCode = ""
                 }
                 Button(NSLocalizedString("cancel", comment: ""), role: .cancel) { }

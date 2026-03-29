@@ -8,6 +8,7 @@
 "show_archived" = "Show archived";
 "import_campaign" = "Import a campaign";
 "paste_json" = "Paste JSON data";
+"paste_json_or_url" = "Paste JSON or web link";
 "import_button" = "Import";
 "cancel" = "Cancel";
 "new_campaign" = "New Campaign";
@@ -191,3 +192,6 @@
 "owes" = "owes";
 "is_owed" = "is owed";
 "settled" = "settled";
+"import_success" = "Data imported successfully!";
+"import_error" = "Import error";
+"open_in_app" = "Open in app";
