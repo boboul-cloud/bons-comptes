@@ -604,13 +604,22 @@ function loadData(jsonStr) {
     if (!data.campaigns || !data.campaigns.length) throw new Error('No campaign');
     state.campaign = data.campaigns[0];
     state.participants = data.participants || [];
+    const cid = state.campaign.id;
     state.expenses = (data.expenses || []).map(e => ({
       ...e,
+      campaignID: e.campaignID || cid,
       customSplits: e.customSplits || {}
     }));
-    state.reimbursements = data.reimbursements || [];
+    state.reimbursements = (data.reimbursements || []).map(r => ({
+      ...r,
+      campaignID: r.campaignID || cid
+    }));
     state.categories = data.categories || [];
     state.paymentMethods = data.paymentMethods || [];
+    // Reconstruct missing ID arrays from actual data
+    if (!state.campaign.participantIDs) state.campaign.participantIDs = state.participants.map(p => p.id);
+    if (!state.campaign.expenseIDs) state.campaign.expenseIDs = state.expenses.map(e => e.id);
+    if (!state.campaign.reimbursementIDs) state.campaign.reimbursementIDs = state.reimbursements.map(r => r.id);
     return true;
   } catch(e) {
     console.error('Parse error:', e);
