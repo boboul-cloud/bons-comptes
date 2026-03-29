@@ -937,25 +937,27 @@ function openInApp() {
 }
 
 async function showShareModal() {
-  const url = await generateShareURL();
-  window._shareURL = url;
-  document.getElementById('modal').innerHTML = `
-    <div class="modal-header"><div class="modal-handle"></div><div class="modal-title">📤 ${t('view_share')}</div></div>
-    <div class="modal-body">
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <button class="btn btn-positive" style="width:100%;justify-content:center" onclick="openInApp()">📱 ${t('open_in_app')}</button>
-        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="copyToClipboard(window._shareURL,'${t('link_copied')}')">🔗 ${t('copy_link')}</button>
-        <button class="btn btn-accent" style="width:100%;justify-content:center" onclick="copyJSON()">📋 ${t('copy_json')}</button>
+  try {
+    const url = await generateShareURL();
+    window._shareURL = url;
+    document.getElementById('modal').innerHTML = `
+      <div class="modal-header"><div class="modal-handle"></div><div class="modal-title">📤 ${t('view_share')}</div></div>
+      <div class="modal-body">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button class="btn btn-positive" style="width:100%;justify-content:center" onclick="openInApp()">📱 ${t('open_in_app')}</button>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="copyToClipboard(window._shareURL,'${t('link_copied')}')">🔗 ${t('copy_link')}</button>
+          <button class="btn btn-accent" style="width:100%;justify-content:center" onclick="copyJSON()">📋 ${t('copy_json')}</button>
+        </div>
+        <div style="margin-top:20px;padding:16px;background:#f5f5f5;border-radius:12px;font-size:13px;color:var(--text2)">
+          💡 ${t('back_to_app')}
+        </div>
       </div>
-      <div style="margin-top:20px;padding:16px;background:#f5f5f5;border-radius:12px;font-size:13px;color:var(--text2)">
-        💡 ${t('back_to_app')}
+      <div class="modal-footer">
+        <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="closeModal()">${t('cancel')}</button>
       </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="closeModal()">${t('cancel')}</button>
-    </div>
-  `;
-  openModal();
+    `;
+    openModal();
+  } catch(e) { alert('Erreur partage: ' + e.message); }
 }
 
 // ===== Modal Helpers =====
@@ -1140,12 +1142,14 @@ function showToast(msg) {
 }
 
 function copyToClipboard(text, msg) {
-  navigator.clipboard.writeText(text).then(() => showToast(msg));
+  navigator.clipboard.writeText(text).then(() => showToast(msg)).catch(e => alert('Copie échouée: ' + e.message));
 }
 
 function copyJSON() {
-  const json = stateToJSON();
-  navigator.clipboard.writeText(json).then(() => showToast(t('json_copied')));
+  try {
+    const json = stateToJSON();
+    navigator.clipboard.writeText(json).then(() => showToast(t('json_copied'))).catch(e => alert('Copie JSON échouée: ' + e.message));
+  } catch(e) { alert('Erreur JSON: ' + e.message); }
 }
 
 // ===== Init =====
