@@ -1,0 +1,151 @@
+/* App */
+"app_title" = "Bons Comptes";
+
+/* Campaign */
+"no_campaigns" = "No campaigns";
+"no_campaigns_desc" = "Create your first expense-sharing campaign";
+"show_active" = "Show active";
+"show_archived" = "Show archived";
+"import_campaign" = "Import a campaign";
+"paste_json" = "Paste JSON data";
+"import_button" = "Import";
+"cancel" = "Cancel";
+"new_campaign" = "New Campaign";
+"campaign_info" = "Information";
+"title_field" = "Title";
+"description_field" = "Description";
+"location_field" = "Location";
+"currency_field" = "Currency";
+"creator" = "Creator";
+"your_name" = "Your name";
+"initial_participants" = "Initial participants";
+"participant_name" = "Participant name";
+"add_participant" = "Add participant";
+"create" = "Create";
+"participants_count" = "participants";
+"total_format" = "%.2f %@";
+"share_code_format" = "Code: %@";
+
+/* Campaign Detail */
+"expenses_tab" = "Expenses";
+"reimbursements_tab" = "Reimbursements";
+"add_expense" = "Add expense";
+"add_reimbursement" = "Add reimbursement";
+"manage_participants" = "Manage participants";
+"view_balance" = "View balances";
+"share_campaign" = "Share campaign";
+"archive_campaign" = "Archive campaign";
+"no_expenses" = "No expenses";
+"no_reimbursements" = "No reimbursements";
+"paid_by" = "Paid by";
+"partial_reimbursement" = "Partial reimbursement";
+
+/* Add Expense */
+"expense_details" = "Expense details";
+"amount_field" = "Amount";
+"date_field" = "Date";
+"notes_field" = "Notes";
+"category_section" = "Category";
+"category_field" = "Category";
+"no_category" = "No category";
+"new_category" = "New category";
+"category_name" = "Category name";
+"paid_by_section" = "Paid by";
+"split_among" = "Split among";
+"select_all" = "Select all";
+"deselect_all" = "Deselect all";
+"split_type" = "Split type";
+"split_method" = "Method";
+"split_equal" = "Equal";
+"split_custom" = "Custom amounts";
+"split_percentage" = "Percentage";
+"save" = "Save";
+"add" = "Add";
+
+/* Add Reimbursement */
+"reimbursement_details" = "Reimbursement details";
+"from_participant" = "From (who pays)";
+"to_participant" = "To (who receives)";
+"payment_method_section" = "Payment method";
+"payment_method" = "Payment method";
+"no_method" = "Not specified";
+"new_payment_method" = "New payment method";
+"method_name" = "Method name";
+"total_debt" = "Total debt";
+"suggested_settlements" = "Suggested settlements";
+"all_settled" = "All accounts are settled!";
+
+/* Participants */
+"done" = "Done";
+"email_optional" = "Email (optional)";
+"add_participant_desc" = "Add a new participant to the campaign";
+
+/* Balance */
+"summary" = "Summary";
+"total_expenses_label" = "Total expenses";
+"expense_count" = "Number of expenses";
+"per_person_avg" = "Average per person";
+"individual_balances" = "Individual balances";
+"by_category" = "Categories";
+"by_payment_method" = "Payments";
+"total_reimbursed" = "Total reimbursed";
+"no_payment_method" = "No payment method";
+"settlements" = "Settlements needed";
+"balance_title" = "Balances & Settlement";
+
+/* Share */
+"share_code_section" = "Share code";
+"share_code_instructions" = "Share this code to allow others to access this campaign";
+"copied" = "Copied!";
+"copy_code" = "Copy code";
+"export_data" = "Export data";
+"view_json" = "View JSON data";
+"share_json" = "Share JSON data";
+"share_summary" = "Share text summary";
+"web_access_section" = "Web Access";
+"web_access_desc" = "Share a web link so anyone can view and edit the campaign from a browser.";
+"share_web_link" = "Share web link";
+"copy_web_link" = "Copy web link";
+"web_deploy_hint" = "Compatible with GitHub Pages, Netlify, Vercel...";
+
+/* Settings */
+"settings" = "Settings";
+"categories_section" = "Expense categories";
+"payment_methods_section" = "Payment methods";
+"default_label" = "default";
+"about_section" = "About";
+"version_label" = "Version";
+"developer_label" = "Developer";
+
+/* Default Categories */
+"category_food" = "Meals";
+"category_transport" = "Transport";
+"category_lodging" = "Lodging";
+"category_groceries" = "Groceries";
+"category_entertainment" = "Entertainment";
+"category_health" = "Health";
+"category_shopping" = "Shopping";
+"category_other" = "Other";
+
+/* Default Payment Methods */
+"payment_cash" = "Cash";
+"payment_card" = "Credit card";
+"payment_check" = "Check";
+"payment_transfer" = "Bank transfer";
+"payment_other" = "Other";
+
+/* Language */
+"language_section" = "Language";
+"language_field" = "App language";
+"language_restart_hint" = "Restart the app to apply the language change.";
+
+/* Tabs */
+"tab_campaigns" = "Campaigns";
+"tab_settings" = "Settings";
+
+/* Additional */
+"app_subtitle" = "Simplified expense sharing";
+"delete" = "Delete";
+"owes" = "owes";
+"is_owed" = "is owed";
+"settled" = "settled";

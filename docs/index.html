@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bons Comptes</title>
+<style>
+:root {
+  --primary: #6C5CE7;
+  --primary-light: #A29BFE;
+  --primary-dark: #4834D4;
+  --accent: #00CEC9;
+  --positive: #00B894;
+  --negative: #E17055;
+  --warning: #FDCB6E;
+  --info: #74B9FF;
+  --bg: #F8F9FD;
+  --card: #FFFFFF;
+  --text: #2D3436;
+  --text2: #636E72;
+  --radius: 16px;
+  --shadow: 0 4px 20px rgba(108,92,231,0.1);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+}
+
+/* Landing Page */
+.landing {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 24px; text-align: center;
+}
+.landing-icon { font-size: 72px; margin-bottom: 16px; }
+.landing h1 { font-size: 32px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+.landing p { color: var(--text2); margin-bottom: 32px; max-width: 400px; }
+.landing textarea {
+  width: 100%; max-width: 500px; height: 180px; border: 2px dashed var(--primary-light);
+  border-radius: var(--radius); padding: 16px; font-family: monospace; font-size: 13px;
+  resize: vertical; outline: none; transition: border-color 0.3s;
+}
+.landing textarea:focus { border-color: var(--primary); }
+.landing textarea::placeholder { color: var(--primary-light); }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px;
+  border: none; border-radius: 50px; font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: all 0.3s; text-decoration: none;
+}
+.btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,92,231,0.3); }
+.btn-accent { background: linear-gradient(135deg, var(--accent), #00B5B0); color: #fff; }
+.btn-positive { background: linear-gradient(135deg, var(--positive), #00A381); color: #fff; }
+.btn-negative { background: linear-gradient(135deg, var(--negative), #D35B45); color: #fff; }
+.btn-outline {
+  background: transparent; border: 2px solid var(--primary); color: var(--primary);
+}
+.btn-outline:hover { background: var(--primary); color: #fff; }
+.btn-sm { padding: 8px 16px; font-size: 13px; }
+.btn-icon { width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 50%; }
+
+.mt-16 { margin-top: 16px; }
+.mt-8 { margin-top: 8px; }
+.gap-8 { gap: 8px; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+
+/* App Layout */
+.app { display: none; }
+.app.active { display: block; }
+.landing.hidden { display: none; }
+
+/* Header */
+.header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff; padding: 24px 20px 60px; text-align: center; position: relative;
+}
+.header-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.header-location { font-size: 13px; opacity: 0.8; margin-bottom: 12px; }
+.header-amount { font-size: 42px; font-weight: 800; letter-spacing: -1px; }
+.header-currency { font-size: 18px; opacity: 0.8; font-weight: 400; }
+.header-meta { display: flex; gap: 24px; justify-content: center; margin-top: 12px; font-size: 13px; opacity: 0.8; }
+.header-actions {
+  position: absolute; top: 16px; right: 16px; display: flex; gap: 8px;
+}
+.header-actions button {
+  background: rgba(255,255,255,0.2); border: none; color: #fff; width: 36px; height: 36px;
+  border-radius: 50%; cursor: pointer; font-size: 16px; transition: background 0.3s;
+}
+.header-actions button:hover { background: rgba(255,255,255,0.3); }
+
+/* Stats Row */
+.stats-row {
+  display: flex; gap: 12px; padding: 0 16px; margin-top: -40px; position: relative; z-index: 1;
+}
+.stat-card {
+  flex: 1; background: var(--card); border-radius: var(--radius); padding: 14px 12px;
+  text-align: center; box-shadow: var(--shadow);
+}
+.stat-icon { font-size: 20px; margin-bottom: 4px; }
+.stat-value { font-size: 18px; font-weight: 700; }
+.stat-label { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+/* Tabs */
+.tabs {
+  display: flex; gap: 8px; padding: 16px 16px 8px; overflow-x: auto;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex-shrink: 0; padding: 8px 16px; border-radius: 50px; font-size: 13px; font-weight: 600;
+  border: none; cursor: pointer; transition: all 0.3s; white-space: nowrap;
+  background: rgba(108,92,231,0.1); color: var(--primary);
+}
+.tab.active { background: var(--primary); color: #fff; }
+
+/* Cards */
+.card {
+  background: var(--card); border-radius: var(--radius); padding: 16px;
+  box-shadow: var(--shadow); margin: 0 16px 12px;
+}
+.section-title {
+  font-size: 14px; font-weight: 700; color: var(--text2); padding: 16px 16px 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* Expense Card */
+.expense-card {
+  display: flex; align-items: center; gap: 14px;
+}
+.expense-icon {
+  width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; font-size: 18px; flex-shrink: 0;
+}
+.expense-icon.expense { background: rgba(225,112,85,0.12); }
+.expense-icon.reimb { background: rgba(0,184,148,0.12); }
+.expense-info { flex: 1; min-width: 0; }
+.expense-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.expense-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.expense-amount { text-align: right; flex-shrink: 0; }
+.expense-amount-value { font-size: 15px; font-weight: 700; }
+.expense-amount-date { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+/* Balance */
+.balance-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.avatar {
+  width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; font-size: 20px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+}
+.avatar-sm { width: 32px; height: 32px; font-size: 16px; }
+.balance-name { font-size: 14px; font-weight: 600; flex: 1; }
+.balance-value { font-size: 14px; font-weight: 700; }
+.progress-bar {
+  height: 6px; background: #eee; border-radius: 3px; margin-top: 6px; overflow: hidden;
+}
+.progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+
+/* Settlement */
+.settlement-card {
+  display: flex; align-items: center; justify-content: center; gap: 16px; padding: 12px 0;
+}
+.settlement-arrow { font-size: 20px; color: var(--negative); font-weight: 700; }
+.settlement-amount { font-size: 14px; font-weight: 700; color: var(--negative); }
+.settlement-name { font-size: 12px; color: var(--text2); margin-top: 4px; text-align: center; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100;
+  display: none; align-items: flex-end; justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--bg); width: 100%; max-width: 500px; max-height: 90vh;
+  border-radius: 24px 24px 0 0; padding: 0; overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+@media(min-width:600px) {
+  .modal-overlay.active { align-items: center; }
+  .modal { border-radius: 24px; max-height: 85vh; margin: 20px; }
+}
+.modal-header {
+  padding: 20px; text-align: center; position: sticky; top: 0;
+  background: var(--bg); z-index: 1; border-bottom: 1px solid #eee;
+}
+.modal-handle {
+  width: 40px; height: 4px; background: #ddd; border-radius: 2px;
+  margin: 0 auto 12px;
+}
+.modal-title { font-size: 18px; font-weight: 700; }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 16px 20px; position: sticky; bottom: 0; background: var(--bg); }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+/* Form */
+.form-group { margin-bottom: 16px; }
+.form-label { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 6px; display: block; }
+.form-input {
+  width: 100%; padding: 12px 14px; border: 2px solid #eee; border-radius: 12px;
+  font-size: 15px; outline: none; transition: border-color 0.3s; background: var(--card);
+}
+.form-input:focus { border-color: var(--primary-light); }
+.form-input-hero {
+  font-size: 36px; font-weight: 800; text-align: center; border: none;
+  background: transparent; color: #fff; width: 100%; outline: none;
+}
+.form-input-hero::placeholder { color: rgba(255,255,255,0.5); }
+.amount-hero {
+  background: linear-gradient(135deg, var(--negative), #D35B45);
+  border-radius: var(--radius); padding: 24px; margin-bottom: 20px; text-align: center;
+}
+.amount-hero.reimb { background: linear-gradient(135deg, var(--positive), #00A381); }
+.amount-hero label { color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 600; }
+
+/* Chips */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 8px 14px; border-radius: 50px; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.3s; border: 2px solid transparent;
+  background: #f0f0f0; color: var(--text);
+}
+.chip.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
+.chip.selected-from { background: var(--negative); color: #fff; border-color: var(--negative); }
+.chip.selected-to { background: var(--positive); color: #fff; border-color: var(--positive); }
+
+/* Empty */
+.empty { text-align: center; padding: 48px 20px; color: var(--text2); }
+.empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+  background: var(--text); color: #fff; padding: 12px 24px; border-radius: 50px;
+  font-size: 14px; font-weight: 600; z-index: 200; opacity: 0;
+  transition: opacity 0.3s; pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+/* Share Panel */
+.share-section { padding: 16px; }
+.share-code {
+  font-size: 32px; font-weight: 800; letter-spacing: 6px; font-family: monospace;
+  color: var(--primary); text-align: center; padding: 16px;
+}
+
+/* Responsive */
+@media(max-width: 400px) {
+  .header-amount { font-size: 32px; }
+  .stats-row { gap: 8px; padding: 0 12px; }
+  .stat-card { padding: 10px 8px; }
+  .card { margin: 0 12px 10px; }
+}
+
+/* Delete button */
+.delete-btn {
+  background: none; border: none; color: var(--negative); cursor: pointer;
+  font-size: 16px; padding: 4px 8px; opacity: 0.6; transition: opacity 0.3s;
+}
+.delete-btn:hover { opacity: 1; }
+
+/* Category grid */
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; }
+.cat-item {
+  padding: 10px 8px; border-radius: 12px; text-align: center; cursor: pointer;
+  border: 2px solid transparent; background: #f5f5f5; transition: all 0.3s;
+  font-size: 12px; font-weight: 600;
+}
+.cat-item.selected { border-color: var(--primary); background: rgba(108,92,231,0.1); }
+.cat-icon { font-size: 22px; margin-bottom: 4px; }
+
+/* Split type */
+.split-tabs { display: flex; gap: 4px; background: #f0f0f0; border-radius: 10px; padding: 3px; }
+.split-tab {
+  flex: 1; padding: 8px; text-align: center; border-radius: 8px; font-size: 13px;
+  font-weight: 600; cursor: pointer; transition: all 0.3s; border: none; background: transparent;
+}
+.split-tab.active { background: var(--card); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+</style>
+</head>
+<body>
+
+<!-- Landing Page -->
+<div class="landing" id="landing">
+  <div class="landing-icon">💰</div>
+  <h1>Bons Comptes</h1>
+  <p id="landingDesc">Collez le JSON d'une campagne exportée depuis l'app pour la visualiser et la modifier.</p>
+  <textarea id="jsonInput" placeholder='{"campaigns":[...],"participants":[...],...}'></textarea>
+  <button class="btn btn-primary mt-16" onclick="loadFromInput()">
+    📊 <span data-i18n="load_campaign">Charger la campagne</span>
+  </button>
+  <div id="errorMsg" style="color:var(--negative);margin-top:12px;font-size:14px;display:none;"></div>
+</div>
+
+<!-- App -->
+<div class="app" id="app">
+  <div class="header" id="header"></div>
+  <div class="stats-row" id="statsRow"></div>
+  <div class="tabs" id="tabs"></div>
+  <div id="content"></div>
+
+  <!-- FAB -->
+  <div style="position:fixed;bottom:20px;right:20px;z-index:50;" id="fab"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal" id="modal"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== i18n =====
+const T = {
+  fr: {
+    load_campaign: "Charger la campagne",
+    landing_desc: "Collez le JSON d'une campagne exportée depuis l'app pour la visualiser et la modifier.",
+    expenses: "Dépenses", reimbursements: "Remboursements", balances: "Soldes",
+    settlements: "Remboursements suggérés", categories: "Catégories", payments: "Paiements",
+    add_expense: "Ajouter une dépense", add_reimbursement: "Ajouter un remboursement",
+    paid_by: "Payé par", split_among: "Répartir entre", amount: "Montant",
+    title: "Titre", save: "Enregistrer", cancel: "Annuler",
+    no_expenses: "Aucune dépense", no_reimbursements: "Aucun remboursement",
+    all_settled: "Tout est équilibré !", total: "Total", avg: "Moy./pers.",
+    participants: "Participants", expense_count: "Dépenses",
+    equal: "Égal", custom: "Montants", percentage: "Pourcentages",
+    from: "De", to: "À", date: "Date", notes: "Notes", category: "Catégorie",
+    share: "Partager", copy_link: "Copier le lien", copy_json: "Copier JSON",
+    export_updated: "Exporter les modifications",
+    link_copied: "Lien copié !", json_copied: "JSON copié !",
+    back_to_app: "Copiez le JSON mis à jour et importez-le dans l'app.",
+    location: "Lieu", no_category: "Sans catégorie",
+    owes: "doit", is_owed: "est créditeur", settled: "équilibré",
+    partial: "Partiel", payment_method: "Moyen de paiement",
+    delete_confirm: "Supprimer ?", deleted: "Supprimé",
+    total_reimbursed: "Total remboursé", new_expense_added: "Dépense ajoutée !",
+    new_reimb_added: "Remboursement ajouté !", description: "Description",
+    share_options: "Options de partage", view_share: "Partage & Export",
+  },
+  en: {
+    load_campaign: "Load campaign",
+    landing_desc: "Paste the JSON exported from the app to view and edit the campaign.",
+    expenses: "Expenses", reimbursements: "Reimbursements", balances: "Balances",
+    settlements: "Suggested settlements", categories: "Categories", payments: "Payments",
+    add_expense: "Add expense", add_reimbursement: "Add reimbursement",
+    paid_by: "Paid by", split_among: "Split among", amount: "Amount",
+    title: "Title", save: "Save", cancel: "Cancel",
+    no_expenses: "No expenses yet", no_reimbursements: "No reimbursements yet",
+    all_settled: "All settled!", total: "Total", avg: "Avg/person",
+    participants: "Participants", expense_count: "Expenses",
+    equal: "Equal", custom: "Custom", percentage: "Percentage",
+    from: "From", to: "To", date: "Date", notes: "Notes", category: "Category",
+    share: "Share", copy_link: "Copy link", copy_json: "Copy JSON",
+    export_updated: "Export changes",
+    link_copied: "Link copied!", json_copied: "JSON copied!",
+    back_to_app: "Copy the updated JSON and import it in the app.",
+    location: "Location", no_category: "No category",
+    owes: "owes", is_owed: "is owed", settled: "settled",
+    partial: "Partial", payment_method: "Payment method",
+    delete_confirm: "Delete?", deleted: "Deleted",
+    total_reimbursed: "Total reimbursed", new_expense_added: "Expense added!",
+    new_reimb_added: "Reimbursement added!", description: "Description",
+    share_options: "Share options", view_share: "Share & Export",
+  }
+};
+
+const lang = (navigator.language || 'fr').startsWith('en') ? 'en' : 'fr';
+function t(key) { return T[lang][key] || T.fr[key] || key; }
+
+// ===== State =====
+let state = { campaign: null, participants: [], expenses: [], reimbursements: [], categories: [], paymentMethods: [] };
+let currentTab = 'expenses';
+
+// Category icons mapping
+const catIcons = {
+  'Alimentation': '🍽️', 'Food': '🍽️', 'Transport': '🚗',
+  'Hébergement': '🏠', 'Lodging': '🏠', 'Courses': '🛒', 'Groceries': '🛒',
+  'Divertissement': '🎭', 'Entertainment': '🎭', 'Santé': '💊', 'Health': '💊',
+  'Shopping': '🛍️', 'Autre': '📦', 'Other': '📦'
+};
+const pmIcons = {
+  'Espèces': '💵', 'Cash': '💵', 'Carte': '💳', 'Card': '💳',
+  'Chèque': '📝', 'Check': '📝', 'Virement': '🏦', 'Transfer': '🏦',
+  'Autre': '📦', 'Other': '📦'
+};
+
+// ===== URL Encoding =====
+function encodeData(jsonStr) {
+  try {
+    const bytes = new TextEncoder().encode(jsonStr);
+    const binStr = Array.from(bytes, b => String.fromCharCode(b)).join('');
+    return btoa(binStr).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  } catch(e) { return ''; }
+}
+
+function decodeData(b64) {
+  try {
+    const raw = b64.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = raw + '===='.slice(raw.length % 4 || 4);
+    const binStr = atob(pad);
+    const bytes = Uint8Array.from(binStr, c => c.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+  } catch(e) { return ''; }
+}
+
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random()*16|0;
+    return (c === 'x' ? r : (r&0x3|0x8)).toString(16);
+  }).toUpperCase();
+}
+
+// ===== Business Logic =====
+function getParticipant(id) { return state.participants.find(p => p.id === id); }
+function getCategory(id) { return state.categories.find(c => c.id === id); }
+function getPaymentMethod(id) { return state.paymentMethods.find(m => m.id === id); }
+
+function expenseShare(expense, participantID) {
+  if (!expense.splitAmongIDs.includes(participantID)) return 0;
+  switch(expense.splitType) {
+    case 'equal': return expense.amount / expense.splitAmongIDs.length;
+    case 'custom': return (expense.customSplits && expense.customSplits[participantID]) || 0;
+    case 'percentage':
+      const pct = (expense.customSplits && expense.customSplits[participantID]) || 0;
+      return expense.amount * pct / 100;
+    default: return expense.amount / expense.splitAmongIDs.length;
+  }
+}
+
+function computeBalance(participantID) {
+  let balance = 0;
+  for (const e of state.expenses) {
+    if (e.campaignID !== state.campaign.id) continue;
+    if (e.paidByID === participantID) balance += e.amount;
+    balance -= expenseShare(e, participantID);
+  }
+  for (const r of state.reimbursements) {
+    if (r.campaignID !== state.campaign.id) continue;
+    if (r.fromID === participantID) balance += r.amount;
+    if (r.toID === participantID) balance -= r.amount;
+  }
+  return balance;
+}
+
+function allBalances() {
+  return state.participants
+    .filter(p => state.campaign.participantIDs.includes(p.id))
+    .map(p => ({ participant: p, balance: computeBalance(p.id) }))
+    .sort((a,b) => b.balance - a.balance);
+}
+
+function computeSettlements() {
+  const bals = allBalances();
+  let debtors = [], creditors = [];
+  for (const {participant, balance} of bals) {
+    if (balance < -0.01) debtors.push({p: participant, amount: -balance});
+    else if (balance > 0.01) creditors.push({p: participant, amount: balance});
+  }
+  debtors.sort((a,b) => b.amount - a.amount);
+  creditors.sort((a,b) => b.amount - a.amount);
+  const settlements = [];
+  let i=0, j=0;
+  while (i < debtors.length && j < creditors.length) {
+    const amount = Math.min(debtors[i].amount, creditors[j].amount);
+    if (amount > 0.01) {
+      settlements.push({ from: debtors[i].p, to: creditors[j].p, amount: Math.round(amount*100)/100 });
+    }
+    debtors[i].amount -= amount;
+    creditors[j].amount -= amount;
+    if (debtors[i].amount < 0.01) i++;
+    if (creditors[j].amount < 0.01) j++;
+  }
+  return settlements;
+}
+
+function totalExpenses() {
+  return state.expenses.filter(e => e.campaignID === state.campaign.id).reduce((s,e) => s+e.amount, 0);
+}
+
+function campaignExpenses() {
+  return state.expenses.filter(e => e.campaignID === state.campaign.id).sort((a,b) => new Date(b.date)-new Date(a.date));
+}
+
+function campaignReimbursements() {
+  return state.reimbursements.filter(r => r.campaignID === state.campaign.id).sort((a,b) => new Date(b.date)-new Date(a.date));
+}
+
+function stateToJSON() {
+  const data = {
+    campaigns: [state.campaign],
+    participants: state.participants.filter(p => state.campaign.participantIDs.includes(p.id)),
+    expenses: state.expenses.filter(e => e.campaignID === state.campaign.id),
+    reimbursements: state.reimbursements.filter(r => r.campaignID === state.campaign.id),
+    categories: state.categories,
+    paymentMethods: state.paymentMethods
+  };
+  return JSON.stringify(data, null, 2);
+}
+
+function generateShareURL() {
+  const json = stateToJSON();
+  const encoded = encodeData(json);
+  return window.location.origin + window.location.pathname + '#' + encoded;
+}
+
+// ===== Load Data =====
+function loadData(jsonStr) {
+  try {
+    const data = JSON.parse(jsonStr);
+    if (!data.campaigns || !data.campaigns.length) throw new Error('No campaign');
+    state.campaign = data.campaigns[0];
+    state.participants = data.participants || [];
+    state.expenses = (data.expenses || []).map(e => ({
+      ...e,
+      customSplits: e.customSplits || {}
+    }));
+    state.reimbursements = data.reimbursements || [];
+    state.categories = data.categories || [];
+    state.paymentMethods = data.paymentMethods || [];
+    return true;
+  } catch(e) {
+    console.error('Parse error:', e);
+    return false;
+  }
+}
+
+function loadFromInput() {
+  const json = document.getElementById('jsonInput').value.trim();
+  if (!json) return;
+  if (loadData(json)) {
+    showApp();
+  } else {
+    const el = document.getElementById('errorMsg');
+    el.textContent = 'JSON invalide. Vérifiez le format.';
+    el.style.display = 'block';
+  }
+}
+
+function loadFromURL() {
+  const hash = window.location.hash.slice(1);
+  if (!hash) return false;
+  const json = decodeData(hash);
+  if (!json) return false;
+  return loadData(json);
+}
+
+// ===== Rendering =====
+function showApp() {
+  document.getElementById('landing').classList.add('hidden');
+  document.getElementById('app').classList.add('active');
+  render();
+}
+
+function render() {
+  renderHeader();
+  renderStats();
+  renderTabs();
+  renderContent();
+  renderFAB();
+}
+
+function renderHeader() {
+  const c = state.campaign;
+  const total = totalExpenses();
+  const parts = state.participants.filter(p => c.participantIDs.includes(p.id));
+  document.getElementById('header').innerHTML = `
+    <div class="header-actions">
+      <button onclick="showShareModal()" title="${t('view_share')}">📤</button>
+    </div>
+    <div class="header-title">${esc(c.title)}</div>
+    ${c.location ? `<div class="header-location">📍 ${esc(c.location)}</div>` : ''}
+    <div class="header-amount">${total.toFixed(2)} <span class="header-currency">${esc(c.currency)}</span></div>
+    <div class="header-meta">
+      <span>👥 ${parts.length} ${t('participants')}</span>
+      <span>📋 ${campaignExpenses().length} ${t('expense_count')}</span>
+      <span>🔗 ${esc(c.shareCode)}</span>
+    </div>
+  `;
+}
+
+function renderStats() {
+  const parts = state.participants.filter(p => state.campaign.participantIDs.includes(p.id));
+  const total = totalExpenses();
+  const avg = parts.length > 0 ? total / parts.length : 0;
+  const reimbTotal = campaignReimbursements().reduce((s,r) => s+r.amount, 0);
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value">${total.toFixed(0)}${esc(state.campaign.currency)}</div><div class="stat-label">${t('total')}</div></div>
+    <div class="stat-card"><div class="stat-icon">👤</div><div class="stat-value">${avg.toFixed(0)}${esc(state.campaign.currency)}</div><div class="stat-label">${t('avg')}</div></div>
+    <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value">${reimbTotal.toFixed(0)}${esc(state.campaign.currency)}</div><div class="stat-label">${t('total_reimbursed')}</div></div>
+  `;
+}
+
+function renderTabs() {
+  const tabs = [
+    {id:'expenses', icon:'🧾', label:t('expenses')},
+    {id:'reimbursements', icon:'💸', label:t('reimbursements')},
+    {id:'balances', icon:'📊', label:t('balances')},
+    {id:'settlements', icon:'🤝', label:t('settlements')},
+    {id:'categories', icon:'🏷️', label:t('categories')},
+  ];
+  document.getElementById('tabs').innerHTML = tabs.map(tab =>
+    `<button class="tab${currentTab===tab.id?' active':''}" onclick="switchTab('${tab.id}')">${tab.icon} ${tab.label}</button>`
+  ).join('');
+}
+
+function switchTab(tab) { currentTab = tab; renderTabs(); renderContent(); renderFAB(); }
+
+function renderContent() {
+  const el = document.getElementById('content');
+  switch(currentTab) {
+    case 'expenses': el.innerHTML = renderExpenses(); break;
+    case 'reimbursements': el.innerHTML = renderReimbursements(); break;
+    case 'balances': el.innerHTML = renderBalances(); break;
+    case 'settlements': el.innerHTML = renderSettlements(); break;
+    case 'categories': el.innerHTML = renderCategories(); break;
+  }
+}
+
+function renderFAB() {
+  const el = document.getElementById('fab');
+  if (currentTab === 'expenses') {
+    el.innerHTML = `<button class="btn btn-negative" onclick="showAddExpense()">➕ ${t('add_expense')}</button>`;
+  } else if (currentTab === 'reimbursements') {
+    el.innerHTML = `<button class="btn btn-positive" onclick="showAddReimbursement()">➕ ${t('add_reimbursement')}</button>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+function renderExpenses() {
+  const items = campaignExpenses();
+  if (!items.length) return `<div class="empty"><div class="empty-icon">🧾</div>${t('no_expenses')}</div>`;
+  return items.map(e => {
+    const payer = getParticipant(e.paidByID);
+    const cat = e.categoryID ? getCategory(e.categoryID) : null;
+    const catName = cat ? cat.name : '';
+    const icon = cat ? (catIcons[cat.name] || '📦') : '🧾';
+    const d = new Date(e.date);
+    const dateStr = d.toLocaleDateString(lang, {day:'numeric', month:'short'});
+    return `<div class="card"><div class="expense-card">
+      <div class="expense-icon expense">${icon}</div>
+      <div class="expense-info">
+        <div class="expense-title">${esc(e.title)}</div>
+        <div class="expense-sub">${t('paid_by')} ${esc(payer?.name||'?')} · ${esc(catName)} · 👥${e.splitAmongIDs.length}</div>
+      </div>
+      <div class="expense-amount">
+        <div class="expense-amount-value" style="color:var(--negative)">${e.amount.toFixed(2)} ${esc(state.campaign.currency)}</div>
+        <div class="expense-amount-date">${dateStr}</div>
+      </div>
+      <button class="delete-btn" onclick="deleteExpense('${e.id}')">🗑️</button>
+    </div></div>`;
+  }).join('');
+}
+
+function renderReimbursements() {
+  const items = campaignReimbursements();
+  if (!items.length) return `<div class="empty"><div class="empty-icon">💸</div>${t('no_reimbursements')}</div>`;
+  return items.map(r => {
+    const from = getParticipant(r.fromID);
+    const to = getParticipant(r.toID);
+    const pm = r.paymentMethodID ? getPaymentMethod(r.paymentMethodID) : null;
+    const d = new Date(r.date);
+    const dateStr = d.toLocaleDateString(lang, {day:'numeric', month:'short'});
+    return `<div class="card"><div class="expense-card">
+      <div class="expense-icon reimb">✅</div>
+      <div class="expense-info">
+        <div class="expense-title">${esc(from?.name||'?')} → ${esc(to?.name||'?')}</div>
+        <div class="expense-sub">${pm ? (pmIcons[pm.name]||'💳')+' '+esc(pm.name) : ''} ${r.isPartial ? '<span style="color:var(--warning)">· '+t('partial')+'</span>' : ''}</div>
+      </div>
+      <div class="expense-amount">
+        <div class="expense-amount-value" style="color:var(--positive)">${r.amount.toFixed(2)} ${esc(state.campaign.currency)}</div>
+        <div class="expense-amount-date">${dateStr}</div>
+      </div>
+      <button class="delete-btn" onclick="deleteReimbursement('${r.id}')">🗑️</button>
+    </div></div>`;
+  }).join('');
+}
+
+function renderBalances() {
+  const bals = allBalances();
+  const maxAbs = Math.max(...bals.map(b => Math.abs(b.balance)), 1);
+  return bals.map(({participant: p, balance}) => {
+    const display = -balance;
+    const color = display <= 0 ? 'var(--positive)' : 'var(--negative)';
+    const label = Math.abs(display) < 0.01 ? t('settled') : (display > 0 ? t('owes') : t('is_owed'));
+    const width = maxAbs > 0 ? (Math.abs(balance)/maxAbs*100) : 0;
+    return `<div class="card"><div class="balance-row">
+      <div class="avatar">${p.avatarEmoji||'👤'}</div>
+      <div class="balance-name">${esc(p.name)}<br><small style="color:var(--text2);font-weight:400">${label}</small></div>
+      <div class="balance-value" style="color:${color}">${display>=0?'+':''}${display.toFixed(2)} ${esc(state.campaign.currency)}</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${width}%;background:${color}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderSettlements() {
+  const setts = computeSettlements();
+  if (!setts.length) return `<div class="empty"><div class="empty-icon">✅</div><div style="font-size:18px;font-weight:700;color:var(--positive)">${t('all_settled')}</div></div>`;
+  return setts.map(s =>
+    `<div class="card"><div class="settlement-card">
+      <div style="text-align:center"><div class="avatar avatar-sm">${s.from.avatarEmoji||'👤'}</div><div class="settlement-name">${esc(s.from.name)}</div></div>
+      <div><div class="settlement-arrow">→</div><div class="settlement-amount">${s.amount.toFixed(2)} ${esc(state.campaign.currency)}</div></div>
+      <div style="text-align:center"><div class="avatar avatar-sm">${s.to.avatarEmoji||'👤'}</div><div class="settlement-name">${esc(s.to.name)}</div></div>
+    </div></div>`
+  ).join('');
+}
+
+function renderCategories() {
+  const exps = campaignExpenses();
+  const grouped = {};
+  for (const e of exps) {
+    const key = e.categoryID || '__none__';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(e);
+  }
+  const total = exps.reduce((s,e)=>s+e.amount, 0);
+  return Object.entries(grouped).map(([catID, items]) => {
+    const cat = catID !== '__none__' ? getCategory(catID) : null;
+    const name = cat ? cat.name : t('no_category');
+    const icon = cat ? (catIcons[cat.name] || '📦') : '❓';
+    const catTotal = items.reduce((s,e)=>s+e.amount, 0);
+    const pct = total > 0 ? catTotal/total*100 : 0;
+    return `<div class="card"><div style="display:flex;gap:14px;align-items:center">
+      <div style="font-size:28px">${icon}</div>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="font-weight:600;font-size:14px">${esc(name)}</span>
+          <span style="font-weight:700;font-size:14px;color:var(--info)">${catTotal.toFixed(2)} ${esc(state.campaign.currency)}</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:var(--info)"></div></div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">${items.length} ${t('expenses').toLowerCase()} · ${pct.toFixed(0)}%</div>
+      </div>
+    </div></div>`;
+  }).join('');
+}
+
+// ===== Add Expense Modal =====
+function showAddExpense() {
+  const parts = state.participants.filter(p => state.campaign.participantIDs.includes(p.id));
+  const cats = state.categories;
+  document.getElementById('modal').innerHTML = `
+    <div class="modal-header"><div class="modal-handle"></div><div class="modal-title">➕ ${t('add_expense')}</div></div>
+    <div class="modal-body">
+      <div class="amount-hero">
+        <label>${t('amount')} (${esc(state.campaign.currency)})</label>
+        <input type="number" step="0.01" class="form-input-hero" id="expAmount" placeholder="0.00" inputmode="decimal">
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('title')}</label>
+        <input type="text" class="form-input" id="expTitle" placeholder="${t('title')}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('category')}</label>
+        <div class="cat-grid" id="expCatGrid">
+          ${cats.map(c => `<div class="cat-item" data-id="${c.id}" onclick="selectCat(this)"><div class="cat-icon">${catIcons[c.name]||'📦'}</div>${esc(c.name)}</div>`).join('')}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('paid_by')}</label>
+        <div class="chips" id="expPaidBy">
+          ${parts.map(p => `<div class="chip" data-id="${p.id}" onclick="selectPaidBy(this)">${p.avatarEmoji||'👤'} ${esc(p.name)}</div>`).join('')}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('split_among')}</label>
+        <div class="chips" id="expSplitAmong">
+          ${parts.map(p => `<div class="chip selected" data-id="${p.id}" onclick="toggleSplit(this)">${p.avatarEmoji||'👤'} ${esc(p.name)}</div>`).join('')}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Split</label>
+        <div class="split-tabs">
+          <button class="split-tab active" data-type="equal" onclick="selectSplitType(this)">${t('equal')}</button>
+          <button class="split-tab" data-type="custom" onclick="selectSplitType(this)">${t('custom')}</button>
+          <button class="split-tab" data-type="percentage" onclick="selectSplitType(this)">${t('percentage')}</button>
+        </div>
+        <div id="customSplitFields" style="margin-top:12px;display:none;"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('date')}</label>
+        <input type="date" class="form-input" id="expDate" value="${new Date().toISOString().split('T')[0]}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('notes')}</label>
+        <input type="text" class="form-input" id="expNotes" placeholder="${t('notes')}">
+      </div>
+    </div>
+    <div class="modal-footer" style="display:flex;gap:8px">
+      <button class="btn btn-outline" style="flex:1" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn btn-negative" style="flex:2" onclick="saveExpense()">${t('save')}</button>
+    </div>
+  `;
+  openModal();
+}
+
+function showAddReimbursement() {
+  const parts = state.participants.filter(p => state.campaign.participantIDs.includes(p.id));
+  const methods = state.paymentMethods;
+  const setts = computeSettlements();
+  document.getElementById('modal').innerHTML = `
+    <div class="modal-header"><div class="modal-handle"></div><div class="modal-title">➕ ${t('add_reimbursement')}</div></div>
+    <div class="modal-body">
+      <div class="amount-hero reimb">
+        <label>${t('amount')} (${esc(state.campaign.currency)})</label>
+        <input type="number" step="0.01" class="form-input-hero" id="reimbAmount" placeholder="0.00" inputmode="decimal">
+      </div>
+      ${setts.length ? `<div style="margin-bottom:16px"><label class="form-label">${t('settlements')}</label>
+        ${setts.map(s => `<div class="card" style="margin:0 0 8px;cursor:pointer;padding:12px" onclick="fillReimb('${s.from.id}','${s.to.id}',${s.amount})">
+          <div style="display:flex;align-items:center;gap:8px;justify-content:center">
+            <span>${s.from.avatarEmoji||'👤'} ${esc(s.from.name)}</span>
+            <span style="color:var(--negative);font-weight:700">→</span>
+            <span>${s.to.avatarEmoji||'👤'} ${esc(s.to.name)}</span>
+            <span style="font-weight:700;color:var(--negative)">${s.amount.toFixed(2)}</span>
+          </div>
+        </div>`).join('')}
+      </div>` : ''}
+      <div class="form-group">
+        <label class="form-label">${t('from')}</label>
+        <div class="chips" id="reimbFrom">
+          ${parts.map(p => `<div class="chip" data-id="${p.id}" onclick="selectReimbFrom(this)">${p.avatarEmoji||'👤'} ${esc(p.name)}</div>`).join('')}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('to')}</label>
+        <div class="chips" id="reimbTo">
+          ${parts.map(p => `<div class="chip" data-id="${p.id}" onclick="selectReimbTo(this)">${p.avatarEmoji||'👤'} ${esc(p.name)}</div>`).join('')}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('payment_method')}</label>
+        <div class="chips" id="reimbMethod">
+          ${methods.map(m => `<div class="chip" data-id="${m.id}" onclick="selectChipSingle(this,'reimbMethod')">${pmIcons[m.name]||'💳'} ${esc(m.name)}</div>`).join('')}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('date')}</label>
+        <input type="date" class="form-input" id="reimbDate" value="${new Date().toISOString().split('T')[0]}">
+      </div>
+    </div>
+    <div class="modal-footer" style="display:flex;gap:8px">
+      <button class="btn btn-outline" style="flex:1" onclick="closeModal()">${t('cancel')}</button>
+      <button class="btn btn-positive" style="flex:2" onclick="saveReimbursement()">${t('save')}</button>
+    </div>
+  `;
+  openModal();
+}
+
+function showShareModal() {
+  const url = generateShareURL();
+  document.getElementById('modal').innerHTML = `
+    <div class="modal-header"><div class="modal-handle"></div><div class="modal-title">📤 ${t('view_share')}</div></div>
+    <div class="modal-body">
+      <div class="share-code">${esc(state.campaign.shareCode)}</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="copyToClipboard('${esc(url)}','${t('link_copied')}')">🔗 ${t('copy_link')}</button>
+        <button class="btn btn-accent" style="width:100%;justify-content:center" onclick="copyJSON()">📋 ${t('copy_json')}</button>
+      </div>
+      <div style="margin-top:20px;padding:16px;background:#f5f5f5;border-radius:12px;font-size:13px;color:var(--text2)">
+        💡 ${t('back_to_app')}
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="closeModal()">${t('cancel')}</button>
+    </div>
+  `;
+  openModal();
+}
+
+// ===== Modal Helpers =====
+function openModal() { document.getElementById('modalOverlay').classList.add('active'); }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+function closeModalOutside(e) { if (e.target === e.currentTarget) closeModal(); }
+
+// ===== Form Helpers =====
+let selectedCatID = null;
+let selectedPaidByID = null;
+let selectedSplitType = 'equal';
+
+function selectCat(el) {
+  document.querySelectorAll('#expCatGrid .cat-item').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedCatID = el.dataset.id;
+}
+
+function selectPaidBy(el) {
+  document.querySelectorAll('#expPaidBy .chip').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPaidByID = el.dataset.id;
+}
+
+function toggleSplit(el) {
+  el.classList.toggle('selected');
+  updateCustomFields();
+}
+
+function selectSplitType(el) {
+  document.querySelectorAll('.split-tab').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  selectedSplitType = el.dataset.type;
+  updateCustomFields();
+}
+
+function updateCustomFields() {
+  const container = document.getElementById('customSplitFields');
+  if (!container) return;
+  if (selectedSplitType === 'equal') { container.style.display = 'none'; return; }
+  container.style.display = 'block';
+  const selected = [...document.querySelectorAll('#expSplitAmong .chip.selected')];
+  const label = selectedSplitType === 'percentage' ? '%' : esc(state.campaign.currency);
+  container.innerHTML = selected.map(chip => {
+    const p = getParticipant(chip.dataset.id);
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="flex:1;font-size:13px">${p?.avatarEmoji||'👤'} ${esc(p?.name||'')}</span>
+      <input type="number" step="0.01" class="form-input" style="width:100px;padding:8px" data-pid="${chip.dataset.id}" placeholder="0" inputmode="decimal">
+      <span style="font-size:13px;color:var(--text2)">${label}</span>
+    </div>`;
+  }).join('');
+}
+
+function selectReimbFrom(el) {
+  document.querySelectorAll('#reimbFrom .chip').forEach(e => e.classList.remove('selected-from'));
+  el.classList.add('selected-from');
+}
+function selectReimbTo(el) {
+  document.querySelectorAll('#reimbTo .chip').forEach(e => e.classList.remove('selected-to'));
+  el.classList.add('selected-to');
+}
+function selectChipSingle(el, containerId) {
+  document.querySelectorAll(`#${containerId} .chip`).forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function fillReimb(fromID, toID, amount) {
+  document.getElementById('reimbAmount').value = amount.toFixed(2);
+  document.querySelectorAll('#reimbFrom .chip').forEach(e => {
+    e.classList.toggle('selected-from', e.dataset.id === fromID);
+  });
+  document.querySelectorAll('#reimbTo .chip').forEach(e => {
+    e.classList.toggle('selected-to', e.dataset.id === toID);
+  });
+}
+
+// ===== Save =====
+function saveExpense() {
+  const amount = parseFloat(document.getElementById('expAmount').value);
+  const title = document.getElementById('expTitle').value.trim();
+  if (!amount || amount <= 0 || !title || !selectedPaidByID) return toast('Remplissez tous les champs');
+
+  const splitAmongIDs = [...document.querySelectorAll('#expSplitAmong .chip.selected')].map(e => e.dataset.id);
+  if (!splitAmongIDs.length) return toast('Sélectionnez au moins un participant');
+
+  let customSplits = {};
+  if (selectedSplitType !== 'equal') {
+    document.querySelectorAll('#customSplitFields input').forEach(input => {
+      customSplits[input.dataset.pid] = parseFloat(input.value) || 0;
+    });
+  }
+
+  const expense = {
+    id: generateUUID(),
+    title: title,
+    amount: amount,
+    date: new Date(document.getElementById('expDate').value || Date.now()).toISOString(),
+    paidByID: selectedPaidByID,
+    splitAmongIDs: splitAmongIDs,
+    splitType: selectedSplitType,
+    customSplits: customSplits,
+    categoryID: selectedCatID || null,
+    location: '',
+    notes: document.getElementById('expNotes').value || '',
+    receiptImageData: null,
+    campaignID: state.campaign.id
+  };
+
+  state.expenses.push(expense);
+  state.campaign.expenseIDs.push(expense.id);
+
+  selectedCatID = null;
+  selectedPaidByID = null;
+  selectedSplitType = 'equal';
+
+  closeModal();
+  updateURLHash();
+  render();
+  showToast(t('new_expense_added'));
+}
+
+function saveReimbursement() {
+  const amount = parseFloat(document.getElementById('reimbAmount').value);
+  const fromEl = document.querySelector('#reimbFrom .selected-from');
+  const toEl = document.querySelector('#reimbTo .selected-to');
+  const methodEl = document.querySelector('#reimbMethod .selected');
+
+  if (!amount || amount <= 0 || !fromEl || !toEl) return showToast('Remplissez tous les champs');
+  if (fromEl.dataset.id === toEl.dataset.id) return showToast('Sélectionnez deux personnes différentes');
+
+  const reimb = {
+    id: generateUUID(),
+    amount: amount,
+    date: new Date(document.getElementById('reimbDate').value || Date.now()).toISOString(),
+    fromID: fromEl.dataset.id,
+    toID: toEl.dataset.id,
+    paymentMethodID: methodEl ? methodEl.dataset.id : null,
+    notes: '',
+    campaignID: state.campaign.id,
+    isPartial: false
+  };
+
+  state.reimbursements.push(reimb);
+  state.campaign.reimbursementIDs.push(reimb.id);
+
+  closeModal();
+  updateURLHash();
+  render();
+  showToast(t('new_reimb_added'));
+}
+
+function deleteExpense(id) {
+  state.expenses = state.expenses.filter(e => e.id !== id);
+  state.campaign.expenseIDs = state.campaign.expenseIDs.filter(eid => eid !== id);
+  updateURLHash();
+  render();
+  showToast(t('deleted'));
+}
+
+function deleteReimbursement(id) {
+  state.reimbursements = state.reimbursements.filter(r => r.id !== id);
+  state.campaign.reimbursementIDs = state.campaign.reimbursementIDs.filter(rid => rid !== id);
+  updateURLHash();
+  render();
+  showToast(t('deleted'));
+}
+
+function updateURLHash() {
+  const json = stateToJSON();
+  const encoded = encodeData(json);
+  history.replaceState(null, '', '#' + encoded);
+}
+
+// ===== Utils =====
+function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function copyToClipboard(text, msg) {
+  navigator.clipboard.writeText(text).then(() => showToast(msg));
+}
+
+function copyJSON() {
+  const json = stateToJSON();
+  navigator.clipboard.writeText(json).then(() => showToast(t('json_copied')));
+}
+
+// ===== Init =====
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('landingDesc').textContent = t('landing_desc');
+  if (loadFromURL()) {
+    showApp();
+  }
+});
+</script>
+</body>
+</html>

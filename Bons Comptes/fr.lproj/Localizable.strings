@@ -1,0 +1,151 @@
+/* App */
+"app_title" = "Bons Comptes";
+
+/* Campaign */
+"no_campaigns" = "Aucune campagne";
+"no_campaigns_desc" = "Créez votre première campagne de partage de frais";
+"show_active" = "Voir actives";
+"show_archived" = "Voir archivées";
+"import_campaign" = "Importer une campagne";
+"paste_json" = "Coller les données JSON";
+"import_button" = "Importer";
+"cancel" = "Annuler";
+"new_campaign" = "Nouvelle campagne";
+"campaign_info" = "Informations";
+"title_field" = "Titre";
+"description_field" = "Description";
+"location_field" = "Lieu";
+"currency_field" = "Devise";
+"creator" = "Créateur";
+"your_name" = "Votre nom";
+"initial_participants" = "Participants initiaux";
+"participant_name" = "Nom du participant";
+"add_participant" = "Ajouter un participant";
+"create" = "Créer";
+"participants_count" = "participants";
+"total_format" = "%.2f %@";
+"share_code_format" = "Code : %@";
+
+/* Campaign Detail */
+"expenses_tab" = "Dépenses";
+"reimbursements_tab" = "Remboursements";
+"add_expense" = "Ajouter une dépense";
+"add_reimbursement" = "Ajouter un remboursement";
+"manage_participants" = "Gérer les participants";
+"view_balance" = "Voir les soldes";
+"share_campaign" = "Partager la campagne";
+"archive_campaign" = "Archiver la campagne";
+"no_expenses" = "Aucune dépense";
+"no_reimbursements" = "Aucun remboursement";
+"paid_by" = "Payé par";
+"partial_reimbursement" = "Remboursement partiel";
+
+/* Add Expense */
+"expense_details" = "Détails de la dépense";
+"amount_field" = "Montant";
+"date_field" = "Date";
+"notes_field" = "Notes";
+"category_section" = "Catégorie";
+"category_field" = "Catégorie";
+"no_category" = "Sans catégorie";
+"new_category" = "Nouvelle catégorie";
+"category_name" = "Nom de la catégorie";
+"paid_by_section" = "Payé par";
+"split_among" = "Partagé entre";
+"select_all" = "Tout sélectionner";
+"deselect_all" = "Tout désélectionner";
+"split_type" = "Type de partage";
+"split_method" = "Méthode";
+"split_equal" = "Égal";
+"split_custom" = "Montants";
+"split_percentage" = "Pourcentage";
+"save" = "Enregistrer";
+"add" = "Ajouter";
+
+/* Add Reimbursement */
+"reimbursement_details" = "Détails du remboursement";
+"from_participant" = "De (qui paie)";
+"to_participant" = "À (qui reçoit)";
+"payment_method_section" = "Mode de paiement";
+"payment_method" = "Mode de paiement";
+"no_method" = "Non spécifié";
+"new_payment_method" = "Nouveau mode de paiement";
+"method_name" = "Nom du mode";
+"total_debt" = "Dette totale";
+"suggested_settlements" = "Remboursements suggérés";
+"all_settled" = "Tous les comptes sont soldés !";
+
+/* Participants */
+"done" = "Terminé";
+"email_optional" = "Email (optionnel)";
+"add_participant_desc" = "Ajouter un nouveau participant à la campagne";
+
+/* Balance */
+"summary" = "Résumé";
+"total_expenses_label" = "Total des dépenses";
+"expense_count" = "Nombre de dépenses";
+"per_person_avg" = "Moyenne par personne";
+"individual_balances" = "Soldes individuels";
+"by_category" = "Catégories";
+"by_payment_method" = "Paiements";
+"total_reimbursed" = "Total remboursé";
+"no_payment_method" = "Sans moyen de paiement";
+"settlements" = "Remboursements à effectuer";
+"balance_title" = "Soldes & Équilibre";
+
+/* Share */
+"share_code_section" = "Code de partage";
+"share_code_instructions" = "Partagez ce code pour permettre à d'autres d'accéder à cette campagne";
+"copied" = "Copié !";
+"copy_code" = "Copier le code";
+"export_data" = "Exporter les données";
+"view_json" = "Voir les données JSON";
+"share_json" = "Partager les données JSON";
+"share_summary" = "Partager un résumé texte";
+"web_access_section" = "Accès Web";
+"web_access_desc" = "Partagez un lien web pour que n'importe qui puisse voir et modifier la campagne depuis un navigateur.";
+"share_web_link" = "Partager le lien web";
+"copy_web_link" = "Copier le lien web";
+"web_deploy_hint" = "Compatible GitHub Pages, Netlify, Vercel...";
+
+/* Settings */
+"settings" = "Réglages";
+"categories_section" = "Catégories de dépenses";
+"payment_methods_section" = "Modes de paiement";
+"default_label" = "par défaut";
+"about_section" = "À propos";
+"version_label" = "Version";
+"developer_label" = "Développeur";
+
+/* Default Categories */
+"category_food" = "Repas";
+"category_transport" = "Transport";
+"category_lodging" = "Hébergement";
+"category_groceries" = "Courses";
+"category_entertainment" = "Loisirs";
+"category_health" = "Santé";
+"category_shopping" = "Shopping";
+"category_other" = "Autre";
+
+/* Default Payment Methods */
+"payment_cash" = "Espèces";
+"payment_card" = "Carte bancaire";
+"payment_check" = "Chèque";
+"payment_transfer" = "Virement";
+"payment_other" = "Autre";
+
+/* Language */
+"language_section" = "Langue";
+"language_field" = "Langue de l'application";
+"language_restart_hint" = "Redémarrez l'application pour appliquer le changement de langue.";
+
+/* Tabs */
+"tab_campaigns" = "Campagnes";
+"tab_settings" = "Réglages";
+
+/* Additional */
+"app_subtitle" = "Partage de frais simplifié";
+"delete" = "Supprimer";
+"owes" = "doit";
+"is_owed" = "est dû";
+"settled" = "soldé";
