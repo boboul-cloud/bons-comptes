@@ -115,10 +115,6 @@ struct CampaignDetailView: View {
                         showingCloseAlert = true
                     }
                 }
-                quickActionButton(icon: "checkmark.circle.fill", label: NSLocalizedString("archive_campaign", comment: ""), color: AppTheme.positive) {
-                    store.archiveCampaign(campaign)
-                    refreshCampaign()
-                }
             }
             .padding(.horizontal)
         }

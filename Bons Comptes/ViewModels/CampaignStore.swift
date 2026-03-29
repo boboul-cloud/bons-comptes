@@ -191,13 +191,6 @@ class CampaignStore: ObservableObject {
         saveData()
     }
 
-    func archiveCampaign(_ campaign: Campaign) {
-        if let idx = campaigns.firstIndex(where: { $0.id == campaign.id }) {
-            campaigns[idx].isArchived = true
-            saveData()
-        }
-    }
-
     func closeCampaign(_ campaign: Campaign) {
         if let idx = campaigns.firstIndex(where: { $0.id == campaign.id }) {
             campaigns[idx].isClosed = true
@@ -446,7 +439,6 @@ class CampaignStore: ObservableObject {
     func importJSON(_ jsonString: String) -> Bool {
         guard let data = jsonString.data(using: .utf8) else { return false }
         let decoder = JSONDecoder()
-        // Handle both ISO 8601 with and without fractional seconds (web uses .000Z)
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
             let str = try container.decode(String.self)
@@ -461,23 +453,12 @@ class CampaignStore: ObservableObject {
         return mergeAppData(appData)
     }
 
-    func importFromURL(_ url: URL) -> Bool {
-        // Handle bonscomptes:// scheme or https web URLs
-        let fragment: String?
-        if url.scheme == "bonscomptes" {
-            // bonscomptes://import#z... or bonscomptes://import#...
-            fragment = url.fragment
-        } else if let host = url.host, host.contains("github.io"), url.path.contains("bons-comptes") {
-            fragment = url.fragment
-        } else {
-            // Try treating the whole string as JSON
-            return importJSON(url.absoluteString)
-        }
-        guard let hash = fragment, !hash.isEmpty else { return false }
+    func importFromFragment(_ hash: String) -> Bool {
+        guard !hash.isEmpty else { return false }
 
         let jsonData: Data?
         if hash.hasPrefix("z") {
-            // Compressed format: z + base64(raw deflate)
+            // Compressed format: z + base64url(raw deflate)
             let b64 = String(hash.dropFirst())
                 .replacingOccurrences(of: "-", with: "+")
                 .replacingOccurrences(of: "_", with: "/")
@@ -487,7 +468,6 @@ class CampaignStore: ObservableObject {
             if let decompressed = Self.rawDeflateDecompress(compressed) {
                 jsonData = decompressed
             } else if let decompressed = try? (compressed as NSData).decompressed(using: .zlib) as Data {
-                // Legacy: full zlib format from old iOS versions
                 jsonData = decompressed
             } else {
                 jsonData = compressed
@@ -502,6 +482,11 @@ class CampaignStore: ObservableObject {
         }
         guard let jsonData, let jsonString = String(data: jsonData, encoding: .utf8) else { return false }
         return importJSON(jsonString)
+    }
+
+    func importFromURL(_ url: URL) -> Bool {
+        guard let fragment = url.fragment, !fragment.isEmpty else { return false }
+        return importFromFragment(fragment)
     }
 
     // MARK: - Raw DEFLATE helpers (compatible with web's deflate-raw)
@@ -525,19 +510,27 @@ class CampaignStore: ObservableObject {
 
     static func rawDeflateDecompress(_ data: Data) -> Data? {
         let sourceSize = data.count
-        let destinationSize = sourceSize * 16 + 4096
-        let destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: destinationSize)
-        defer { destinationBuffer.deallocate() }
-        let decompressedSize = data.withUnsafeBytes { sourceBuffer -> Int in
-            guard let baseAddress = sourceBuffer.baseAddress else { return 0 }
-            return compression_decode_buffer(
-                destinationBuffer, destinationSize,
-                baseAddress.assumingMemoryBound(to: UInt8.self), sourceSize,
-                nil, COMPRESSION_ZLIB
-            )
+        // JSON compresses heavily (20-50x); try increasing buffer sizes
+        let multipliers = [64, 256, 1024]
+        for mult in multipliers {
+            let destinationSize = max(sourceSize * mult, 1_000_000)
+            let destinationBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: destinationSize)
+            let decompressedSize = data.withUnsafeBytes { sourceBuffer -> Int in
+                guard let baseAddress = sourceBuffer.baseAddress else { return 0 }
+                return compression_decode_buffer(
+                    destinationBuffer, destinationSize,
+                    baseAddress.assumingMemoryBound(to: UInt8.self), sourceSize,
+                    nil, COMPRESSION_ZLIB
+                )
+            }
+            if decompressedSize > 0 && decompressedSize < destinationSize {
+                let result = Data(bytes: destinationBuffer, count: decompressedSize)
+                destinationBuffer.deallocate()
+                return result
+            }
+            destinationBuffer.deallocate()
         }
-        guard decompressedSize > 0 else { return nil }
-        return Data(bytes: destinationBuffer, count: decompressedSize)
+        return nil
     }
 
     private func mergeAppData(_ appData: AppData) -> Bool {

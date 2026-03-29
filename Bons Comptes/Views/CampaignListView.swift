@@ -10,13 +10,11 @@ struct CampaignListView: View {
     @State private var showingAddCampaign = false
     @State private var showingImport = false
     @State private var importCode = ""
-    @State private var showArchived = false
     @State private var importResult: Bool?
     @State private var showingBackups = false
 
     var filteredCampaigns: [Campaign] {
-        store.campaigns.filter { $0.isArchived == showArchived }
-            .sorted { $0.createdAt > $1.createdAt }
+        store.campaigns.sorted { $0.createdAt > $1.createdAt }
     }
 
     var body: some View {
@@ -83,11 +81,6 @@ struct CampaignListView: View {
                 } label: {
                     Label(NSLocalizedString("delete", comment: ""), systemImage: "trash")
                 }
-                Button {
-                    store.archiveCampaign(campaign)
-                } label: {
-                    Label(NSLocalizedString("archive_campaign", comment: ""), systemImage: "archivebox")
-                }
             }
         }
     }
@@ -101,15 +94,6 @@ struct CampaignListView: View {
 
                 actionCapsule(icon: "square.and.arrow.down", label: NSLocalizedString("import_campaign", comment: ""), fg: AppTheme.accent, bg: AppTheme.accent.opacity(0.12)) {
                     showingImport = true
-                }
-
-                actionCapsule(
-                    icon: showArchived ? "play.circle" : "checkmark.circle",
-                    label: showArchived ? NSLocalizedString("show_active", comment: "") : NSLocalizedString("show_archived", comment: ""),
-                    fg: showArchived ? AppTheme.positive : .secondary,
-                    bg: showArchived ? AppTheme.positive.opacity(0.12) : Color.secondary.opacity(0.1)
-                ) {
-                    withAnimation(.spring()) { showArchived.toggle() }
                 }
             }
         }

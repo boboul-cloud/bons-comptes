@@ -124,7 +124,6 @@ struct ImportCampaignSheet: View {
     }
 
     private func readClipboard() {
-        // Try URL first (preserves fragment better on iOS)
         if let url = UIPasteboard.general.url, let fragment = url.fragment, !fragment.isEmpty {
             inputText = url.absoluteString
             clipboardStatus = .found
@@ -140,23 +139,16 @@ struct ImportCampaignSheet: View {
         let input = inputText
         let success: Bool
 
-        // If it's a URL with a fragment, extract fragment manually for reliability
         if input.contains("#"), let hashIndex = input.firstIndex(of: "#") {
             let fragment = String(input[input.index(after: hashIndex)...])
             if !fragment.isEmpty {
-                // Build a clean URL with the fragment
-                let baseURL = String(input[..<hashIndex])
-                if let url = URL(string: baseURL + "#" + fragment) {
-                    success = store.importFromURL(url)
-                } else {
-                    // Fallback: treat fragment as encoded data directly
-                    success = store.importFromURL(URL(string: "bonscomptes://import#" + fragment)!)
-                }
+                // Pass fragment directly — avoid URL round-trip that can corrupt data
+                success = store.importFromFragment(fragment)
             } else {
                 success = store.importJSON(input)
             }
-        } else if let url = URL(string: input), url.scheme == "bonscomptes" {
-            success = store.importFromURL(url)
+        } else if input.hasPrefix("{") {
+            success = store.importJSON(input)
         } else {
             success = store.importJSON(input)
         }

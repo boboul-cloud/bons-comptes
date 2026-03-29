@@ -938,12 +938,13 @@ function openInApp() {
 
 async function showShareModal() {
   const url = await generateShareURL();
+  window._shareURL = url;
   document.getElementById('modal').innerHTML = `
     <div class="modal-header"><div class="modal-handle"></div><div class="modal-title">📤 ${t('view_share')}</div></div>
     <div class="modal-body">
       <div style="display:flex;flex-direction:column;gap:10px">
         <button class="btn btn-positive" style="width:100%;justify-content:center" onclick="openInApp()">📱 ${t('open_in_app')}</button>
-        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="copyToClipboard('${esc(url)}','${t('link_copied')}')">🔗 ${t('copy_link')}</button>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="copyToClipboard(window._shareURL,'${t('link_copied')}')">🔗 ${t('copy_link')}</button>
         <button class="btn btn-accent" style="width:100%;justify-content:center" onclick="copyJSON()">📋 ${t('copy_json')}</button>
       </div>
       <div style="margin-top:20px;padding:16px;background:#f5f5f5;border-radius:12px;font-size:13px;color:var(--text2)">
