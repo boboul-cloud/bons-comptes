@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Politique de confidentialité — Bons Comptes</title>
+<style>
+:root { --primary: #6C5CE7; --primary-dark: #4834D4; --text: #2D3436; --text2: #636E72; --bg: #F8F9FD; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+.header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; padding: 48px 24px 32px; text-align: center; }
+.header h1 { font-size: 24px; font-weight: 700; }
+.header p { font-size: 13px; opacity: 0.8; margin-top: 8px; }
+.content { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; }
+.section { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(108,92,231,0.08); }
+.section h2 { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--primary); }
+.section p { font-size: 14px; line-height: 1.6; color: var(--text2); }
+.date { font-size: 12px; color: var(--text2); text-align: center; margin-bottom: 20px; }
+.back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 20px; color: var(--primary); text-decoration: none; font-size: 14px; font-weight: 600; }
+.back:hover { text-decoration: underline; }
+.lang { position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; }
+.lang a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 13px; font-weight: 600; }
+.lang a.active { color: #fff; border-bottom: 2px solid #fff; }
+.header { position: relative; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="lang"><a href="privacy.html" id="langFr">FR</a> <a href="privacy-en.html" id="langEn">EN</a></div>
+  <h1>🔒 Politique de confidentialité</h1>
+  <p>Bons Comptes</p>
+</div>
+
+<div class="content">
+  <div class="date">Dernière mise à jour : 29 mars 2026</div>
+
+  <div class="section">
+    <h2>Introduction</h2>
+    <p>Bons Comptes respecte votre vie privée. Cette politique explique comment nous traitons vos données personnelles.</p>
+  </div>
+
+  <div class="section">
+    <h2>Données collectées</h2>
+    <p>L'application ne collecte aucune donnée personnelle. Toutes les informations (noms, dépenses, remboursements) sont stockées uniquement sur votre appareil.</p>
+  </div>
+
+  <div class="section">
+    <h2>Stockage des données</h2>
+    <p>Vos données sont enregistrées localement sur votre appareil au format JSON. Aucune donnée n'est transmise à un serveur externe. Le partage de données se fait uniquement à votre initiative via un lien ou un export JSON.</p>
+  </div>
+
+  <div class="section">
+    <h2>Partage de données</h2>
+    <p>Lorsque vous partagez une campagne via un lien web, les données sont encodées directement dans l'URL. Aucun serveur intermédiaire ne stocke ces informations.</p>
+  </div>
+
+  <div class="section">
+    <h2>Vos droits</h2>
+    <p>Vous pouvez supprimer toutes vos données à tout moment en supprimant les campagnes dans l'application ou en désinstallant l'application. Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression de vos données.</p>
+  </div>
+
+  <div class="section">
+    <h2>Contact</h2>
+    <p>Pour toute question relative à la confidentialité, contactez-nous à <a href="mailto:bob.oulhen@gmail.com" style="color:var(--primary)">bob.oulhen@gmail.com</a>.</p>
+  </div>
+</div>
+
+<script>document.getElementById('langFr').classList.add('active');</script>
+</body>
+</html>
