@@ -116,6 +116,48 @@
 "about_section" = "À propos";
 "version_label" = "Version";
 "developer_label" = "Développeur";
+"contact_label" = "Contact";
+"website_label" = "Site web";
+"about_description" = "Bons Comptes est une application de partage de dépenses entre amis, en famille ou entre collègues. Gérez vos dépenses communes simplement et équitablement.";
+
+/* Legal */
+"privacy_policy" = "Politique de confidentialité";
+"terms_of_use" = "Conditions d'utilisation";
+"legal_notices" = "Mentions légales";
+"privacy_last_updated" = "Dernière mise à jour : 29 mars 2026";
+"privacy_intro_title" = "Introduction";
+"privacy_intro_body" = "Bons Comptes respecte votre vie privée. Cette politique explique comment nous traitons vos données personnelles.";
+"privacy_data_title" = "Données collectées";
+"privacy_data_body" = "L'application ne collecte aucune donnée personnelle. Toutes les informations (noms, dépenses, remboursements) sont stockées uniquement sur votre appareil.";
+"privacy_storage_title" = "Stockage des données";
+"privacy_storage_body" = "Vos données sont enregistrées localement sur votre appareil au format JSON. Aucune donnée n'est transmise à un serveur externe. Le partage de données se fait uniquement à votre initiative via un lien ou un export JSON.";
+"privacy_sharing_title" = "Partage de données";
+"privacy_sharing_body" = "Lorsque vous partagez une campagne via un lien web, les données sont encodées directement dans l'URL. Aucun serveur intermédiaire ne stocke ces informations.";
+"privacy_rights_title" = "Vos droits";
+"privacy_rights_body" = "Vous pouvez supprimer toutes vos données à tout moment en supprimant les campagnes dans l'application ou en désinstallant l'application. Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression de vos données.";
+"privacy_contact_title" = "Contact";
+"privacy_contact_body" = "Pour toute question relative à la confidentialité, contactez-nous à bob.oulhen@gmail.com.";
+"terms_last_updated" = "Dernière mise à jour : 29 mars 2026";
+"terms_acceptance_title" = "Acceptation des conditions";
+"terms_acceptance_body" = "En utilisant Bons Comptes, vous acceptez les présentes conditions d'utilisation. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser l'application.";
+"terms_description_title" = "Description du service";
+"terms_description_body" = "Bons Comptes est une application gratuite de gestion et partage de dépenses entre plusieurs personnes. Elle permet de créer des campagnes, d'ajouter des dépenses et des remboursements, et de calculer les soldes.";
+"terms_usage_title" = "Utilisation acceptable";
+"terms_usage_body" = "Vous vous engagez à utiliser l'application de manière licite et conforme à son objectif. Toute utilisation frauduleuse ou abusive est interdite.";
+"terms_liability_title" = "Limitation de responsabilité";
+"terms_liability_body" = "L'application est fournie \"en l'état\". Le développeur ne peut être tenu responsable des erreurs de calcul, pertes de données ou tout dommage résultant de l'utilisation de l'application. Les montants affichés sont indicatifs et ne constituent pas un avis financier.";
+"terms_ip_title" = "Propriété intellectuelle";
+"terms_ip_body" = "L'application Bons Comptes, son design, son code source et son contenu sont la propriété de Robert Oulhen. Toute reproduction non autorisée est interdite.";
+"terms_modifications_title" = "Modifications";
+"terms_modifications_body" = "Le développeur se réserve le droit de modifier ces conditions à tout moment. Les utilisateurs seront informés des changements via une mise à jour de l'application.";
+"legal_publisher_title" = "Éditeur";
+"legal_publisher_body" = "Robert Oulhen\nPersonne physique\nContact : bob.oulhen@gmail.com";
+"legal_hosting_title" = "Hébergement";
+"legal_hosting_body" = "Application mobile : Apple Inc. (App Store)\nSite web : GitHub Pages — GitHub, Inc., 88 Colin P Kelly Jr St, San Francisco, CA 94107, USA.";
+"legal_credits_title" = "Crédits";
+"legal_credits_body" = "Conception et développement : Robert Oulhen\nIcones : SF Symbols (Apple)\nFramework : SwiftUI";
+"legal_law_title" = "Droit applicable";
+"legal_law_body" = "Les présentes mentions légales sont régies par le droit français. Tout litige sera soumis aux tribunaux compétents de Paris, France.";
 
 /* Default Categories */
 "category_food" = "Repas";

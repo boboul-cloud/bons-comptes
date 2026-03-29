@@ -116,6 +116,48 @@
 "about_section" = "About";
 "version_label" = "Version";
 "developer_label" = "Developer";
+"contact_label" = "Contact";
+"website_label" = "Website";
+"about_description" = "Bons Comptes is an expense sharing app for friends, family, or colleagues. Manage your shared expenses simply and fairly.";
+
+/* Legal */
+"privacy_policy" = "Privacy Policy";
+"terms_of_use" = "Terms of Use";
+"legal_notices" = "Legal Notices";
+"privacy_last_updated" = "Last updated: March 29, 2026";
+"privacy_intro_title" = "Introduction";
+"privacy_intro_body" = "Bons Comptes respects your privacy. This policy explains how we handle your personal data.";
+"privacy_data_title" = "Data Collected";
+"privacy_data_body" = "The app does not collect any personal data. All information (names, expenses, reimbursements) is stored only on your device.";
+"privacy_storage_title" = "Data Storage";
+"privacy_storage_body" = "Your data is saved locally on your device in JSON format. No data is sent to any external server. Data sharing is only done at your initiative via a link or JSON export.";
+"privacy_sharing_title" = "Data Sharing";
+"privacy_sharing_body" = "When you share a campaign via a web link, the data is encoded directly in the URL. No intermediate server stores this information.";
+"privacy_rights_title" = "Your Rights";
+"privacy_rights_body" = "You can delete all your data at any time by removing campaigns in the app or uninstalling the app. In accordance with GDPR, you have the right to access, rectify, and delete your data.";
+"privacy_contact_title" = "Contact";
+"privacy_contact_body" = "For any privacy-related questions, contact us at bob.oulhen@gmail.com.";
+"terms_last_updated" = "Last updated: March 29, 2026";
+"terms_acceptance_title" = "Acceptance of Terms";
+"terms_acceptance_body" = "By using Bons Comptes, you agree to these terms of use. If you do not agree, please do not use the app.";
+"terms_description_title" = "Service Description";
+"terms_description_body" = "Bons Comptes is a free app for managing and sharing expenses among multiple people. It allows creating campaigns, adding expenses and reimbursements, and calculating balances.";
+"terms_usage_title" = "Acceptable Use";
+"terms_usage_body" = "You agree to use the app lawfully and in accordance with its purpose. Any fraudulent or abusive use is prohibited.";
+"terms_liability_title" = "Limitation of Liability";
+"terms_liability_body" = "The app is provided \"as is\". The developer cannot be held liable for calculation errors, data loss, or any damage resulting from the use of the app. Displayed amounts are indicative and do not constitute financial advice.";
+"terms_ip_title" = "Intellectual Property";
+"terms_ip_body" = "The Bons Comptes app, its design, source code, and content are the property of Robert Oulhen. Unauthorized reproduction is prohibited.";
+"terms_modifications_title" = "Modifications";
+"terms_modifications_body" = "The developer reserves the right to modify these terms at any time. Users will be informed of changes via an app update.";
+"legal_publisher_title" = "Publisher";
+"legal_publisher_body" = "Robert Oulhen\nIndividual\nContact: bob.oulhen@gmail.com";
+"legal_hosting_title" = "Hosting";
+"legal_hosting_body" = "Mobile app: Apple Inc. (App Store)\nWebsite: GitHub Pages — GitHub, Inc., 88 Colin P Kelly Jr St, San Francisco, CA 94107, USA.";
+"legal_credits_title" = "Credits";
+"legal_credits_body" = "Design and development: Robert Oulhen\nIcons: SF Symbols (Apple)\nFramework: SwiftUI";
+"legal_law_title" = "Applicable Law";
+"legal_law_body" = "These legal notices are governed by French law. Any dispute shall be submitted to the competent courts of Paris, France.";
 
 /* Default Categories */
 "category_food" = "Meals";

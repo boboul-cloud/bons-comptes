@@ -114,7 +114,7 @@ struct SettingsView: View {
                         .cardStyle()
                         .animatedAppear(delay: 0.1)
 
-                        // About
+                        // About & Legal
                         VStack(alignment: .leading, spacing: 12) {
                             sectionHeader(icon: "info.circle.fill", title: NSLocalizedString("about_section", comment: ""), color: AppTheme.warning)
 
@@ -128,6 +128,20 @@ struct SettingsView: View {
                                 Text(NSLocalizedString("developer_label", comment: "")).font(.subheadline)
                                 Spacer()
                                 Text("Robert Oulhen").font(.subheadline).foregroundColor(.secondary)
+                            }
+                            Divider()
+
+                            NavigationLink(destination: AboutView()) {
+                                legalRow(icon: "info.circle", title: NSLocalizedString("about_section", comment: ""), color: AppTheme.info)
+                            }
+                            NavigationLink(destination: PrivacyPolicyView()) {
+                                legalRow(icon: "hand.raised.fill", title: NSLocalizedString("privacy_policy", comment: ""), color: AppTheme.positive)
+                            }
+                            NavigationLink(destination: TermsOfUseView()) {
+                                legalRow(icon: "doc.text.fill", title: NSLocalizedString("terms_of_use", comment: ""), color: AppTheme.primary)
+                            }
+                            NavigationLink(destination: LegalNoticesView()) {
+                                legalRow(icon: "building.columns.fill", title: NSLocalizedString("legal_notices", comment: ""), color: AppTheme.warning)
                             }
                         }
                         .cardStyle()
@@ -184,5 +198,20 @@ struct SettingsView: View {
             Image(systemName: icon).foregroundColor(color)
             Text(title).font(.headline).fontWeight(.bold)
         }
+    }
+
+    func legalRow(icon: String, title: String, color: Color) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle().fill(color.opacity(0.12)).frame(width: 36, height: 36)
+                Image(systemName: icon).font(.caption).foregroundColor(color)
+            }
+            Text(title).font(.subheadline).foregroundColor(.primary)
+            Spacer()
+            Image(systemName: "chevron.right").font(.caption2).foregroundColor(.secondary)
+        }
+        .padding(8)
+        .background(AppTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }
