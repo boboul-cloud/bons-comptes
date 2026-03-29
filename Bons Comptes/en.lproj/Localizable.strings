@@ -135,6 +135,9 @@
 "share_pdf" = "Share PDF summary";
 "view_pdf" = "View PDF summary";
 "share_json" = "Share JSON data";
+"send_sms_section" = "Send via SMS";
+"no_phone_numbers" = "No participant has a phone number. Add one in participant management.";
+"send_sms_all_format" = "Send to all (%d participants)";
 "share_summary" = "Share text summary";
 "web_deploy_hint" = "Compatible with GitHub Pages, Netlify, Vercel...";
 

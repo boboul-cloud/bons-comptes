@@ -25,6 +25,10 @@ struct ShareView: View {
     @State private var copiedFeedback = false
     @State private var pdfURL: URL?
 
+    var participantsWithPhone: [Participant] {
+        store.participantsFor(campaign: campaign).filter { !$0.phone.isEmpty }
+    }
+
     var webLink: String { store.webURL(for: campaign) }
 
     private func generatePDFURL() -> URL {
@@ -122,6 +126,52 @@ struct ShareView: View {
                         }
                         .cardStyle()
                         .animatedAppear(delay: 0.1)
+
+                        // SMS send to participants
+                        VStack(alignment: .leading, spacing: 12) {
+                            sectionHeader(icon: "message.fill", title: NSLocalizedString("send_sms_section", comment: ""), color: AppTheme.positive)
+
+                            if participantsWithPhone.isEmpty {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "info.circle")
+                                        .foregroundColor(.secondary)
+                                    Text(NSLocalizedString("no_phone_numbers", comment: ""))
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding(12)
+                            } else {
+                                Button(action: sendSMSToAll) {
+                                    shareRow(
+                                        icon: "paperplane.fill",
+                                        title: String(format: NSLocalizedString("send_sms_all_format", comment: ""), participantsWithPhone.count),
+                                        color: AppTheme.positive
+                                    )
+                                }
+
+                                ForEach(participantsWithPhone) { p in
+                                    Button(action: { sendSMS(to: [p.phone]) }) {
+                                        HStack(spacing: 14) {
+                                            AvatarView(p.avatarEmoji, size: 40)
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(p.name)
+                                                    .font(.subheadline).foregroundColor(.primary)
+                                                Text(p.phone)
+                                                    .font(.caption2).foregroundColor(.secondary)
+                                            }
+                                            Spacer()
+                                            Image(systemName: "message.fill")
+                                                .foregroundColor(AppTheme.positive)
+                                        }
+                                        .padding(12)
+                                        .background(AppTheme.cardBackground)
+                                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                    }
+                                }
+                            }
+                        }
+                        .cardStyle()
+                        .animatedAppear(delay: 0.15)
                     }
                     .padding(.vertical)
                 }
@@ -157,6 +207,21 @@ struct ShareView: View {
         HStack(spacing: 8) {
             Image(systemName: icon).foregroundColor(color)
             Text(title).font(.headline).fontWeight(.bold)
+        }
+    }
+
+    func sendSMSToAll() {
+        let phones = participantsWithPhone.map { $0.phone }
+        sendSMS(to: phones)
+    }
+
+    func sendSMS(to phones: [String]) {
+        let link = webLink
+        let body = String(format: NSLocalizedString("sms_campaign_body", comment: ""), campaign.title, link)
+            .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let recipients = phones.joined(separator: ",")
+        if let url = URL(string: "sms://open?addresses=\(recipients)&body=\(body)") {
+            UIApplication.shared.open(url)
         }
     }
 }

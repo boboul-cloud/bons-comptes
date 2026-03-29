@@ -13,6 +13,7 @@ struct ParticipantsView: View {
     @State private var showingAddParticipant = false
     @State private var newName = ""
     @State private var newEmail = ""
+    @State private var newPhone = ""
     @State private var selectedEmoji = "🧑"
 
     let emojiOptions = ["🧑", "👩", "👨", "👧", "👦", "🧓", "👴", "👵", "🤴", "👸", "🦸", "🧙", "🎅", "🤠", "👻"]
@@ -130,8 +131,10 @@ struct ParticipantsView: View {
             .alert(NSLocalizedString("add_participant", comment: ""), isPresented: $showingAddParticipant) {
                 TextField(NSLocalizedString("participant_name", comment: ""), text: $newName)
                 TextField(NSLocalizedString("email_optional", comment: ""), text: $newEmail)
+                TextField(NSLocalizedString("participant_phone", comment: ""), text: $newPhone)
+                    .keyboardType(.phonePad)
                 Button(NSLocalizedString("add", comment: "")) { addParticipant() }
-                Button(NSLocalizedString("cancel", comment: ""), role: .cancel) { newName = ""; newEmail = "" }
+                Button(NSLocalizedString("cancel", comment: ""), role: .cancel) { newName = ""; newEmail = ""; newPhone = "" }
             } message: {
                 Text(NSLocalizedString("add_participant_desc", comment: ""))
             }
@@ -143,10 +146,12 @@ struct ParticipantsView: View {
         let participant = Participant(
             name: newName,
             email: newEmail,
+            phone: newPhone.trimmingCharacters(in: .whitespaces),
             avatarEmoji: emojiOptions.randomElement() ?? "🧑"
         )
         store.addParticipant(participant, to: &campaign)
         newName = ""
         newEmail = ""
+        newPhone = ""
     }
 }
