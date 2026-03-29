@@ -20,6 +20,8 @@
 "paste_json" = "Coller les données JSON";
 "paste_json_or_url" = "Coller JSON ou lien web";
 "import_button" = "Importer";
+"import_from_file" = "Charger depuis un fichier";
+"file_read_error" = "Impossible de lire le fichier";
 "clipboard_ready" = "Données trouvées dans le presse-papiers";
 "clipboard_empty" = "Presse-papiers vide";
 "clipboard_hint" = "Copiez un lien web ou des données JSON avant d'importer";

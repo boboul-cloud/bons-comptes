@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ImportCampaignSheet: View {
     let store: CampaignStore
@@ -12,6 +13,7 @@ struct ImportCampaignSheet: View {
     @State private var inputText = ""
     @State private var clipboardStatus: ClipboardStatus = .checking
     @State private var errorMessage = ""
+    @State private var showingFilePicker = false
 
     enum ClipboardStatus {
         case checking, found, empty
@@ -30,6 +32,7 @@ struct ImportCampaignSheet: View {
                     } else if clipboardStatus == .empty {
                         emptyAction
                     }
+                    fileImportButton
                     if !errorMessage.isEmpty {
                         ScrollView {
                             Text(errorMessage)
@@ -56,6 +59,21 @@ struct ImportCampaignSheet: View {
             })
             .onAppear {
                 readClipboard()
+            }
+            .fileImporter(isPresented: $showingFilePicker, allowedContentTypes: [.json, .plainText]) { result in
+                switch result {
+                case .success(let url):
+                    let accessing = url.startAccessingSecurityScopedResource()
+                    defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+                    if let data = try? Data(contentsOf: url), let text = String(data: data, encoding: .utf8) {
+                        inputText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                        doImport()
+                    } else {
+                        errorMessage = NSLocalizedString("file_read_error", comment: "")
+                    }
+                case .failure(let error):
+                    errorMessage = error.localizedDescription
+                }
             }
         }
     }
@@ -133,6 +151,21 @@ struct ImportCampaignSheet: View {
                 .background(AppTheme.primary.opacity(0.1))
                 .clipShape(Capsule())
             }
+        }
+    }
+
+    private var fileImportButton: some View {
+        Button(action: { showingFilePicker = true }) {
+            HStack(spacing: 10) {
+                Image(systemName: "folder.fill")
+                Text(NSLocalizedString("import_from_file", comment: ""))
+                    .fontWeight(.medium)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .foregroundColor(AppTheme.primary)
+            .background(AppTheme.primary.opacity(0.1))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
     }
 
