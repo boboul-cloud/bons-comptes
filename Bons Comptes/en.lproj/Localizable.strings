@@ -39,7 +39,12 @@
 "phone_hint" = "Allows recipients to reply by SMS from the web page.";
 "initial_participants" = "Initial participants";
 "participant_name" = "Participant name";
+"participant_phone" = "Phone (optional)";
 "add_participant" = "Add participant";
+"send_sms_title" = "Send link";
+"send_sms_button" = "Send via SMS";
+"send_sms_message" = "Send the campaign link by SMS to participants?";
+"sms_campaign_body" = "Join the campaign \"%@\" on Bons Comptes: %@";
 "create" = "Create";
 "participants_count" = "participants";
 "total_format" = "%.2f %@";

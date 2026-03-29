@@ -16,7 +16,10 @@ struct AddCampaignView: View {
     @State private var creatorName = ""
     @State private var creatorPhone = ""
     @State private var participantNames: [String] = [""]
+    @State private var participantPhones: [String] = [""]
     @State private var currentStep = 0
+    @State private var createdCampaign: Campaign?
+    @State private var showSMSConfirm = false
 
     let currencies = ["EUR", "USD", "GBP", "CHF", "CAD", "JPY", "AUD"]
 
@@ -35,6 +38,12 @@ struct AddCampaignView: View {
             .navigationTitle(NSLocalizedString("new_campaign", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { cancelToolbar }
+            .alert(NSLocalizedString("send_sms_title", comment: ""), isPresented: $showSMSConfirm) {
+                Button(NSLocalizedString("send_sms_button", comment: "")) { sendSMSToParticipants() }
+                Button(NSLocalizedString("cancel", comment: ""), role: .cancel) { dismiss() }
+            } message: {
+                Text(NSLocalizedString("send_sms_message", comment: ""))
+            }
         }
     }
 
@@ -130,24 +139,50 @@ struct AddCampaignView: View {
             sectionHeader(icon: "person.3.fill", title: NSLocalizedString("initial_participants", comment: ""), color: AppTheme.accent)
 
             ForEach(participantNames.indices, id: \.self) { index in
-                HStack(spacing: 10) {
-                    AvatarView(["🧑","👩","👨","🧓","👧","👦"][index % 6], size: 36)
-                    TextField(NSLocalizedString("participant_name", comment: ""), text: $participantNames[index])
-                        .padding(10)
+                VStack(spacing: 6) {
+                    HStack(spacing: 10) {
+                        AvatarView(["🧑","👩","👨","🧓","👧","👦"][index % 6], size: 36)
+                        TextField(NSLocalizedString("participant_name", comment: ""), text: $participantNames[index])
+                            .padding(10)
+                            .background(AppTheme.cardBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        if participantNames.count > 1 {
+                            Button(action: {
+                                withAnimation(.spring()) {
+                                    _ = participantNames.remove(at: index)
+                                    _ = participantPhones.remove(at: index)
+                                }
+                            }) {
+                                Image(systemName: "minus.circle.fill")
+                                    .foregroundColor(AppTheme.negative)
+                                    .font(.title3)
+                            }
+                        }
+                    }
+                    HStack(spacing: 10) {
+                        Spacer().frame(width: 36)
+                        HStack(spacing: 8) {
+                            Image(systemName: "phone.fill")
+                                .foregroundColor(AppTheme.primary.opacity(0.4))
+                                .font(.caption)
+                            TextField(NSLocalizedString("participant_phone", comment: ""), text: $participantPhones[index])
+                                .keyboardType(.phonePad)
+                                .font(.subheadline)
+                        }
+                        .padding(8)
                         .background(AppTheme.cardBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    if participantNames.count > 1 {
-                        Button(action: { withAnimation(.spring()) { _ = participantNames.remove(at: index) } }) {
-                            Image(systemName: "minus.circle.fill")
-                                .foregroundColor(AppTheme.negative)
-                                .font(.title3)
-                        }
                     }
                 }
                 .transition(.asymmetric(insertion: .scale.combined(with: .opacity), removal: .opacity))
             }
 
-            Button(action: { withAnimation(.spring()) { participantNames.append("") } }) {
+            Button(action: {
+                withAnimation(.spring()) {
+                    participantNames.append("")
+                    participantPhones.append("")
+                }
+            }) {
                 HStack {
                     Image(systemName: "plus.circle.fill")
                     Text(NSLocalizedString("add_participant", comment: ""))
@@ -212,13 +247,14 @@ struct AddCampaignView: View {
     }
 
     func createCampaign() {
-        let creator = Participant(name: creatorName)
+        let creator = Participant(name: creatorName, phone: creatorPhone.trimmingCharacters(in: .whitespaces))
         store.participants.append(creator)
 
         var allParticipantIDs = [creator.id]
 
-        for name in participantNames where !name.trimmingCharacters(in: .whitespaces).isEmpty {
-            let p = Participant(name: name)
+        for (i, name) in participantNames.enumerated() where !name.trimmingCharacters(in: .whitespaces).isEmpty {
+            let phone = i < participantPhones.count ? participantPhones[i].trimmingCharacters(in: .whitespaces) : ""
+            let p = Participant(name: name, phone: phone)
             store.participants.append(p)
             allParticipantIDs.append(p.id)
         }
@@ -233,6 +269,29 @@ struct AddCampaignView: View {
             managerPhone: creatorPhone.trimmingCharacters(in: .whitespaces)
         )
         store.addCampaign(campaign)
+        createdCampaign = campaign
+
+        // Check if any participant has a phone number
+        let hasPhones = participantPhones.contains { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        if hasPhones {
+            showSMSConfirm = true
+        } else {
+            dismiss()
+        }
+    }
+
+    func sendSMSToParticipants() {
+        guard let campaign = createdCampaign else { dismiss(); return }
+        let link = store.webURL(for: campaign)
+        let phones = participantPhones
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+            .joined(separator: ",")
+        let body = String(format: NSLocalizedString("sms_campaign_body", comment: ""), campaign.title, link)
+            .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        if let url = URL(string: "sms://open?addresses=\(phones)&body=\(body)") {
+            UIApplication.shared.open(url)
+        }
         dismiss()
     }
 }

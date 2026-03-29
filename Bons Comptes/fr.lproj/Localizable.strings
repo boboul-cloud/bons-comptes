@@ -39,7 +39,12 @@
 "phone_hint" = "Permet aux destinataires de vous répondre par SMS depuis la page web.";
 "initial_participants" = "Participants initiaux";
 "participant_name" = "Nom du participant";
+"participant_phone" = "Téléphone (optionnel)";
 "add_participant" = "Ajouter un participant";
+"send_sms_title" = "Envoyer le lien";
+"send_sms_button" = "Envoyer par SMS";
+"send_sms_message" = "Envoyer le lien de la campagne par SMS aux participants ?";
+"sms_campaign_body" = "Rejoins la campagne \"%@\" sur Bons Comptes : %@";
 "create" = "Créer";
 "participants_count" = "participants";
 "total_format" = "%.2f %@";
