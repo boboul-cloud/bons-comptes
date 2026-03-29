@@ -345,7 +345,7 @@ const T = {
     total_reimbursed: "Total remboursé", new_expense_added: "Dépense ajoutée !",
     new_reimb_added: "Remboursement ajouté !", description: "Description",
     share_options: "Options de partage", view_share: "Partage & Export",
-    reply_sms: "Répondre par SMS", reply_sms_body: "Re: ",
+    send_update: "Envoyer la mise à jour", send_update_body: "Voici la mise à jour de ",
   },
   en: {
     load_campaign: "Load campaign",
@@ -372,7 +372,7 @@ const T = {
     total_reimbursed: "Total reimbursed", new_expense_added: "Expense added!",
     new_reimb_added: "Reimbursement added!", description: "Description",
     share_options: "Share options", view_share: "Share & Export",
-    reply_sms: "Reply by SMS", reply_sms_body: "Re: ",
+    send_update: "Send update", send_update_body: "Here's the update for ",
   }
 };
 
@@ -932,7 +932,7 @@ function renderHeader() {
   const parts = state.participants.filter(p => c.participantIDs.includes(p.id));
   document.getElementById('header').innerHTML = `
     <div class="header-actions">
-      ${c.managerPhone ? `<button onclick="replySMS()" title="${t('reply_sms')}">💬</button>` : ''}
+      ${c.managerPhone ? `<button onclick="sendUpdate()" title="${t('send_update')}">📩</button>` : ''}
       <button onclick="showShareModal()" title="${t('view_share')}">📤</button>
     </div>
     <div class="header-title">${esc(c.title)}</div>
@@ -1229,11 +1229,14 @@ function openInApp() {
   });
 }
 
-function replySMS() {
+async function sendUpdate() {
   const phone = state.campaign.managerPhone;
   if (!phone) return;
-  const body = encodeURIComponent(t('reply_sms_body') + state.campaign.title);
-  window.location.href = `sms:${phone}&body=${body}`;
+  try {
+    const url = await generateShareURL();
+    const body = encodeURIComponent(t('send_update_body') + state.campaign.title + ' :\n' + url);
+    window.location.href = `sms:${phone}&body=${body}`;
+  } catch(e) { alert('Erreur: ' + e.message); }
 }
 
 async function showShareModal() {
