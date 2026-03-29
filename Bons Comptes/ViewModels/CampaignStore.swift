@@ -316,6 +316,14 @@ class CampaignStore: ObservableObject {
         encoder.outputFormatting = [.sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
         guard let jsonData = try? encoder.encode(data) else { return Self.webBaseURL }
+        // Compress with zlib to reduce URL length
+        if let compressed = try? (jsonData as NSData).compressed(using: .zlib) as Data {
+            let base64 = compressed.base64EncodedString()
+                .replacingOccurrences(of: "+", with: "-")
+                .replacingOccurrences(of: "/", with: "_")
+                .replacingOccurrences(of: "=", with: "")
+            return Self.webBaseURL + "#z" + base64
+        }
         let base64 = jsonData.base64EncodedString()
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")

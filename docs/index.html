@@ -396,21 +396,86 @@ const pmIcons = {
   'Autre': '📦', 'Other': '📦'
 };
 
-// ===== URL Encoding =====
-function encodeData(jsonStr) {
+// ===== URL Encoding (with zlib compression) =====
+async function compressBytes(bytes) {
+  try {
+    const cs = new CompressionStream('deflate-raw');
+    const writer = cs.writable.getWriter();
+    writer.write(bytes);
+    writer.close();
+    const chunks = [];
+    const reader = cs.readable.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+    }
+    const total = chunks.reduce((a, c) => a + c.length, 0);
+    const result = new Uint8Array(total);
+    let off = 0;
+    for (const c of chunks) { result.set(c, off); off += c.length; }
+    return result;
+  } catch(e) { return null; }
+}
+
+async function decompressBytes(bytes) {
+  const formats = ['deflate-raw', 'deflate'];
+  for (const fmt of formats) {
+    try {
+      const ds = new DecompressionStream(fmt);
+      const writer = ds.writable.getWriter();
+      writer.write(bytes);
+      writer.close();
+      const chunks = [];
+      const reader = ds.readable.getReader();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+      }
+      const total = chunks.reduce((a, c) => a + c.length, 0);
+      const result = new Uint8Array(total);
+      let off = 0;
+      for (const c of chunks) { result.set(c, off); off += c.length; }
+      return result;
+    } catch(e) { continue; }
+  }
+  return null;
+}
+
+function b64ToBytes(b64) {
+  const raw = b64.replace(/-/g, '+').replace(/_/g, '/');
+  const pad = raw + '===='.slice(raw.length % 4 || 4);
+  const binStr = atob(pad);
+  return Uint8Array.from(binStr, c => c.charCodeAt(0));
+}
+
+function bytesToB64(bytes) {
+  const binStr = Array.from(bytes, b => String.fromCharCode(b)).join('');
+  return btoa(binStr).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function encodeData(jsonStr) {
   try {
     const bytes = new TextEncoder().encode(jsonStr);
-    const binStr = Array.from(bytes, b => String.fromCharCode(b)).join('');
-    return btoa(binStr).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const compressed = await compressBytes(bytes);
+    if (compressed) {
+      return 'z' + bytesToB64(compressed);
+    }
+    return bytesToB64(bytes);
   } catch(e) { return ''; }
 }
 
-function decodeData(b64) {
+async function decodeData(b64) {
   try {
-    const raw = b64.replace(/-/g, '+').replace(/_/g, '/');
-    const pad = raw + '===='.slice(raw.length % 4 || 4);
-    const binStr = atob(pad);
-    const bytes = Uint8Array.from(binStr, c => c.charCodeAt(0));
+    if (b64.startsWith('z')) {
+      const bytes = b64ToBytes(b64.slice(1));
+      const decompressed = await decompressBytes(bytes);
+      if (decompressed) return new TextDecoder().decode(decompressed);
+      return '';
+    }
+    // Legacy uncompressed format
+    const bytes = b64ToBytes(b64);
     return new TextDecoder().decode(bytes);
   } catch(e) { return ''; }
 }
@@ -509,9 +574,9 @@ function stateToJSON() {
   return JSON.stringify(data, null, 2);
 }
 
-function generateShareURL() {
+async function generateShareURL() {
   const json = stateToJSON();
-  const encoded = encodeData(json);
+  const encoded = await encodeData(json);
   return window.location.origin + window.location.pathname + '#' + encoded;
 }
 
@@ -548,10 +613,10 @@ function loadFromInput() {
   }
 }
 
-function loadFromURL() {
+async function loadFromURL() {
   const hash = window.location.hash.slice(1);
   if (!hash) return false;
-  const json = decodeData(hash);
+  const json = await decodeData(hash);
   if (!json) return false;
   return loadData(json);
 }
@@ -858,8 +923,8 @@ function showAddReimbursement() {
   openModal();
 }
 
-function showShareModal() {
-  const url = generateShareURL();
+async function showShareModal() {
+  const url = await generateShareURL();
   document.getElementById('modal').innerHTML = `
     <div class="modal-header"><div class="modal-handle"></div><div class="modal-title">📤 ${t('view_share')}</div></div>
     <div class="modal-body">
@@ -1044,9 +1109,9 @@ function deleteReimbursement(id) {
   showToast(t('deleted'));
 }
 
-function updateURLHash() {
+async function updateURLHash() {
   const json = stateToJSON();
-  const encoded = encodeData(json);
+  const encoded = await encodeData(json);
   history.replaceState(null, '', '#' + encoded);
 }
 
@@ -1070,9 +1135,9 @@ function copyJSON() {
 }
 
 // ===== Init =====
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('landingDesc').textContent = t('landing_desc');
-  if (loadFromURL()) {
+  if (await loadFromURL()) {
     showApp();
   }
 });
