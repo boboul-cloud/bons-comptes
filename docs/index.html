@@ -615,20 +615,23 @@ function stateToCompactJSON() {
     if (!o.phone) delete o.phone;
     if (o.isActive === true) delete o.isActive;
     if (o.joinedAt) delete o.joinedAt;
+    if (o.avatarEmoji === '🧑') delete o.avatarEmoji;
     return o;
   });
+  // Strip default currency
+  if (camp.currency === 'EUR') delete camp.currency;
   const data = {
     campaigns: [camp],
     participants: parts,
     expenses: expenses,
-    reimbursements: reimbs,
+    reimbursements: reimbs.length ? reimbs : undefined,
     categories: state.categories.filter(c => usedCatIDs.has(c.id)),
     paymentMethods: state.paymentMethods.filter(m => usedPmIDs.has(m.id))
   };
   // UUID indexing: replace UUIDs with "$0", "$1" etc.
   const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const uuids = []; const uuidMap = {};
-  function idx(u) { if (!(u in uuidMap)) { uuidMap[u] = uuids.length; uuids.push(u); } return '$' + uuidMap[u]; }
+  function idx(u) { if (!(u in uuidMap)) { uuidMap[u] = uuids.length; uuids.push(u.replace(/-/g,'')); } return '$' + uuidMap[u]; }
   function compact(obj) {
     if (typeof obj === 'string') return uuidRe.test(obj) ? idx(obj) : obj;
     if (Array.isArray(obj)) return obj.map(compact);
@@ -668,9 +671,132 @@ function stateToCompactJSON() {
 }
 
 async function generateShareURL() {
-  const json = stateToCompactJSON();
-  const encoded = await encodeData(json);
+  const v2 = stateToV2();
+  const encoded = await encodeData(v2);
   return window.location.origin + window.location.pathname + '#' + encoded;
+}
+
+// ===== V2 Compact Format (pipe-delimited, ~40% smaller than JSON) =====
+function escV2(s) { return (s||'').replace(/\n/g,' ').replace(/\t/g,' '); }
+function fmtNum(n) { return n === Math.floor(n) && Math.abs(n) < 1e15 ? String(Math.floor(n)) : String(n); }
+function trimV2(fields) {
+  const f = [...fields];
+  while (f.length > 0 && f[f.length-1] === '') f.pop();
+  return f.join('|');
+}
+
+function stateToV2() {
+  const c = state.campaign;
+  const parts = state.participants.filter(p => c.participantIDs.includes(p.id));
+  const exps = state.expenses.filter(e => e.campaignID === c.id);
+  const reimbs = state.reimbursements.filter(r => r.campaignID === c.id);
+  const pIdx = {}; parts.forEach((p, i) => pIdx[p.id] = i);
+  const allPIDs = new Set(parts.map(p => p.id));
+
+  const lines = ['v2'];
+
+  // Campaign: title[|currency[|description[|location]]]
+  lines.push(trimV2([escV2(c.title), c.currency && c.currency !== 'EUR' ? c.currency : '', escV2(c.description||''), escV2(c.location||'')]));
+
+  // Participants: name[|emoji]\tname[|emoji]\t...
+  lines.push(parts.map(p => {
+    const emoji = (!p.avatarEmoji || p.avatarEmoji === '🧑') ? '' : p.avatarEmoji;
+    return emoji ? escV2(p.name) + '|' + emoji : escV2(p.name);
+  }).join('\t'));
+
+  // Expenses: title|amount|YYMMDD|payerIdx|splitIdxs[|splitType[|customSplits[|location[|notes]]]]
+  lines.push(exps.map(e => {
+    const d = new Date(e.date);
+    const yy = String(d.getFullYear()).slice(2);
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    const f = [escV2(e.title), fmtNum(e.amount), yy+mm+dd, String(pIdx[e.paidByID]??0)];
+    const splitSet = new Set(e.splitAmongIDs);
+    if (splitSet.size === allPIDs.size && [...allPIDs].every(id => splitSet.has(id))) {
+      f.push('*');
+    } else {
+      f.push(e.splitAmongIDs.map(id => pIdx[id]).filter(i => i!==undefined).sort((a,b)=>a-b).join(','));
+    }
+    const st = (!e.splitType || e.splitType==='equal') ? '' : (e.splitType==='custom' ? 'c' : 'p');
+    const cs = (e.customSplits && Object.keys(e.customSplits).length>0)
+      ? Object.entries(e.customSplits).map(([k,v]) => (pIdx[k]!==undefined?pIdx[k]:k)+':'+fmtNum(v)).join(',') : '';
+    f.push(st, cs, escV2(e.location||''), escV2(e.notes||''));
+    return trimV2(f);
+  }).join('\t'));
+
+  // Reimbursements (if any)
+  if (reimbs.length > 0) {
+    lines.push(reimbs.map(r => {
+      const d = new Date(r.date);
+      const yy = String(d.getFullYear()).slice(2);
+      const mm = String(d.getMonth()+1).padStart(2,'0');
+      const dd = String(d.getDate()).padStart(2,'0');
+      return trimV2([String(pIdx[r.fromID]??0), String(pIdx[r.toID]??0), fmtNum(r.amount), yy+mm+dd, escV2(r.notes||''), r.isPartial?'1':'']);
+    }).join('\t'));
+  }
+  return lines.join('\n');
+}
+
+function loadV2(text) {
+  try {
+    const lines = text.split('\n');
+    if (lines.length < 4 || lines[0] !== 'v2') return false;
+    const cf = lines[1].split('|');
+    const campaignID = generateUUID();
+    state.campaign = {
+      id: campaignID, title: cf[0]||'', currency: cf[1]||'EUR',
+      description: cf[2]||'', location: cf[3]||'',
+      isArchived: false, isClosed: false,
+      participantIDs: [], expenseIDs: [], reimbursementIDs: []
+    };
+    state.participants = lines[2].split('\t').filter(s=>s).map(item => {
+      const pf = item.split('|');
+      return { id:generateUUID(), name:pf[0]||'', avatarEmoji:pf[1]||'🧑', isActive:true, email:'', phone:'' };
+    });
+    state.expenses = lines[3].split('\t').filter(s=>s).map(item => {
+      const ef = item.split('|');
+      const payerIdx = parseInt(ef[3])||0;
+      const splitIdxs = ef[4]==='*' ? state.participants.map((_,i)=>i) : ef[4].split(',').map(s=>parseInt(s)).filter(n=>!isNaN(n));
+      const ds = ef[2]||'';
+      const date = `${2000+parseInt(ds.slice(0,2))}-${ds.slice(2,4)}-${ds.slice(4,6)}`;
+      let splitType='equal', customSplits={};
+      if (ef.length>5 && ef[5]) splitType = ef[5]==='c' ? 'custom' : 'percentage';
+      if (ef.length>6 && ef[6]) {
+        ef[6].split(',').forEach(pair => {
+          const [k,v] = pair.split(':');
+          const idx = parseInt(k);
+          if (idx < state.participants.length) customSplits[state.participants[idx].id] = parseFloat(v);
+        });
+      }
+      return {
+        id:generateUUID(), title:ef[0]||'', amount:parseFloat(ef[1])||0, date:date,
+        paidByID: state.participants[payerIdx]?.id||state.participants[0]?.id,
+        splitAmongIDs: splitIdxs.filter(i=>i<state.participants.length).map(i=>state.participants[i].id),
+        splitType:splitType, customSplits:customSplits, campaignID:campaignID,
+        location: ef[7]||'', notes: ef[8]||''
+      };
+    });
+    state.reimbursements = [];
+    if (lines.length>4 && lines[4]) {
+      state.reimbursements = lines[4].split('\t').filter(s=>s).map(item => {
+        const rf = item.split('|');
+        const fromIdx=parseInt(rf[0])||0, toIdx=parseInt(rf[1])||0;
+        const ds = rf[3]||'';
+        return {
+          id:generateUUID(), amount:parseFloat(rf[2])||0,
+          date: `${2000+parseInt(ds.slice(0,2))}-${ds.slice(2,4)}-${ds.slice(4,6)}`,
+          fromID: state.participants[fromIdx]?.id||state.participants[0]?.id,
+          toID: state.participants[toIdx]?.id||state.participants[0]?.id,
+          notes: rf[4]||'', isPartial: rf[5]==='1', campaignID:campaignID
+        };
+      });
+    }
+    state.categories = []; state.paymentMethods = [];
+    state.campaign.participantIDs = state.participants.map(p=>p.id);
+    state.campaign.expenseIDs = state.expenses.map(e=>e.id);
+    state.campaign.reimbursementIDs = state.reimbursements.map(r=>r.id);
+    return true;
+  } catch(e) { console.error('V2 parse error:', e); return false; }
 }
 
 // ===== Load Data =====
@@ -699,7 +825,12 @@ function expandShortFormat(data) {
   }
   // Expand UUID refs
   if (!data._u) return data;
-  const uuids = data._u; delete data._u;
+  const rawUUIDs = data._u; delete data._u;
+  // Re-insert dashes if stored without them (32 hex → 8-4-4-4-12)
+  const uuids = rawUUIDs.map(u => {
+    const h = u.replace(/-/g, '');
+    return h.length === 32 ? h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20) : u;
+  });
   const refRe = /^\$(\d+)$/;
   function expand(obj) {
     if (typeof obj === 'string') { const m = obj.match(refRe); return m ? uuids[parseInt(m[1])] : obj; }
@@ -722,7 +853,12 @@ function loadData(jsonStr) {
     data = expandShortFormat(data);
     if (!data.campaigns || !data.campaigns.length) throw new Error('No campaign');
     state.campaign = data.campaigns[0];
-    state.participants = data.participants || [];
+    if (!state.campaign.currency) state.campaign.currency = 'EUR';
+    state.participants = (data.participants || []).map(p => ({
+      ...p,
+      avatarEmoji: p.avatarEmoji || '🧑',
+      isActive: p.isActive !== undefined ? p.isActive : true
+    }));
     const cid = state.campaign.id;
     state.expenses = (data.expenses || []).map(e => ({
       ...e,
@@ -764,9 +900,12 @@ function loadFromInput() {
 async function loadFromURL() {
   const hash = window.location.hash.slice(1);
   if (!hash) return false;
-  const json = await decodeData(hash);
-  if (!json) return false;
-  return loadData(json);
+  const text = await decodeData(hash);
+  if (!text) return false;
+  // V2 pipe-delimited format
+  if (text.startsWith('v2\n')) return loadV2(text);
+  // Legacy JSON format
+  return loadData(text);
 }
 
 // ===== Rendering =====
@@ -1278,8 +1417,8 @@ function deleteReimbursement(id) {
 }
 
 async function updateURLHash() {
-  const json = stateToCompactJSON();
-  const encoded = await encodeData(json);
+  const v2 = stateToV2();
+  const encoded = await encodeData(v2);
   history.replaceState(null, '', '#' + encoded);
 }
 

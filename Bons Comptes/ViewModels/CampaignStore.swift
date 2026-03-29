@@ -410,88 +410,183 @@ class CampaignStore: ObservableObject {
     }
 
     func webURL(for campaign: Campaign) -> String {
-        let campaignExpenses = expensesFor(campaign: campaign)
-        let campaignReimbs = reimbursementsFor(campaign: campaign)
-        // Only include categories/paymentMethods actually used
-        let usedCatIDs = Set(campaignExpenses.compactMap { $0.categoryID })
-        let usedPmIDs = Set(campaignReimbs.compactMap { $0.paymentMethodID })
-        let data = AppData(
-            campaigns: [campaign],
-            participants: participantsFor(campaign: campaign),
-            expenses: campaignExpenses,
-            reimbursements: campaignReimbs,
-            categories: categories.filter { usedCatIDs.contains($0.id) },
-            paymentMethods: paymentMethods.filter { usedPmIDs.contains($0.id) }
-        )
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.sortedKeys]
-        encoder.dateEncodingStrategy = .iso8601
-        guard let jsonData = try? encoder.encode(data) else { return Self.webBaseURL }
+        let v2Text = encodeV2(for: campaign)
+        guard let textData = v2Text.data(using: .utf8) else { return Self.webBaseURL }
 
-        // Strip redundant data to reduce URL size
-        guard var dict = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else { return Self.webBaseURL }
-        // Campaign: strip ID arrays, shareCode, createdAt, empty fields
-        if var campaigns = dict["campaigns"] as? [[String: Any]], !campaigns.isEmpty {
-            campaigns[0].removeValue(forKey: "expenseIDs")
-            campaigns[0].removeValue(forKey: "reimbursementIDs")
-            campaigns[0].removeValue(forKey: "participantIDs")
-            campaigns[0].removeValue(forKey: "shareCode")
-            campaigns[0].removeValue(forKey: "createdAt")
-            dict["campaigns"] = campaigns
-        }
-        // Expenses: strip campaignID, receiptImageData, defaults, shorten dates
-        if var expenses = dict["expenses"] as? [[String: Any]] {
-            for i in expenses.indices {
-                expenses[i].removeValue(forKey: "campaignID")
-                expenses[i].removeValue(forKey: "receiptImageData")
-                expenses[i].removeValue(forKey: "createdAt")
-                if let st = expenses[i]["splitType"] as? String, st == "equal" {
-                    expenses[i].removeValue(forKey: "splitType")
-                }
-                if let d = expenses[i]["date"] as? String { expenses[i]["date"] = String(d.prefix(10)) }
-            }
-            dict["expenses"] = expenses
-        }
-        // Reimbursements: strip campaignID, shorten dates
-        if var reimbs = dict["reimbursements"] as? [[String: Any]] {
-            for i in reimbs.indices {
-                reimbs[i].removeValue(forKey: "campaignID")
-                reimbs[i].removeValue(forKey: "createdAt")
-                if let d = reimbs[i]["date"] as? String { reimbs[i]["date"] = String(d.prefix(10)) }
-            }
-            dict["reimbursements"] = reimbs
-        }
-        // Participants: strip joinedAt, default avatarEmoji, default isActive
-        if var parts = dict["participants"] as? [[String: Any]] {
-            for i in parts.indices {
-                parts[i].removeValue(forKey: "joinedAt")
-            }
-            dict["participants"] = parts
-        }
-        if let cats = dict["categories"] as? [Any], cats.isEmpty { dict.removeValue(forKey: "categories") }
-        if let pms = dict["paymentMethods"] as? [Any], pms.isEmpty { dict.removeValue(forKey: "paymentMethods") }
-
-        // UUID indexing: replace 36-char UUIDs with "$0", "$1" etc.
-        dict = Self.compactUUIDs(dict)
-
-        // Short keys: rename long keys to 1-2 char abbreviations
-        dict = Self.shortenKeys(dict) as! [String: Any]
-
-        guard let compactData = try? JSONSerialization.data(withJSONObject: dict, options: [.sortedKeys]) else { return Self.webBaseURL }
-
-        // Compress with raw DEFLATE (compatible with web's deflate-raw)
-        if let compressed = Self.rawDeflateCompress(compactData) {
+        if let compressed = Self.rawDeflateCompress(textData) {
             let base64 = compressed.base64EncodedString()
                 .replacingOccurrences(of: "+", with: "-")
                 .replacingOccurrences(of: "/", with: "_")
                 .replacingOccurrences(of: "=", with: "")
             return Self.webBaseURL + "#z" + base64
         }
-        let base64 = compactData.base64EncodedString()
+        let base64 = textData.base64EncodedString()
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
         return Self.webBaseURL + "#" + base64
+    }
+
+    // MARK: - V2 Compact Format (pipe-delimited, ~40% smaller than JSON)
+
+    func encodeV2(for campaign: Campaign) -> String {
+        let parts = participantsFor(campaign: campaign)
+        let exps = expensesFor(campaign: campaign)
+        let reimbs = reimbursementsFor(campaign: campaign)
+        let pIdx: [UUID: Int] = Dictionary(uniqueKeysWithValues: parts.enumerated().map { ($1.id, $0) })
+        let allPIDs = Set(parts.map { $0.id })
+        let df = DateFormatter()
+        df.dateFormat = "yyMMdd"
+        df.locale = Locale(identifier: "en_US_POSIX")
+
+        var lines: [String] = ["v2"]
+
+        // Campaign: title[|currency[|description[|location]]]
+        lines.append(Self.trimV2([
+            Self.escV2(campaign.title),
+            campaign.currency == "EUR" ? "" : campaign.currency,
+            Self.escV2(campaign.description),
+            Self.escV2(campaign.location)
+        ]))
+
+        // Participants: name[|emoji]\tname[|emoji]\t...
+        lines.append(parts.map { p in
+            p.avatarEmoji == "🧑" ? Self.escV2(p.name) : "\(Self.escV2(p.name))|\(p.avatarEmoji)"
+        }.joined(separator: "\t"))
+
+        // Expenses: title|amount|YYMMDD|payerIdx|splitIdxs[|splitType[|customSplits[|location[|notes]]]]
+        lines.append(exps.map { e -> String in
+            var f = [Self.escV2(e.title), Self.fmtNum(e.amount), df.string(from: e.date), String(pIdx[e.paidByID] ?? 0)]
+            if Set(e.splitAmongIDs) == allPIDs {
+                f.append("*")
+            } else {
+                f.append(e.splitAmongIDs.compactMap { pIdx[$0] }.sorted().map { String($0) }.joined(separator: ","))
+            }
+            let st = e.splitType == .equal ? "" : (e.splitType == .custom ? "c" : "p")
+            let cs: String = e.customSplits.isEmpty ? "" : e.customSplits
+                .sorted(by: { (pIdx[$0.key] ?? 0) < (pIdx[$1.key] ?? 0) })
+                .map { "\(pIdx[$0.key] ?? 0):\(Self.fmtNum($0.value))" }
+                .joined(separator: ",")
+            f.append(contentsOf: [st, cs, Self.escV2(e.location), Self.escV2(e.notes)])
+            return Self.trimV2(f)
+        }.joined(separator: "\t"))
+
+        // Reimbursements (if any)
+        if !reimbs.isEmpty {
+            lines.append(reimbs.map { r -> String in
+                Self.trimV2([
+                    String(pIdx[r.fromID] ?? 0), String(pIdx[r.toID] ?? 0),
+                    Self.fmtNum(r.amount), df.string(from: r.date),
+                    Self.escV2(r.notes), r.isPartial ? "1" : ""
+                ])
+            }.joined(separator: "\t"))
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
+    func importV2(_ text: String) -> Bool {
+        let lines = text.components(separatedBy: "\n")
+        guard lines.count >= 4, lines[0] == "v2" else { return false }
+
+        // Campaign
+        let cf = lines[1].components(separatedBy: "|")
+        let campaignID = UUID()
+        var campaign = Campaign(
+            id: campaignID,
+            title: cf[0],
+            description: cf.count > 2 ? cf[2] : "",
+            location: cf.count > 3 ? cf[3] : "",
+            currency: (cf.count > 1 && !cf[1].isEmpty) ? cf[1] : "EUR",
+            creatorName: ""
+        )
+
+        // Participants
+        let parts: [Participant] = lines[2].components(separatedBy: "\t").filter { !$0.isEmpty }.map { item in
+            let pf = item.components(separatedBy: "|")
+            return Participant(name: pf[0], avatarEmoji: pf.count > 1 && !pf[1].isEmpty ? pf[1] : "🧑")
+        }
+
+        // Expenses
+        let df = DateFormatter()
+        df.dateFormat = "yyMMdd"
+        df.locale = Locale(identifier: "en_US_POSIX")
+
+        let exps: [Expense] = lines[3].components(separatedBy: "\t").filter { !$0.isEmpty }.compactMap { item in
+            let ef = item.components(separatedBy: "|")
+            guard ef.count >= 5, let amount = Double(ef[1]) else { return nil }
+            let date = df.date(from: ef[2]) ?? Date()
+            let payerIdx = Int(ef[3]) ?? 0
+            guard payerIdx < parts.count else { return nil }
+            let splitIdxs: [Int]
+            if ef[4] == "*" {
+                splitIdxs = Array(0..<parts.count)
+            } else {
+                splitIdxs = ef[4].components(separatedBy: ",").compactMap { Int($0) }
+            }
+            var splitType: SplitType = .equal
+            if ef.count > 5 && !ef[5].isEmpty {
+                splitType = ef[5] == "c" ? .custom : .percentage
+            }
+            var customSplits: [UUID: Double] = [:]
+            if ef.count > 6 && !ef[6].isEmpty {
+                for pair in ef[6].components(separatedBy: ",") {
+                    let kv = pair.components(separatedBy: ":")
+                    if kv.count == 2, let idx = Int(kv[0]), let val = Double(kv[1]), idx < parts.count {
+                        customSplits[parts[idx].id] = val
+                    }
+                }
+            }
+            return Expense(
+                title: ef[0], amount: amount, date: date,
+                paidByID: parts[payerIdx].id,
+                splitAmongIDs: splitIdxs.filter { $0 < parts.count }.map { parts[$0].id },
+                splitType: splitType, customSplits: customSplits,
+                location: ef.count > 7 ? ef[7] : "",
+                notes: ef.count > 8 ? ef[8] : "",
+                campaignID: campaignID
+            )
+        }
+
+        // Reimbursements
+        var reimbs: [Reimbursement] = []
+        if lines.count > 4 && !lines[4].isEmpty {
+            reimbs = lines[4].components(separatedBy: "\t").filter { !$0.isEmpty }.compactMap { item in
+                let rf = item.components(separatedBy: "|")
+                guard rf.count >= 4, let amount = Double(rf[2]) else { return nil }
+                let fromIdx = Int(rf[0]) ?? 0
+                let toIdx = Int(rf[1]) ?? 0
+                guard fromIdx < parts.count, toIdx < parts.count else { return nil }
+                return Reimbursement(
+                    amount: amount, date: df.date(from: rf[3]) ?? Date(),
+                    fromID: parts[fromIdx].id, toID: parts[toIdx].id,
+                    notes: rf.count > 4 ? rf[4] : "",
+                    campaignID: campaignID,
+                    isPartial: rf.count > 5 && rf[5] == "1"
+                )
+            }
+        }
+
+        campaign.participantIDs = parts.map { $0.id }
+        campaign.expenseIDs = exps.map { $0.id }
+        campaign.reimbursementIDs = reimbs.map { $0.id }
+
+        let appData = AppData(campaigns: [campaign], participants: parts, expenses: exps, reimbursements: reimbs)
+        return mergeAppData(appData)
+    }
+
+    private static func escV2(_ s: String) -> String {
+        s.replacingOccurrences(of: "\n", with: " ").replacingOccurrences(of: "\t", with: " ")
+    }
+
+    private static func fmtNum(_ d: Double) -> String {
+        d == d.rounded() && abs(d) < 1e15 ? String(Int(d)) : String(d)
+    }
+
+    private static func trimV2(_ fields: [String]) -> String {
+        var f = fields
+        while f.last == "" { f.removeLast() }
+        return f.joined(separator: "|")
     }
 
     func importJSON(_ jsonString: String) -> Bool {
@@ -560,8 +655,14 @@ class CampaignStore: ObservableObject {
             let padded = b64.padding(toLength: ((b64.count + 3) / 4) * 4, withPad: "=", startingAt: 0)
             jsonData = Data(base64Encoded: padded)
         }
-        guard let jsonData, let jsonString = String(data: jsonData, encoding: .utf8) else { return false }
-        return importJSON(jsonString)
+        guard let jsonData, let text = String(data: jsonData, encoding: .utf8) else { return false }
+
+        // Detect v2 compact format
+        if text.hasPrefix("v2\n") {
+            return importV2(text)
+        }
+        // Legacy JSON format
+        return importJSON(text)
     }
 
     func importFromURL(_ url: URL) -> Bool {
@@ -627,8 +728,15 @@ class CampaignStore: ObservableObject {
             dict = expandKeys(dict) as! [String: Any]
         }
         // Expand UUIDs if present
-        if let uuids = dict["_u"] as? [String] {
+        if let rawUUIDs = dict["_u"] as? [String] {
             dict.removeValue(forKey: "_u")
+            // Re-insert dashes if stored without them (32 hex chars → 8-4-4-4-12)
+            let uuids = rawUUIDs.map { u -> String in
+                let h = u.replacingOccurrences(of: "-", with: "")
+                guard h.count == 32 else { return u }
+                let s = Array(h)
+                return "\(String(s[0..<8]))-\(String(s[8..<12]))-\(String(s[12..<16]))-\(String(s[16..<20]))-\(String(s[20..<32]))"
+            }
             func expand(_ obj: Any) -> Any {
                 if let s = obj as? String, s.hasPrefix("$"), let i = Int(s.dropFirst(1)), i < uuids.count {
                     return uuids[i]
@@ -671,7 +779,8 @@ class CampaignStore: ObservableObject {
             if let i = uuidMap[u] { return "$\(i)" }
             let i = uuids.count
             uuidMap[u] = i
-            uuids.append(u)
+            // Store without dashes to save 4 chars per UUID
+            uuids.append(u.replacingOccurrences(of: "-", with: ""))
             return "$\(i)"
         }
 
