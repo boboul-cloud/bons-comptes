@@ -450,6 +450,9 @@ class CampaignStore: ObservableObject {
         // UUID indexing: replace 36-char UUIDs with "$0", "$1" etc.
         dict = Self.compactUUIDs(dict)
 
+        // Short keys: rename long keys to 1-2 char abbreviations
+        dict = Self.shortenKeys(dict) as! [String: Any]
+
         guard let compactData = try? JSONSerialization.data(withJSONObject: dict, options: [.sortedKeys]) else { return Self.webBaseURL }
 
         // Compress with raw DEFLATE (compatible with web's deflate-raw)
@@ -473,8 +476,8 @@ class CampaignStore: ObservableObject {
             lastImportError = "String→Data failed"
             return false
         }
-        // Expand UUID indices ($0, $1...) if present
-        data = Self.expandUUIDs(data)
+        // Expand short keys and UUID indices if present
+        data = Self.expandShortFormat(data)
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
@@ -533,6 +536,89 @@ class CampaignStore: ObservableObject {
     func importFromURL(_ url: URL) -> Bool {
         guard let fragment = url.fragment, !fragment.isEmpty else { return false }
         return importFromFragment(fragment)
+    }
+
+    // MARK: - Key Shortening (reduce JSON key sizes)
+
+    private static let keyMap: [String: String] = [
+        "campaigns": "C", "participants": "P", "expenses": "E", "reimbursements": "R",
+        "categories": "K", "paymentMethods": "M", "_u": "_u",
+        "id": "i", "title": "t", "amount": "a", "date": "d", "name": "n",
+        "paidByID": "pb", "splitAmongIDs": "sa", "splitType": "st",
+        "customSplits": "cs", "categoryID": "ci", "location": "lo", "notes": "no",
+        "fromID": "fi", "toID": "ti", "paymentMethodID": "mi",
+        "isPartial": "ip", "currency": "cu", "createdAt": "ca",
+        "description": "de", "creatorName": "cn",
+        "isArchived": "ia", "isClosed": "ic",
+        "email": "em", "phone": "ph", "joinedAt": "ja",
+        "isActive": "ac", "avatarEmoji": "av",
+        "icon": "ik", "isDefault": "df",
+        "receiptImageData": "ri"
+    ]
+
+    private static let reverseKeyMap: [String: String] = {
+        var m: [String: String] = [:]
+        for (long, short) in keyMap { m[short] = long }
+        return m
+    }()
+
+    static func shortenKeys(_ input: Any) -> Any {
+        if let dict = input as? [String: Any] {
+            var result: [String: Any] = [:]
+            for (k, v) in dict {
+                let newKey = keyMap[k] ?? k
+                result[newKey] = shortenKeys(v)
+            }
+            return result
+        }
+        if let arr = input as? [Any] { return arr.map { shortenKeys($0) } }
+        return input
+    }
+
+    static func expandKeys(_ input: Any) -> Any {
+        if let dict = input as? [String: Any] {
+            var result: [String: Any] = [:]
+            for (k, v) in dict {
+                let newKey = reverseKeyMap[k] ?? k
+                result[newKey] = expandKeys(v)
+            }
+            return result
+        }
+        if let arr = input as? [Any] { return arr.map { expandKeys($0) } }
+        return input
+    }
+
+    static func expandShortFormat(_ data: Data) -> Data {
+        guard var dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return data }
+        // Detect short format by checking for short top-level keys
+        let isShort = dict["C"] != nil || dict["E"] != nil
+        if isShort {
+            dict = expandKeys(dict) as! [String: Any]
+        }
+        // Expand UUIDs if present
+        if let uuids = dict["_u"] as? [String] {
+            dict.removeValue(forKey: "_u")
+            func expand(_ obj: Any) -> Any {
+                if let s = obj as? String, s.hasPrefix("$"), let i = Int(s.dropFirst(1)), i < uuids.count {
+                    return uuids[i]
+                }
+                if let arr = obj as? [Any] { return arr.map { expand($0) } }
+                if let d = obj as? [String: Any] {
+                    var result: [String: Any] = [:]
+                    for (k, v) in d {
+                        let newKey: String
+                        if k.hasPrefix("$"), let i = Int(k.dropFirst(1)), i < uuids.count {
+                            newKey = uuids[i]
+                        } else { newKey = k }
+                        result[newKey] = expand(v)
+                    }
+                    return result
+                }
+                return obj
+            }
+            dict = expand(dict) as! [String: Any]
+        }
+        return (try? JSONSerialization.data(withJSONObject: dict)) ?? data
     }
 
     // MARK: - UUID Indexing (compress UUIDs to "$0", "$1" etc.)

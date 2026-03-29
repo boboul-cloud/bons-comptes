@@ -600,8 +600,27 @@ function stateToCompactJSON() {
   }
   const compactData = compact(data);
   compactData._u = uuids;
+  // Short key names to reduce size
+  const keyMap = {
+    campaigns:'C',participants:'P',expenses:'E',reimbursements:'R',categories:'K',paymentMethods:'M',_u:'_u',
+    id:'i',title:'t',amount:'a',date:'d',name:'n',paidByID:'pb',splitAmongIDs:'sa',splitType:'st',
+    customSplits:'cs',categoryID:'ci',location:'lo',notes:'no',fromID:'fi',toID:'ti',
+    paymentMethodID:'mi',isPartial:'ip',currency:'cu',createdAt:'ca',description:'de',creatorName:'cn',
+    isArchived:'ia',isClosed:'ic',email:'em',phone:'ph',joinedAt:'ja',isActive:'ac',avatarEmoji:'av',
+    icon:'ik',isDefault:'df',receiptImageData:'ri'
+  };
+  function shorten(obj) {
+    if (Array.isArray(obj)) return obj.map(shorten);
+    if (obj && typeof obj === 'object') {
+      const r = {};
+      for (const [k, v] of Object.entries(obj)) { r[keyMap[k] || k] = shorten(v); }
+      return r;
+    }
+    return obj;
+  }
+  const shortData = shorten(compactData);
   // Strip null/empty values to reduce size
-  return JSON.stringify(compactData, (k, v) => {
+  return JSON.stringify(shortData, (k, v) => {
     if (v === null || v === '' || (typeof v === 'object' && !Array.isArray(v) && v !== null && Object.keys(v).length === 0)) return undefined;
     return v;
   });
@@ -614,7 +633,30 @@ async function generateShareURL() {
 }
 
 // ===== Load Data =====
-function expandUUIDs(data) {
+function expandShortFormat(data) {
+  // Expand short key names if detected
+  const isShort = data.C !== undefined || data.E !== undefined;
+  if (isShort) {
+    const reverseKeyMap = {
+      C:'campaigns',P:'participants',E:'expenses',R:'reimbursements',K:'categories',M:'paymentMethods',_u:'_u',
+      i:'id',t:'title',a:'amount',d:'date',n:'name',pb:'paidByID',sa:'splitAmongIDs',st:'splitType',
+      cs:'customSplits',ci:'categoryID',lo:'location',no:'notes',fi:'fromID',ti:'toID',
+      mi:'paymentMethodID',ip:'isPartial',cu:'currency',ca:'createdAt',de:'description',cn:'creatorName',
+      ia:'isArchived',ic:'isClosed',em:'email',ph:'phone',ja:'joinedAt',ac:'isActive',av:'avatarEmoji',
+      ik:'icon',df:'isDefault',ri:'receiptImageData'
+    };
+    function expandK(obj) {
+      if (Array.isArray(obj)) return obj.map(expandK);
+      if (obj && typeof obj === 'object') {
+        const r = {};
+        for (const [k, v] of Object.entries(obj)) { r[reverseKeyMap[k] || k] = expandK(v); }
+        return r;
+      }
+      return obj;
+    }
+    data = expandK(data);
+  }
+  // Expand UUID refs
   if (!data._u) return data;
   const uuids = data._u; delete data._u;
   const refRe = /^\$(\d+)$/;
@@ -636,7 +678,7 @@ function expandUUIDs(data) {
 function loadData(jsonStr) {
   try {
     let data = JSON.parse(jsonStr);
-    data = expandUUIDs(data);
+    data = expandShortFormat(data);
     if (!data.campaigns || !data.campaigns.length) throw new Error('No campaign');
     state.campaign = data.campaigns[0];
     state.participants = data.participants || [];
