@@ -572,8 +572,27 @@ function stateToJSON() {
   return JSON.stringify(data, null, 2);
 }
 
+// Compact export for URL sharing (no defaults, no nulls, no pretty-print)
+function stateToCompactJSON() {
+  const usedCatIDs = new Set(state.expenses.map(e => e.categoryID).filter(Boolean));
+  const usedPmIDs = new Set(state.reimbursements.map(r => r.paymentMethodID).filter(Boolean));
+  const data = {
+    campaigns: [state.campaign],
+    participants: state.participants.filter(p => state.campaign.participantIDs.includes(p.id)),
+    expenses: state.expenses.filter(e => e.campaignID === state.campaign.id),
+    reimbursements: state.reimbursements.filter(r => r.campaignID === state.campaign.id),
+    categories: state.categories.filter(c => usedCatIDs.has(c.id)),
+    paymentMethods: state.paymentMethods.filter(m => usedPmIDs.has(m.id))
+  };
+  // Strip null/empty values to reduce size
+  return JSON.stringify(data, (k, v) => {
+    if (v === null || v === '' || (typeof v === 'object' && !Array.isArray(v) && v !== null && Object.keys(v).length === 0)) return undefined;
+    return v;
+  });
+}
+
 async function generateShareURL() {
-  const json = stateToJSON();
+  const json = stateToCompactJSON();
   const encoded = await encodeData(json);
   return window.location.origin + window.location.pathname + '#' + encoded;
 }
@@ -1037,7 +1056,7 @@ function fillReimb(fromID, toID, amount) {
 // ===== Save =====
 function saveExpense() {
   try {
-  const amount = parseFloat(document.getElementById('expAmount').value);
+  const amount = parseFloat(document.getElementById('expAmount').value.replace(',', '.'));
   const title = document.getElementById('expTitle').value.trim();
   if (!amount || amount <= 0 || !title || !selectedPaidByID) return showToast('Remplissez tous les champs');
 
@@ -1047,7 +1066,7 @@ function saveExpense() {
   let customSplits = {};
   if (selectedSplitType !== 'equal') {
     document.querySelectorAll('#customSplitFields input').forEach(input => {
-      customSplits[input.dataset.pid] = parseFloat(input.value) || 0;
+      customSplits[input.dataset.pid] = parseFloat(input.value.replace(',', '.')) || 0;
     });
   }
 
@@ -1082,7 +1101,7 @@ function saveExpense() {
 }
 
 function saveReimbursement() {
-  const amount = parseFloat(document.getElementById('reimbAmount').value);
+  const amount = parseFloat(document.getElementById('reimbAmount').value.replace(',', '.'));
   const fromEl = document.querySelector('#reimbFrom .selected-from');
   const toEl = document.querySelector('#reimbTo .selected-to');
   const methodEl = document.querySelector('#reimbMethod .selected');
