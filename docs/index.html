@@ -345,6 +345,7 @@ const T = {
     total_reimbursed: "Total remboursé", new_expense_added: "Dépense ajoutée !",
     new_reimb_added: "Remboursement ajouté !", description: "Description",
     share_options: "Options de partage", view_share: "Partage & Export",
+    reply_sms: "Répondre par SMS", reply_sms_body: "Re: ",
   },
   en: {
     load_campaign: "Load campaign",
@@ -371,6 +372,7 @@ const T = {
     total_reimbursed: "Total reimbursed", new_expense_added: "Expense added!",
     new_reimb_added: "Reimbursement added!", description: "Description",
     share_options: "Share options", view_share: "Share & Export",
+    reply_sms: "Reply by SMS", reply_sms_body: "Re: ",
   }
 };
 
@@ -651,7 +653,7 @@ function stateToCompactJSON() {
     customSplits:'cs',categoryID:'ci',location:'lo',notes:'no',fromID:'fi',toID:'ti',
     paymentMethodID:'mi',isPartial:'ip',currency:'cu',createdAt:'ca',description:'de',creatorName:'cn',
     isArchived:'ia',isClosed:'ic',email:'em',phone:'ph',joinedAt:'ja',isActive:'ac',avatarEmoji:'av',
-    icon:'ik',isDefault:'df',receiptImageData:'ri'
+    icon:'ik',isDefault:'df',receiptImageData:'ri',managerPhone:'mp'
   };
   function shorten(obj) {
     if (Array.isArray(obj)) return obj.map(shorten);
@@ -695,8 +697,8 @@ function stateToV2() {
 
   const lines = ['v2'];
 
-  // Campaign: title[|currency[|description[|location]]]
-  lines.push(trimV2([escV2(c.title), c.currency && c.currency !== 'EUR' ? c.currency : '', escV2(c.description||''), escV2(c.location||'')]));
+  // Campaign: title[|currency[|description[|location[|phone]]]]
+  lines.push(trimV2([escV2(c.title), c.currency && c.currency !== 'EUR' ? c.currency : '', escV2(c.description||''), escV2(c.location||''), c.managerPhone||'']));
 
   // Participants: name[|emoji]\tname[|emoji]\t...
   lines.push(parts.map(p => {
@@ -745,7 +747,7 @@ function loadV2(text) {
     const campaignID = generateUUID();
     state.campaign = {
       id: campaignID, title: cf[0]||'', currency: cf[1]||'EUR',
-      description: cf[2]||'', location: cf[3]||'',
+      description: cf[2]||'', location: cf[3]||'', managerPhone: cf[4]||'',
       isArchived: false, isClosed: false,
       participantIDs: [], expenseIDs: [], reimbursementIDs: []
     };
@@ -810,7 +812,7 @@ function expandShortFormat(data) {
       cs:'customSplits',ci:'categoryID',lo:'location',no:'notes',fi:'fromID',ti:'toID',
       mi:'paymentMethodID',ip:'isPartial',cu:'currency',ca:'createdAt',de:'description',cn:'creatorName',
       ia:'isArchived',ic:'isClosed',em:'email',ph:'phone',ja:'joinedAt',ac:'isActive',av:'avatarEmoji',
-      ik:'icon',df:'isDefault',ri:'receiptImageData'
+      ik:'icon',df:'isDefault',ri:'receiptImageData',mp:'managerPhone'
     };
     function expandK(obj) {
       if (Array.isArray(obj)) return obj.map(expandK);
@@ -854,6 +856,7 @@ function loadData(jsonStr) {
     if (!data.campaigns || !data.campaigns.length) throw new Error('No campaign');
     state.campaign = data.campaigns[0];
     if (!state.campaign.currency) state.campaign.currency = 'EUR';
+    if (!state.campaign.managerPhone) state.campaign.managerPhone = '';
     state.participants = (data.participants || []).map(p => ({
       ...p,
       avatarEmoji: p.avatarEmoji || '🧑',
@@ -929,6 +932,7 @@ function renderHeader() {
   const parts = state.participants.filter(p => c.participantIDs.includes(p.id));
   document.getElementById('header').innerHTML = `
     <div class="header-actions">
+      ${c.managerPhone ? `<button onclick="replySMS()" title="${t('reply_sms')}">💬</button>` : ''}
       <button onclick="showShareModal()" title="${t('view_share')}">📤</button>
     </div>
     <div class="header-title">${esc(c.title)}</div>
@@ -1223,6 +1227,13 @@ function openInApp() {
     document.body.removeChild(ta);
     window.location.href = 'bonscomptes://paste';
   });
+}
+
+function replySMS() {
+  const phone = state.campaign.managerPhone;
+  if (!phone) return;
+  const body = encodeURIComponent(t('reply_sms_body') + state.campaign.title);
+  window.location.href = `sms:${phone}&body=${body}`;
 }
 
 async function showShareModal() {

@@ -19,12 +19,13 @@ struct Campaign: Identifiable, Codable {
     var reimbursementIDs: [UUID]
     var isArchived: Bool
     var isClosed: Bool
+    var managerPhone: String
 
     enum CodingKeys: String, CodingKey {
         case id, title, description, location, currency, createdAt
         case shareCode
         case creatorName, participantIDs, expenseIDs, reimbursementIDs
-        case isArchived, isClosed
+        case isArchived, isClosed, managerPhone
     }
 
     func encode(to encoder: Encoder) throws {
@@ -41,6 +42,7 @@ struct Campaign: Identifiable, Codable {
         try container.encode(reimbursementIDs, forKey: .reimbursementIDs)
         if isArchived { try container.encode(isArchived, forKey: .isArchived) }
         if isClosed { try container.encode(isClosed, forKey: .isClosed) }
+        if !managerPhone.isEmpty { try container.encode(managerPhone, forKey: .managerPhone) }
         // shareCode intentionally not encoded
     }
 
@@ -59,6 +61,7 @@ struct Campaign: Identifiable, Codable {
         reimbursementIDs = try container.decodeIfPresent([UUID].self, forKey: .reimbursementIDs) ?? []
         isArchived = try container.decodeIfPresent(Bool.self, forKey: .isArchived) ?? false
         isClosed = try container.decodeIfPresent(Bool.self, forKey: .isClosed) ?? false
+        managerPhone = try container.decodeIfPresent(String.self, forKey: .managerPhone) ?? ""
     }
 
     init(
@@ -74,7 +77,8 @@ struct Campaign: Identifiable, Codable {
         expenseIDs: [UUID] = [],
         reimbursementIDs: [UUID] = [],
         isArchived: Bool = false,
-        isClosed: Bool = false
+        isClosed: Bool = false,
+        managerPhone: String = ""
     ) {
         self.id = id
         self.title = title
@@ -89,6 +93,7 @@ struct Campaign: Identifiable, Codable {
         self.reimbursementIDs = reimbursementIDs
         self.isArchived = isArchived
         self.isClosed = isClosed
+        self.managerPhone = managerPhone
     }
 
     static func generateShareCode() -> String {

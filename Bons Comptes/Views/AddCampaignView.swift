@@ -14,6 +14,7 @@ struct AddCampaignView: View {
     @State private var location = ""
     @State private var currency = "EUR"
     @State private var creatorName = ""
+    @State private var creatorPhone = ""
     @State private var participantNames: [String] = [""]
     @State private var currentStep = 0
 
@@ -107,6 +108,18 @@ struct AddCampaignView: View {
             sectionHeader(icon: "crown.fill", title: NSLocalizedString("creator", comment: ""), color: AppTheme.warning)
             modernTextField(icon: "person.fill", placeholder: NSLocalizedString("your_name", comment: ""), text: $creatorName)
                 .onChange(of: creatorName) { _, _ in updateStep() }
+            HStack(spacing: 12) {
+                Image(systemName: "phone.fill").foregroundColor(AppTheme.primary.opacity(0.6)).frame(width: 20)
+                TextField(NSLocalizedString("your_phone", comment: ""), text: $creatorPhone)
+                    .keyboardType(.phonePad)
+            }
+            .padding(14)
+            .background(AppTheme.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            Text(NSLocalizedString("phone_hint", comment: ""))
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 4)
         }
         .cardStyle()
         .animatedAppear(delay: 0.1)
@@ -216,7 +229,8 @@ struct AddCampaignView: View {
             location: location,
             currency: currency,
             creatorName: creatorName,
-            participantIDs: allParticipantIDs
+            participantIDs: allParticipantIDs,
+            managerPhone: creatorPhone.trimmingCharacters(in: .whitespaces)
         )
         store.addCampaign(campaign)
         dismiss()

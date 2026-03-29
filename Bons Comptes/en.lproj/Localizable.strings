@@ -35,6 +35,8 @@
 "currency_field" = "Currency";
 "creator" = "Creator";
 "your_name" = "Your name";
+"your_phone" = "Your phone (optional)";
+"phone_hint" = "Allows recipients to reply by SMS from the web page.";
 "initial_participants" = "Initial participants";
 "participant_name" = "Participant name";
 "add_participant" = "Add participant";

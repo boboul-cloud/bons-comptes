@@ -441,12 +441,13 @@ class CampaignStore: ObservableObject {
 
         var lines: [String] = ["v2"]
 
-        // Campaign: title[|currency[|description[|location]]]
+        // Campaign: title[|currency[|description[|location[|phone]]]]
         lines.append(Self.trimV2([
             Self.escV2(campaign.title),
             campaign.currency == "EUR" ? "" : campaign.currency,
             Self.escV2(campaign.description),
-            Self.escV2(campaign.location)
+            Self.escV2(campaign.location),
+            campaign.managerPhone
         ]))
 
         // Participants: name[|emoji]\tname[|emoji]\t...
@@ -498,7 +499,8 @@ class CampaignStore: ObservableObject {
             description: cf.count > 2 ? cf[2] : "",
             location: cf.count > 3 ? cf[3] : "",
             currency: (cf.count > 1 && !cf[1].isEmpty) ? cf[1] : "EUR",
-            creatorName: ""
+            creatorName: "",
+            managerPhone: cf.count > 4 ? cf[4] : ""
         )
 
         // Participants
@@ -685,7 +687,8 @@ class CampaignStore: ObservableObject {
         "email": "em", "phone": "ph", "joinedAt": "ja",
         "isActive": "ac", "avatarEmoji": "av",
         "icon": "ik", "isDefault": "df",
-        "receiptImageData": "ri"
+        "receiptImageData": "ri",
+        "managerPhone": "mp"
     ]
 
     private static let reverseKeyMap: [String: String] = {

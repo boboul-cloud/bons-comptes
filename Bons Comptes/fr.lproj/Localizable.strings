@@ -35,6 +35,8 @@
 "currency_field" = "Devise";
 "creator" = "Créateur";
 "your_name" = "Votre nom";
+"your_phone" = "Votre téléphone (optionnel)";
+"phone_hint" = "Permet aux destinataires de vous répondre par SMS depuis la page web.";
 "initial_participants" = "Participants initiaux";
 "participant_name" = "Nom du participant";
 "add_participant" = "Ajouter un participant";
