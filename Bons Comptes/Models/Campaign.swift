@@ -51,7 +51,7 @@ struct Campaign: Identifiable, Codable {
         description = try container.decodeIfPresent(String.self, forKey: .description) ?? ""
         location = try container.decodeIfPresent(String.self, forKey: .location) ?? ""
         currency = try container.decodeIfPresent(String.self, forKey: .currency) ?? "EUR"
-        createdAt = try container.decode(Date.self, forKey: .createdAt)
+        createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
         shareCode = try container.decodeIfPresent(String.self, forKey: .shareCode) ?? ""
         creatorName = try container.decodeIfPresent(String.self, forKey: .creatorName) ?? ""
         participantIDs = try container.decodeIfPresent([UUID].self, forKey: .participantIDs) ?? []

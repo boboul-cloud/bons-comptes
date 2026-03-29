@@ -42,7 +42,7 @@ struct Participant: Identifiable, Codable, Hashable {
         name = try c.decode(String.self, forKey: .name)
         email = try c.decodeIfPresent(String.self, forKey: .email) ?? ""
         phone = try c.decodeIfPresent(String.self, forKey: .phone) ?? ""
-        joinedAt = try c.decode(Date.self, forKey: .joinedAt)
+        joinedAt = try c.decodeIfPresent(Date.self, forKey: .joinedAt) ?? Date()
         isActive = try c.decodeIfPresent(Bool.self, forKey: .isActive) ?? true
         avatarEmoji = try c.decodeIfPresent(String.self, forKey: .avatarEmoji) ?? "🧑"
     }

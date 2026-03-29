@@ -33,7 +33,7 @@ struct Expense: Identifiable, Codable {
         date = try c.decode(Date.self, forKey: .date)
         paidByID = try c.decode(UUID.self, forKey: .paidByID)
         splitAmongIDs = try c.decode([UUID].self, forKey: .splitAmongIDs)
-        splitType = try c.decode(SplitType.self, forKey: .splitType)
+        splitType = try c.decodeIfPresent(SplitType.self, forKey: .splitType) ?? .equal
         categoryID = try c.decodeIfPresent(UUID.self, forKey: .categoryID)
         location = try c.decodeIfPresent(String.self, forKey: .location) ?? ""
         notes = try c.decodeIfPresent(String.self, forKey: .notes) ?? ""

@@ -430,19 +430,43 @@ class CampaignStore: ObservableObject {
 
         // Strip redundant data to reduce URL size
         guard var dict = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else { return Self.webBaseURL }
+        // Campaign: strip ID arrays, shareCode, createdAt, empty fields
         if var campaigns = dict["campaigns"] as? [[String: Any]], !campaigns.isEmpty {
             campaigns[0].removeValue(forKey: "expenseIDs")
             campaigns[0].removeValue(forKey: "reimbursementIDs")
             campaigns[0].removeValue(forKey: "participantIDs")
+            campaigns[0].removeValue(forKey: "shareCode")
+            campaigns[0].removeValue(forKey: "createdAt")
             dict["campaigns"] = campaigns
         }
+        // Expenses: strip campaignID, receiptImageData, defaults, shorten dates
         if var expenses = dict["expenses"] as? [[String: Any]] {
-            for i in expenses.indices { expenses[i].removeValue(forKey: "campaignID") }
+            for i in expenses.indices {
+                expenses[i].removeValue(forKey: "campaignID")
+                expenses[i].removeValue(forKey: "receiptImageData")
+                expenses[i].removeValue(forKey: "createdAt")
+                if let st = expenses[i]["splitType"] as? String, st == "equal" {
+                    expenses[i].removeValue(forKey: "splitType")
+                }
+                if let d = expenses[i]["date"] as? String { expenses[i]["date"] = String(d.prefix(10)) }
+            }
             dict["expenses"] = expenses
         }
+        // Reimbursements: strip campaignID, shorten dates
         if var reimbs = dict["reimbursements"] as? [[String: Any]] {
-            for i in reimbs.indices { reimbs[i].removeValue(forKey: "campaignID") }
+            for i in reimbs.indices {
+                reimbs[i].removeValue(forKey: "campaignID")
+                reimbs[i].removeValue(forKey: "createdAt")
+                if let d = reimbs[i]["date"] as? String { reimbs[i]["date"] = String(d.prefix(10)) }
+            }
             dict["reimbursements"] = reimbs
+        }
+        // Participants: strip joinedAt, default avatarEmoji, default isActive
+        if var parts = dict["participants"] as? [[String: Any]] {
+            for i in parts.indices {
+                parts[i].removeValue(forKey: "joinedAt")
+            }
+            dict["participants"] = parts
         }
         if let cats = dict["categories"] as? [Any], cats.isEmpty { dict.removeValue(forKey: "categories") }
         if let pms = dict["paymentMethods"] as? [Any], pms.isEmpty { dict.removeValue(forKey: "paymentMethods") }
@@ -482,6 +506,13 @@ class CampaignStore: ObservableObject {
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
             let str = try container.decode(String.self)
+            // Try YYYY-MM-DD first (short format from web/compact URLs)
+            if str.count == 10, let _ = str.range(of: #"^\d{4}-\d{2}-\d{2}$"#, options: .regularExpression) {
+                let df = DateFormatter()
+                df.dateFormat = "yyyy-MM-dd"
+                df.locale = Locale(identifier: "en_US_POSIX")
+                if let date = df.date(from: str) { return date }
+            }
             let f = ISO8601DateFormatter()
             f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
             if let date = f.date(from: str) { return date }
