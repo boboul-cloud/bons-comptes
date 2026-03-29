@@ -373,6 +373,7 @@ const T = {
     send_update: "Envoyer la mise à jour", send_update_body: "Voici la mise à jour de ",
     open_in_app: "Ouvrir dans l'app",
     open_in_app_banner: "Importer dans Bons Comptes",
+    confirm_delete_expense: "Attention : si vous supprimez cette dépense, vous ne serez pas remboursé. Confirmer la suppression ?",
   },
   en: {
     load_campaign: "Load campaign",
@@ -405,6 +406,7 @@ const T = {
     share_options: "Share options", view_share: "Share & Export",
     send_update: "Send update", send_update_body: "Here's the update for ",
     open_in_app_banner: "Import in Bons Comptes",
+    confirm_delete_expense: "Warning: if you delete this expense, you will not be reimbursed. Confirm deletion?",
   }
 };
 
@@ -1510,6 +1512,7 @@ function deleteExpense(id) {
     showToast(t('cannot_delete_expense'));
     return;
   }
+  if (!confirm(t('confirm_delete_expense'))) return;
   state.expenses = state.expenses.filter(e => e.id !== id);
   state.campaign.expenseIDs = state.campaign.expenseIDs.filter(eid => eid !== id);
   updateURLHash();
