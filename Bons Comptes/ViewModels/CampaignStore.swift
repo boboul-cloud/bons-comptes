@@ -542,6 +542,11 @@ class CampaignStore: ObservableObject {
             }
         }
 
+        // First participant is the creator
+        if let first = parts.first {
+            campaign.creatorName = first.name
+        }
+
         // Expenses
         let df = DateFormatter()
         df.dateFormat = "yyMMdd"
@@ -950,6 +955,8 @@ class CampaignStore: ObservableObject {
                 merged.participantIDs = Array(Set(campaigns[idx].participantIDs + c.participantIDs))
                 merged.expenseIDs = Array(Set(campaigns[idx].expenseIDs + c.expenseIDs))
                 merged.reimbursementIDs = Array(Set(campaigns[idx].reimbursementIDs + c.reimbursementIDs))
+                // Preserve fields not in V3 format
+                if merged.creatorName.isEmpty { merged.creatorName = campaigns[idx].creatorName }
                 campaigns[idx] = merged
             } else {
                 campaigns.append(c)
