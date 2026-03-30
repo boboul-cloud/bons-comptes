@@ -155,6 +155,7 @@ struct ParticipantsView: View {
                 EditParticipantView(participant: participant, emojiOptions: emojiOptions) { updated in
                     if let idx = store.participants.firstIndex(where: { $0.id == updated.id }) {
                         store.participants[idx] = updated
+                        store.saveData()
                     }
                 }
             }

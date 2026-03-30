@@ -155,6 +155,9 @@ struct CampaignCardView: View {
                             .font(.headline)
                             .fontWeight(.bold)
                             .foregroundColor(.primary)
+                        if campaign.isClosed {
+                            GradientBadge(text: NSLocalizedString("closed_badge", comment: ""), gradient: LinearGradient(colors: [AppTheme.negative, AppTheme.negative.opacity(0.7)], startPoint: .leading, endPoint: .trailing))
+                        }
                         if campaign.isArchived {
                             GradientBadge(text: "ARCHIVÉ", gradient: LinearGradient(colors: [.gray, .gray.opacity(0.7)], startPoint: .leading, endPoint: .trailing))
                         }
@@ -163,6 +166,11 @@ struct CampaignCardView: View {
                         Label(campaign.location, systemImage: "mappin.and.ellipse")
                             .font(.caption)
                             .foregroundColor(.secondary)
+                    }
+                    if !campaign.creatorName.isEmpty {
+                        Label(campaign.creatorName, systemImage: "crown.fill")
+                            .font(.caption)
+                            .foregroundColor(AppTheme.warning)
                     }
                 }
                 Spacer()

@@ -234,3 +234,4 @@
 "import_desc" = "Collez un lien web ou des données JSON pour importer une campagne.";
 "paste_clipboard" = "Coller depuis le presse-papier";
 "open_in_app" = "Ouvrir dans l'app";
+"closed_badge" = "CLÔTURÉE";

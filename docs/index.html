@@ -29,6 +29,7 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  overscroll-behavior-y: none;
 }
 
 .gradient-bg {
@@ -989,6 +990,7 @@ function showIdentityPicker() {
 function selectIdentity(id) {
   currentUserID = id;
   identityLocked = true;
+  try { sessionStorage.setItem('bc_me', id); } catch(e) {}
   closeModal();
   render();
 }
@@ -1566,8 +1568,20 @@ window.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const meParam = urlParams.get('me');
   if (meParam) {
-    currentUserID = meParam;
+    // Convert dashless UUID (32 hex) to dashed format to match participant IDs
+    const m = meParam.replace(/-/g, '').toLowerCase();
+    if (/^[0-9a-f]{32}$/.test(m)) {
+      currentUserID = m.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5');
+    } else {
+      currentUserID = meParam;
+    }
     identityLocked = true;
+  } else {
+    // Restore identity from sessionStorage (survives pull-to-refresh)
+    try {
+      const saved = sessionStorage.getItem('bc_me');
+      if (saved) { currentUserID = saved; identityLocked = true; }
+    } catch(e) {}
   }
   if (await loadFromURL()) {
     // Validate locked identity exists in participants
