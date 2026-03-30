@@ -113,6 +113,7 @@
 "add_participant_desc" = "Ajouter un nouveau participant à la campagne";
 "edit" = "Modifier";
 "edit_participant" = "Modifier le participant";
+"edit_expense" = "Modifier la dépense";
 
 /* Balance */
 "summary" = "Résumé";

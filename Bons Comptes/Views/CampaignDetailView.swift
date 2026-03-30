@@ -15,6 +15,7 @@ struct CampaignDetailView: View {
     @State private var showingShare = false
     @State private var showingCloseAlert = false
     @State private var selectedTab = 0
+    @State private var editingExpense: Expense?
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -67,6 +68,9 @@ struct CampaignDetailView: View {
         }
         .sheet(isPresented: $showingBalance) { BalanceView(campaign: campaign) }
         .sheet(isPresented: $showingShare) { ShareView(campaign: campaign) }
+        .sheet(item: $editingExpense) { expense in
+            EditExpenseView(campaign: campaign, expense: expense).onDisappear { refreshCampaign() }
+        }
         .alert(NSLocalizedString("close_campaign_title", comment: ""), isPresented: $showingCloseAlert) {
             Button(NSLocalizedString("cancel", comment: ""), role: .cancel) {}
             Button(NSLocalizedString("close_confirm", comment: ""), role: .destructive) {
@@ -153,7 +157,11 @@ struct CampaignDetailView: View {
                 ForEach(Array(items.enumerated()), id: \.element.id) { i, expense in
                     ExpenseCardView(expense: expense, currency: campaign.currency)
                         .animatedAppear(delay: Double(i) * 0.05)
+                        .onTapGesture { editingExpense = expense }
                         .contextMenu {
+                            Button { editingExpense = expense } label: {
+                                Label(NSLocalizedString("edit_expense", comment: ""), systemImage: "pencil")
+                            }
                             Button(role: .destructive) { withAnimation { store.deleteExpense(expense); refreshCampaign() } } label: {
                                 Label(NSLocalizedString("delete", comment: ""), systemImage: "trash")
                             }

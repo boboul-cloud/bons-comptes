@@ -113,6 +113,7 @@
 "add_participant_desc" = "Add a new participant to the campaign";
 "edit" = "Edit";
 "edit_participant" = "Edit participant";
+"edit_expense" = "Edit expense";
 
 /* Balance */
 "summary" = "Summary";
