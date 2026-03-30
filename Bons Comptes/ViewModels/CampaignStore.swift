@@ -943,7 +943,11 @@ class CampaignStore: ObservableObject {
         }
         for p in fixedAppData.participants {
             if let idx = participants.firstIndex(where: { $0.id == p.id }) {
-                participants[idx] = p
+                var merged = p
+                // Preserve local fields not in V3 format
+                if merged.phone.isEmpty { merged.phone = participants[idx].phone }
+                if merged.email.isEmpty { merged.email = participants[idx].email }
+                participants[idx] = merged
             } else {
                 participants.append(p)
             }
