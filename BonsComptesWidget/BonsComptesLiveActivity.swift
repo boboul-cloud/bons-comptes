@@ -91,6 +91,6 @@ struct BonsComptesLiveActivity: Widget {
             }
         }
         .padding(16)
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(Color(.secondarySystemBackground))
     }
 }

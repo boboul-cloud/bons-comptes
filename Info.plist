@@ -2,6 +2,17 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Bons Comptes uses the local network to share campaigns with nearby devices.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_bonscomptes._tcp</string>
+		<string>_bonscomptes._udp</string>
+	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Bons Comptes uses your camera to scan receipts.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

@@ -6,11 +6,40 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		AA000001DEADBEEF00000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BFD75CF12F792E3800BB6C41 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA000002DEADBEEF00000002;
+			remoteInfo = BonsComptesWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AA000003DEADBEEF00000003 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		AA000005DEADBEEF00000005 /* BonsComptesWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BonsComptesWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BFD75CF92F792E3800BB6C41 /* Bons Comptes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Bons Comptes.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		AA000006DEADBEEF00000006 /* BonsComptesWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = BonsComptesWidget;
+			sourceTree = "<group>";
+		};
 		BFD75CFB2F792E3800BB6C41 /* Bons Comptes */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "Bons Comptes";
@@ -19,6 +48,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		AA000007DEADBEEF00000007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BFD75CF62F792E3800BB6C41 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -33,6 +69,7 @@
 			isa = PBXGroup;
 			children = (
 				BFD75CFB2F792E3800BB6C41 /* Bons Comptes */,
+				AA000006DEADBEEF00000006 /* BonsComptesWidget */,
 				BFD75CFA2F792E3800BB6C41 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +78,7 @@
 			isa = PBXGroup;
 			children = (
 				BFD75CF92F792E3800BB6C41 /* Bons Comptes.app */,
+				AA000005DEADBEEF00000005 /* BonsComptesWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,6 +86,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		AA000002DEADBEEF00000002 /* BonsComptesWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA000009DEADBEEF00000009 /* Build configuration list for PBXNativeTarget "BonsComptesWidgetExtension" */;
+			buildPhases = (
+				AA00000ADEADBEEF0000000A /* Sources */,
+				AA000007DEADBEEF00000007 /* Frameworks */,
+				AA00000BDEADBEEF0000000B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AA000006DEADBEEF00000006 /* BonsComptesWidget */,
+			);
+			name = BonsComptesWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = BonsComptesWidgetExtension;
+			productReference = AA000005DEADBEEF00000005 /* BonsComptesWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		BFD75CF82F792E3800BB6C41 /* Bons Comptes */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BFD75D042F792E3900BB6C41 /* Build configuration list for PBXNativeTarget "Bons Comptes" */;
@@ -55,10 +115,12 @@
 				BFD75CF52F792E3800BB6C41 /* Sources */,
 				BFD75CF62F792E3800BB6C41 /* Frameworks */,
 				BFD75CF72F792E3800BB6C41 /* Resources */,
+				AA000003DEADBEEF00000003 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				AA000008DEADBEEF00000008 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				BFD75CFB2F792E3800BB6C41 /* Bons Comptes */,
@@ -80,6 +142,9 @@
 				LastSwiftUpdateCheck = 2610;
 				LastUpgradeCheck = 2610;
 				TargetAttributes = {
+					AA000002DEADBEEF00000002 = {
+						CreatedOnToolsVersion = 26.1.1;
+					};
 					BFD75CF82F792E3800BB6C41 = {
 						CreatedOnToolsVersion = 26.1.1;
 					};
@@ -101,11 +166,19 @@
 			projectRoot = "";
 			targets = (
 				BFD75CF82F792E3800BB6C41 /* Bons Comptes */,
+				AA000002DEADBEEF00000002 /* BonsComptesWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		AA00000BDEADBEEF0000000B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BFD75CF72F792E3800BB6C41 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -116,6 +189,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		AA00000ADEADBEEF0000000A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BFD75CF52F792E3800BB6C41 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -125,7 +205,75 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		AA000008DEADBEEF00000008 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA000002DEADBEEF00000002 /* BonsComptesWidgetExtension */;
+			targetProxy = AA000001DEADBEEF00000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		AA00000CDEADBEEF0000000C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 38DQ8FW23J;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BonsComptesWidgetInfo.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BonsComptesWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "bob.oulhen-gmail.com.Bons-Comptes.BonsComptesWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AA00000DDEADBEEF0000000D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 38DQ8FW23J;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BonsComptesWidgetInfo.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BonsComptesWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "bob.oulhen-gmail.com.Bons-Comptes.BonsComptesWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		BFD75D022F792E3900BB6C41 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -335,6 +483,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		AA000009DEADBEEF00000009 /* Build configuration list for PBXNativeTarget "BonsComptesWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA00000CDEADBEEF0000000C /* Debug */,
+				AA00000DDEADBEEF0000000D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		BFD75CF42F792E3800BB6C41 /* Build configuration list for PBXProject "Bons Comptes" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
