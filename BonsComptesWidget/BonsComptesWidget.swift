@@ -11,10 +11,8 @@ import AppIntents
 
 // MARK: - App Group Helper
 
-nonisolated(unsafe) private let appGroupID = "group.com.bonscomptes.shared"
-
 nonisolated private func loadAllCampaigns() -> [WidgetCampaignData] {
-    guard let defaults = UserDefaults(suiteName: appGroupID),
+    guard let defaults = UserDefaults(suiteName: "group.com.bonscomptes.shared"),
           let data = defaults.data(forKey: "widgetCampaigns"),
           let campaigns = try? JSONDecoder().decode([WidgetCampaignData].self, from: data)
     else { return [] }
