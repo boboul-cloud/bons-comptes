@@ -131,6 +131,9 @@ struct SettingsView: View {
                             }
                             Divider()
 
+                            NavigationLink(destination: UserGuideView()) {
+                                legalRow(icon: "book.fill", title: NSLocalizedString("user_guide", comment: ""), color: AppTheme.accent)
+                            }
                             NavigationLink(destination: AboutView()) {
                                 legalRow(icon: "info.circle", title: NSLocalizedString("about_section", comment: ""), color: AppTheme.info)
                             }

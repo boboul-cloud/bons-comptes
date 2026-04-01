@@ -286,6 +286,38 @@
 "proximity_import" = "Import Campaign";
 "close" = "Close";
 
+/* User Guide */
+"user_guide" = "User Guide";
+"guide_welcome_title" = "Welcome to Bons Comptes";
+"guide_welcome_desc" = "Learn how to manage your shared expenses with ease.";
+"guide_start_title" = "Getting Started";
+"guide_start_step1" = "Create a campaign with a name, location, and currency.";
+"guide_start_step2" = "Add participants (name and optionally phone number).";
+"guide_start_step3" = "Choose the currency (€, $, £…) and you're all set!";
+"guide_expenses_title" = "Managing Expenses";
+"guide_expenses_step1" = "Tap + to add an expense: title, amount, and payer.";
+"guide_expenses_step2" = "Choose how to split: equally, by amount, or by percentage.";
+"guide_expenses_step3" = "Assign a category and payment method for better tracking.";
+"guide_expenses_step4" = "Scan a receipt with the camera to create expenses automatically (OCR).";
+"guide_balances_title" = "Balances & Settlements";
+"guide_balances_step1" = "Check the Balances tab to see who owes what to whom.";
+"guide_balances_step2" = "Record settlements to balance accounts.";
+"guide_balances_step3" = "Generate a SEPA QR code for easy bank transfers.";
+"guide_sharing_title" = "Sharing a Campaign";
+"guide_sharing_step1" = "Share via a compressed web link — data is encoded directly in the URL.";
+"guide_sharing_step2" = "Send the link via SMS, iMessage, or any other channel.";
+"guide_sharing_step3" = "Use proximity sharing (Bluetooth/Wi-Fi) to send directly to a nearby device.";
+"guide_sharing_step4" = "Recipients can view and edit expenses from their web browser.";
+"guide_advanced_title" = "Advanced Features";
+"guide_advanced_step1" = "Enable Live Activity to track expenses in real time on the lock screen and Dynamic Island.";
+"guide_advanced_step2" = "Add the iOS widget to your home screen for a quick campaign overview.";
+"guide_advanced_step3" = "Create local backups to protect your data.";
+"guide_advanced_step4" = "Export a full PDF summary of the campaign.";
+"guide_tips_title" = "Tips";
+"guide_tip1" = "Archive a finished campaign to keep a clean history.";
+"guide_tip2" = "Enable deletion sync so changes propagate between devices.";
+"guide_tip3" = "Your data never leaves your device — everything is local and private.";
+
 /* Live Activity */
 "live_start" = "Live Activity";
 "live_stop" = "Stop Live";

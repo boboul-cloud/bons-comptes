@@ -286,6 +286,38 @@
 "proximity_import" = "Importer la campagne";
 "close" = "Fermer";
 
+/* User Guide */
+"user_guide" = "Mode d'emploi";
+"guide_welcome_title" = "Bienvenue dans Bons Comptes";
+"guide_welcome_desc" = "Découvrez comment gérer vos dépenses partagées en toute simplicité.";
+"guide_start_title" = "Démarrer";
+"guide_start_step1" = "Créez une campagne en lui donnant un nom, un lieu et une devise.";
+"guide_start_step2" = "Ajoutez les participants (nom et éventuellement numéro de téléphone).";
+"guide_start_step3" = "Choisissez la devise (€, $, £…) et c'est parti !";
+"guide_expenses_title" = "Gérer les dépenses";
+"guide_expenses_step1" = "Appuyez sur + pour ajouter une dépense : titre, montant, payeur.";
+"guide_expenses_step2" = "Choisissez la répartition : égale, par montant ou par pourcentage.";
+"guide_expenses_step3" = "Associez une catégorie et un moyen de paiement pour mieux suivre.";
+"guide_expenses_step4" = "Scannez un ticket de caisse avec l'appareil photo pour créer les dépenses automatiquement (OCR).";
+"guide_balances_title" = "Soldes et remboursements";
+"guide_balances_step1" = "Consultez l'onglet Soldes pour voir qui doit combien à qui.";
+"guide_balances_step2" = "Enregistrez les remboursements effectués pour équilibrer les comptes.";
+"guide_balances_step3" = "Générez un QR code SEPA pour faciliter le virement bancaire.";
+"guide_sharing_title" = "Partager une campagne";
+"guide_sharing_step1" = "Partagez via un lien web compressé : les données sont encodées dans l'URL.";
+"guide_sharing_step2" = "Envoyez le lien par SMS, iMessage ou tout autre moyen.";
+"guide_sharing_step3" = "Utilisez le partage de proximité (Bluetooth/Wi-Fi) pour envoyer directement à un appareil à côté.";
+"guide_sharing_step4" = "Les destinataires peuvent consulter et modifier les dépenses depuis le navigateur web.";
+"guide_advanced_title" = "Fonctions avancées";
+"guide_advanced_step1" = "Activez la Live Activity pour suivre les dépenses en direct sur l'écran de verrouillage et la Dynamic Island.";
+"guide_advanced_step2" = "Ajoutez le widget iOS sur votre écran d'accueil pour un aperçu rapide de la campagne.";
+"guide_advanced_step3" = "Créez des sauvegardes locales pour protéger vos données.";
+"guide_advanced_step4" = "Exportez un récapitulatif PDF complet de la campagne.";
+"guide_tips_title" = "Astuces";
+"guide_tip1" = "Archivez une campagne terminée pour garder un historique propre.";
+"guide_tip2" = "Activez la synchronisation des suppressions pour que les modifications se propagent entre appareils.";
+"guide_tip3" = "Vos données ne quittent jamais votre appareil — tout est local et privé.";
+
 /* Live Activity */
 "live_start" = "Live Activity";
 "live_stop" = "Arrêter Live";
