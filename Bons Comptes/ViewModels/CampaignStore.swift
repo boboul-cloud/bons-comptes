@@ -437,20 +437,21 @@ class CampaignStore: ObservableObject {
                 .replacingOccurrences(of: "+", with: "-")
                 .replacingOccurrences(of: "/", with: "_")
                 .replacingOccurrences(of: "=", with: "")
-            return Self.webBaseURL + "#z" + base64
+            return Self.webBaseURL + "?d=z" + base64
         }
         let base64 = textData.base64EncodedString()
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
-        return Self.webBaseURL + "#" + base64
+        return Self.webBaseURL + "?d=" + base64
     }
 
     func webURL(for campaign: Campaign, participantID: UUID, syncDeletions: Bool = false) -> String {
         let base = webURL(for: campaign, syncDeletions: syncDeletions)
         let dashless = Self.dashlessUUID(participantID)
-        if let hashIndex = base.firstIndex(of: "#") {
-            return String(base[..<hashIndex]) + "?me=\(dashless)" + String(base[hashIndex...])
+        // Insert &me= after ?d=
+        if base.contains("?d=") {
+            return base + "&me=\(dashless)"
         }
         return base + "?me=\(dashless)"
     }
@@ -728,6 +729,13 @@ class CampaignStore: ObservableObject {
     }
 
     func importFromURL(_ url: URL) -> Bool {
+        // Check ?d= query parameter first (new format)
+        if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+           let dParam = components.queryItems?.first(where: { $0.name == "d" })?.value,
+           !dParam.isEmpty {
+            return importFromFragment(dParam)
+        }
+        // Fallback to #fragment (legacy format)
         guard let fragment = url.fragment, !fragment.isEmpty else { return false }
         return importFromFragment(fragment)
     }

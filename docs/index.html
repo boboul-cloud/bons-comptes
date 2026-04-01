@@ -712,7 +712,9 @@ function stateToCompactJSON() {
 async function generateShareURL() {
   const v2 = stateToV2();
   const encoded = await encodeData(v2);
-  return window.location.origin + window.location.pathname + '#' + encoded;
+  const url = new URL(window.location.origin + window.location.pathname);
+  url.searchParams.set('d', encoded);
+  return url.toString();
 }
 
 // ===== V2 Compact Format (pipe-delimited, ~40% smaller than JSON) =====
@@ -949,12 +951,15 @@ function loadFromInput() {
 }
 
 async function loadFromURL() {
-  const hash = window.location.hash.slice(1);
-  if (!hash) return false;
-  const text = await decodeData(hash);
+  // Check ?d= query parameter first (new format), fallback to #hash (legacy)
+  const urlParams = new URLSearchParams(window.location.search);
+  const dParam = urlParams.get('d');
+  const data = dParam || window.location.hash.slice(1);
+  if (!data) return false;
+  const text = await decodeData(data);
   if (!text) return false;
   // V2/V3 pipe-delimited format
-  if (text.startsWith('v2\n') || text.startsWith('v3\n')) return loadV2(text);
+  if (text.startsWith('v2\n') || text.startsWith('v3\n') || text.startsWith('v3s\n')) return loadV2(text);
   // Legacy JSON format
   return loadData(text);
 }
@@ -1315,18 +1320,20 @@ async function sendUpdate() {
   const phone = state.campaign.managerPhone;
   if (!phone) return;
   try {
-    const hash = window.location.hash.slice(1);
-    if (!hash) return;
-    const appURL = 'bonscomptes://import#' + hash;
+    const urlParams = new URLSearchParams(window.location.search);
+    const data = urlParams.get('d') || window.location.hash.slice(1);
+    if (!data) return;
+    const appURL = 'bonscomptes://import#' + data;
     const body = encodeURIComponent(t('send_update_body') + state.campaign.title + ' :\n' + appURL);
     window.location.href = `sms:${phone}&body=${body}`;
   } catch(e) { alert('Erreur: ' + e.message); }
 }
 
 function openDirectInApp() {
-  const hash = window.location.hash.slice(1);
-  if (!hash) return;
-  window.location.href = 'bonscomptes://import#' + hash;
+  const urlParams = new URLSearchParams(window.location.search);
+  const data = urlParams.get('d') || window.location.hash.slice(1);
+  if (!data) return;
+  window.location.href = 'bonscomptes://import#' + data;
 }
 
 function isIOS() {
@@ -1538,7 +1545,10 @@ function deleteReimbursement(id) {
 async function updateURLHash() {
   const v2 = stateToV2();
   const encoded = await encodeData(v2);
-  history.replaceState(null, '', window.location.search + '#' + encoded);
+  const url = new URL(window.location);
+  url.searchParams.set('d', encoded);
+  url.hash = '';
+  history.replaceState(null, '', url.toString());
 }
 
 // ===== Utils =====
@@ -1590,7 +1600,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       identityLocked = false;
     }
     // Show import banner on iOS
-    if (isIOS() && window.location.hash) {
+    if (isIOS() && (window.location.hash || urlParams.get('d'))) {
       const banner = document.getElementById('appBanner');
       document.getElementById('appBannerLabel').textContent = t('open_in_app_banner');
       banner.style.display = 'flex';
