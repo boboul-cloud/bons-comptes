@@ -1016,7 +1016,6 @@ class CampaignStore: ObservableObject {
             let cid = importedCampaign.id
             let importedExpenseIDs = Set(fixedAppData.expenses.map { $0.id })
             let importedReimbIDs = Set(fixedAppData.reimbursements.map { $0.id })
-            let importedParticipantIDs = Set(fixedAppData.participants.map { $0.id })
 
             expenses.removeAll { $0.campaignID == cid && !importedExpenseIDs.contains($0.id) }
             reimbursements.removeAll { $0.campaignID == cid && !importedReimbIDs.contains($0.id) }
