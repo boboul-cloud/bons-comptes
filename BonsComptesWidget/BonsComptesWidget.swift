@@ -7,33 +7,83 @@
 
 import WidgetKit
 import SwiftUI
+import AppIntents
 
-// MARK: - Shared Data Model (read from App Group UserDefaults)
-// WidgetCampaignData is defined in Models/WidgetCampaignData.swift (shared between targets)
+// MARK: - App Group Helper
 
-struct BonsComptesWidgetProvider: TimelineProvider {
-    static let appGroupID = "group.com.bonscomptes.shared"
+private let appGroupID = "group.com.bonscomptes.shared"
 
+private func loadAllCampaigns() -> [WidgetCampaignData] {
+    guard let defaults = UserDefaults(suiteName: appGroupID),
+          let data = defaults.data(forKey: "widgetCampaigns"),
+          let campaigns = try? JSONDecoder().decode([WidgetCampaignData].self, from: data)
+    else { return [] }
+    return campaigns
+}
+
+// MARK: - AppIntent for Campaign Selection
+
+struct CampaignEntity: AppEntity {
+    static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Campaign")
+    static var defaultQuery = CampaignEntityQuery()
+
+    var id: String
+    var title: String
+
+    var displayRepresentation: DisplayRepresentation {
+        DisplayRepresentation(title: "\(title)")
+    }
+}
+
+struct CampaignEntityQuery: EntityQuery {
+    func entities(for identifiers: [String]) async throws -> [CampaignEntity] {
+        let all = loadAllCampaigns()
+        return identifiers.compactMap { id in
+            guard let c = all.first(where: { $0.id == id }) else { return nil }
+            return CampaignEntity(id: c.id, title: c.title)
+        }
+    }
+
+    func suggestedEntities() async throws -> [CampaignEntity] {
+        loadAllCampaigns().map { CampaignEntity(id: $0.id, title: $0.title) }
+    }
+
+    func defaultResult() async -> CampaignEntity? {
+        guard let first = loadAllCampaigns().first else { return nil }
+        return CampaignEntity(id: first.id, title: first.title)
+    }
+}
+
+struct SelectCampaignIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource = "Select Campaign"
+    static var description: IntentDescription = "Choose which campaign to display"
+
+    @Parameter(title: "Campaign")
+    var campaign: CampaignEntity?
+}
+
+// MARK: - Provider
+
+struct BonsComptesWidgetProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> BonsComptesWidgetEntry {
         BonsComptesWidgetEntry(date: Date(), campaign: nil)
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (BonsComptesWidgetEntry) -> Void) {
-        completion(BonsComptesWidgetEntry(date: Date(), campaign: loadCampaign()))
+    func snapshot(for configuration: SelectCampaignIntent, in context: Context) async -> BonsComptesWidgetEntry {
+        BonsComptesWidgetEntry(date: Date(), campaign: resolveCampaign(for: configuration))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<BonsComptesWidgetEntry>) -> Void) {
-        let entry = BonsComptesWidgetEntry(date: Date(), campaign: loadCampaign())
-        let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(3600)))
-        completion(timeline)
+    func timeline(for configuration: SelectCampaignIntent, in context: Context) async -> Timeline<BonsComptesWidgetEntry> {
+        let entry = BonsComptesWidgetEntry(date: Date(), campaign: resolveCampaign(for: configuration))
+        return Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(3600)))
     }
 
-    private func loadCampaign() -> WidgetCampaignData? {
-        guard let defaults = UserDefaults(suiteName: Self.appGroupID),
-              let data = defaults.data(forKey: "widgetCampaign"),
-              let campaign = try? JSONDecoder().decode(WidgetCampaignData.self, from: data)
-        else { return nil }
-        return campaign
+    private func resolveCampaign(for config: SelectCampaignIntent) -> WidgetCampaignData? {
+        let all = loadAllCampaigns()
+        if let selected = config.campaign {
+            return all.first(where: { $0.id == selected.id })
+        }
+        return all.first
     }
 }
 
@@ -149,7 +199,7 @@ struct BonsComptesHomeWidget: Widget {
     let kind = "BonsComptesWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: BonsComptesWidgetProvider()) { entry in
+        AppIntentConfiguration(kind: kind, intent: SelectCampaignIntent.self, provider: BonsComptesWidgetProvider()) { entry in
             BonsComptesWidgetEntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }

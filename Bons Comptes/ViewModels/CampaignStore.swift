@@ -68,22 +68,25 @@ class CampaignStore: ObservableObject {
     }
 
     private func updateWidgetData() {
-        guard let campaign = campaigns.sorted(by: { ($0.isClosed ? 1 : 0) < ($1.isClosed ? 1 : 0) }).first else { return }
-        let total = totalExpenses(for: campaign)
-        let pCount = campaign.participantIDs.count
-        let eCount = campaign.expenseIDs.count
-        let widgetData = WidgetCampaignData(
-            title: campaign.title,
-            currency: campaign.currency,
-            totalExpenses: total,
-            perPerson: pCount > 0 ? total / Double(pCount) : 0,
-            participantCount: pCount,
-            expenseCount: eCount,
-            lastUpdate: Date()
-        )
+        let activeCampaigns = campaigns.filter { !$0.isClosed }
+        let allWidgetData = activeCampaigns.map { campaign -> WidgetCampaignData in
+            let total = totalExpenses(for: campaign)
+            let pCount = campaign.participantIDs.count
+            let eCount = campaign.expenseIDs.count
+            return WidgetCampaignData(
+                id: campaign.id.uuidString,
+                title: campaign.title,
+                currency: campaign.currency,
+                totalExpenses: total,
+                perPerson: pCount > 0 ? total / Double(pCount) : 0,
+                participantCount: pCount,
+                expenseCount: eCount,
+                lastUpdate: Date()
+            )
+        }
         if let defaults = UserDefaults(suiteName: "group.com.bonscomptes.shared"),
-           let encoded = try? JSONEncoder().encode(widgetData) {
-            defaults.set(encoded, forKey: "widgetCampaign")
+           let encoded = try? JSONEncoder().encode(allWidgetData) {
+            defaults.set(encoded, forKey: "widgetCampaigns")
         }
         WidgetCenter.shared.reloadAllTimelines()
     }

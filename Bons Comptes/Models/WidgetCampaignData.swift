@@ -7,7 +7,8 @@
 
 import Foundation
 
-struct WidgetCampaignData: Codable {
+struct WidgetCampaignData: Codable, Identifiable, Hashable {
+    let id: String
     let title: String
     let currency: String
     let totalExpenses: Double
