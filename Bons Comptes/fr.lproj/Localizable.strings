@@ -243,7 +243,7 @@
 
 /* QR Code SEPA */
 "qr_sepa_title" = "QR Code de virement";
-"qr_from_to" = "%@ doit %@ à %@";
+"qr_from_to" = "%@ → %@";
 "qr_scan_hint" = "Scannez ce QR code avec votre application bancaire pour effectuer le virement.";
 "qr_bank_details" = "Coordonnées bancaires";
 "qr_beneficiary" = "Bénéficiaire";

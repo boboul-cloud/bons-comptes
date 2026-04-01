@@ -243,7 +243,7 @@
 
 /* QR Code SEPA */
 "qr_sepa_title" = "Payment QR Code";
-"qr_from_to" = "%@ owes %@ to %@";
+"qr_from_to" = "%@ → %@";
 "qr_scan_hint" = "Scan this QR code with your banking app to make the transfer.";
 "qr_bank_details" = "Bank Details";
 "qr_beneficiary" = "Beneficiary";
