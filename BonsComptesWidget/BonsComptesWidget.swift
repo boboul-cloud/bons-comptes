@@ -13,7 +13,7 @@ import AppIntents
 
 private let appGroupID = "group.com.bonscomptes.shared"
 
-private func loadAllCampaigns() -> [WidgetCampaignData] {
+nonisolated private func loadAllCampaigns() -> [WidgetCampaignData] {
     guard let defaults = UserDefaults(suiteName: appGroupID),
           let data = defaults.data(forKey: "widgetCampaigns"),
           let campaigns = try? JSONDecoder().decode([WidgetCampaignData].self, from: data)
