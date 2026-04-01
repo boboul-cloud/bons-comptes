@@ -389,6 +389,25 @@ class CampaignStore: ObservableObject {
     // MARK: - Export / Share
 
     static let webBaseURL = "https://boboul-cloud.github.io/bons-comptes/"
+    static let appScheme = "bonscomptes"
+
+    func appURL(for campaign: Campaign, syncDeletions: Bool = false) -> String {
+        let v2Text = encodeV2(for: campaign, syncDeletions: syncDeletions)
+        guard let textData = v2Text.data(using: .utf8) else { return "\(Self.appScheme)://import" }
+
+        if let compressed = Self.rawDeflateCompress(textData) {
+            let base64 = compressed.base64EncodedString()
+                .replacingOccurrences(of: "+", with: "-")
+                .replacingOccurrences(of: "/", with: "_")
+                .replacingOccurrences(of: "=", with: "")
+            return "\(Self.appScheme)://import#z" + base64
+        }
+        let base64 = textData.base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+        return "\(Self.appScheme)://import#" + base64
+    }
 
     func exportJSON(for campaign: Campaign) -> String {
         let data = AppData(
@@ -409,8 +428,8 @@ class CampaignStore: ObservableObject {
         return jsonString
     }
 
-    func webURL(for campaign: Campaign) -> String {
-        let v2Text = encodeV2(for: campaign)
+    func webURL(for campaign: Campaign, syncDeletions: Bool = false) -> String {
+        let v2Text = encodeV2(for: campaign, syncDeletions: syncDeletions)
         guard let textData = v2Text.data(using: .utf8) else { return Self.webBaseURL }
 
         if let compressed = Self.rawDeflateCompress(textData) {
@@ -427,8 +446,8 @@ class CampaignStore: ObservableObject {
         return Self.webBaseURL + "#" + base64
     }
 
-    func webURL(for campaign: Campaign, participantID: UUID) -> String {
-        let base = webURL(for: campaign)
+    func webURL(for campaign: Campaign, participantID: UUID, syncDeletions: Bool = false) -> String {
+        let base = webURL(for: campaign, syncDeletions: syncDeletions)
         let dashless = Self.dashlessUUID(participantID)
         if let hashIndex = base.firstIndex(of: "#") {
             return String(base[..<hashIndex]) + "?me=\(dashless)" + String(base[hashIndex...])
@@ -452,7 +471,7 @@ class CampaignStore: ObservableObject {
         return UUID(uuidString: u.uppercased())
     }
 
-    func encodeV2(for campaign: Campaign) -> String {
+    func encodeV2(for campaign: Campaign, syncDeletions: Bool = false) -> String {
         let parts = participantsFor(campaign: campaign)
         let exps = expensesFor(campaign: campaign)
         let reimbs = reimbursementsFor(campaign: campaign)
@@ -462,7 +481,7 @@ class CampaignStore: ObservableObject {
         df.dateFormat = "yyMMdd"
         df.locale = Locale(identifier: "en_US_POSIX")
 
-        var lines: [String] = ["v3"]
+        var lines: [String] = [syncDeletions ? "v3s" : "v3"]
 
         // Campaign: id|title[|currency[|description[|location[|phone]]]]
         lines.append(Self.trimV2([
@@ -514,8 +533,9 @@ class CampaignStore: ObservableObject {
 
     func importV2(_ text: String) -> Bool {
         let lines = text.components(separatedBy: "\n")
-        guard lines.count >= 4, lines[0] == "v2" || lines[0] == "v3" else { return false }
-        let hasIDs = lines[0] == "v3"
+        guard lines.count >= 4, lines[0] == "v2" || lines[0] == "v3" || lines[0] == "v3s" else { return false }
+        let hasIDs = lines[0] == "v3" || lines[0] == "v3s"
+        let syncDeletions = lines[0] == "v3s"
         let o = hasIDs ? 1 : 0 // field offset for ID prefix
 
         // Campaign
@@ -614,7 +634,7 @@ class CampaignStore: ObservableObject {
         campaign.reimbursementIDs = reimbs.map { $0.id }
 
         let appData = AppData(campaigns: [campaign], participants: parts, expenses: exps, reimbursements: reimbs)
-        return mergeAppData(appData)
+        return mergeAppData(appData, syncDeletions: syncDeletions)
     }
 
     private static func escV2(_ s: String) -> String {
@@ -918,7 +938,7 @@ class CampaignStore: ObservableObject {
         return nil
     }
 
-    private func mergeAppData(_ appData: AppData) -> Bool {
+    private func mergeAppData(_ appData: AppData, syncDeletions: Bool = false) -> Bool {
         // Reconstruct missing ID lists (stripped for compact URL sharing)
         var fixedAppData = appData
         let campaignIDs = Set(fixedAppData.campaigns.map { $0.id })
@@ -990,6 +1010,28 @@ class CampaignStore: ObservableObject {
                 paymentMethods.append(pm)
             }
         }
+
+        // Sync deletions: remove local entities not present in import
+        if syncDeletions, let importedCampaign = fixedAppData.campaigns.first {
+            let cid = importedCampaign.id
+            let importedExpenseIDs = Set(fixedAppData.expenses.map { $0.id })
+            let importedReimbIDs = Set(fixedAppData.reimbursements.map { $0.id })
+            let importedParticipantIDs = Set(fixedAppData.participants.map { $0.id })
+
+            expenses.removeAll { $0.campaignID == cid && !importedExpenseIDs.contains($0.id) }
+            reimbursements.removeAll { $0.campaignID == cid && !importedReimbIDs.contains($0.id) }
+
+            if let idx = campaigns.firstIndex(where: { $0.id == cid }) {
+                campaigns[idx].participantIDs = importedCampaign.participantIDs
+                campaigns[idx].expenseIDs = importedCampaign.expenseIDs
+                campaigns[idx].reimbursementIDs = importedCampaign.reimbursementIDs
+            }
+
+            // Remove orphaned participants (not used by any campaign)
+            let allUsedIDs = Set(campaigns.flatMap { $0.participantIDs })
+            participants.removeAll { !allUsedIDs.contains($0.id) }
+        }
+
         saveData()
         return true
     }

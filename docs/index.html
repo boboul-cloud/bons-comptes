@@ -781,8 +781,8 @@ function stateToV2() {
 function loadV2(text) {
   try {
     const lines = text.split('\n');
-    if (lines.length < 4 || (lines[0] !== 'v2' && lines[0] !== 'v3')) return false;
-    const hasIDs = lines[0] === 'v3';
+    if (lines.length < 4 || (lines[0] !== 'v2' && lines[0] !== 'v3' && lines[0] !== 'v3s')) return false;
+    const hasIDs = lines[0] === 'v3' || lines[0] === 'v3s';
     const o = hasIDs ? 1 : 0; // field offset for ID prefix
     const parseID = s => /^[0-9a-f]{32}$/i.test(s) ? s.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5') : null;
 

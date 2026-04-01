@@ -140,6 +140,11 @@
 "share_pdf" = "Share PDF summary";
 "view_pdf" = "View PDF summary";
 "share_json" = "Share JSON data";
+"share_app_section" = "App-to-app sharing";
+"share_app_desc" = "Send this link to another Bons Comptes user to import the campaign directly into their app.";
+"share_app_link" = "Send app link";
+"sync_deletions_title" = "Sync deletions";
+"sync_deletions_desc" = "Items deleted from this campaign will also be removed on the recipient's device.";
 "send_sms_section" = "Send via SMS";
 "no_phone_numbers" = "No participant has a phone number. Add one in participant management.";
 "send_sms_all_format" = "Send to all (%d participants)";

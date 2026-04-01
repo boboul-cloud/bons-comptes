@@ -24,12 +24,14 @@ struct ShareView: View {
 
     @State private var copiedFeedback = false
     @State private var pdfURL: URL?
+    @State private var syncDeletions = false
 
     var participantsWithPhone: [Participant] {
         store.participantsFor(campaign: campaign).filter { !$0.phone.isEmpty }
     }
 
-    var webLink: String { store.webURL(for: campaign) }
+    var webLink: String { store.webURL(for: campaign, syncDeletions: syncDeletions) }
+    var appLink: String { store.appURL(for: campaign, syncDeletions: syncDeletions) }
 
     private func generatePDFURL() -> URL {
         let data = PDFGenerator.generate(campaign: campaign, store: store)
@@ -50,6 +52,28 @@ struct ShareView: View {
 
                 ScrollView {
                     VStack(spacing: 20) {
+                        // Sync deletions toggle
+                        VStack(spacing: 8) {
+                            Toggle(isOn: $syncDeletions) {
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        Circle().fill(AppTheme.negative.opacity(0.12)).frame(width: 40, height: 40)
+                                        Image(systemName: "arrow.triangle.2.circlepath").foregroundColor(AppTheme.negative)
+                                    }
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(NSLocalizedString("sync_deletions_title", comment: ""))
+                                            .font(.subheadline).fontWeight(.semibold)
+                                        Text(NSLocalizedString("sync_deletions_desc", comment: ""))
+                                            .font(.caption2).foregroundColor(.secondary)
+                                    }
+                                }
+                            }
+                            .tint(AppTheme.negative)
+                            .padding(12)
+                        }
+                        .cardStyle()
+                        .animatedAppear()
+
                         ZStack {
                             RoundedRectangle(cornerRadius: 20, style: .continuous)
                                 .fill(AppTheme.headerGradient)
@@ -106,6 +130,22 @@ struct ShareView: View {
                         }
                         .padding(.horizontal)
                         .animatedAppear()
+
+                        // App-to-app sharing
+                        VStack(alignment: .leading, spacing: 12) {
+                            sectionHeader(icon: "app.badge.fill", title: NSLocalizedString("share_app_section", comment: ""), color: AppTheme.accent)
+
+                            Text(NSLocalizedString("share_app_desc", comment: ""))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 12)
+
+                            ShareLink(item: appLink) {
+                                shareRow(icon: "arrow.up.forward.app", title: NSLocalizedString("share_app_link", comment: ""), color: AppTheme.accent)
+                            }
+                        }
+                        .cardStyle()
+                        .animatedAppear(delay: 0.05)
 
                         VStack(alignment: .leading, spacing: 12) {
                             sectionHeader(icon: "square.and.arrow.up.fill", title: NSLocalizedString("export_data", comment: ""), color: AppTheme.info)
@@ -171,7 +211,7 @@ struct ShareView: View {
                             }
                         }
                         .cardStyle()
-                        .animatedAppear(delay: 0.15)
+                        .animatedAppear(delay: 0.2)
                     }
                     .padding(.vertical)
                 }
@@ -226,7 +266,7 @@ struct ShareView: View {
     }
 
     func sendSMS(toParticipant participant: Participant) {
-        let link = store.webURL(for: campaign, participantID: participant.id)
+        let link = store.webURL(for: campaign, participantID: participant.id, syncDeletions: syncDeletions)
         let body = String(format: NSLocalizedString("sms_campaign_body", comment: ""), campaign.title, link)
             .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         if let url = URL(string: "sms://open?addresses=\(participant.phone)&body=\(body)") {
