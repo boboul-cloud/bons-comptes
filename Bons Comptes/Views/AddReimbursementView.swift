@@ -20,6 +20,7 @@ struct AddReimbursementView: View {
     @State private var isPartial = false
     @State private var showingNewPaymentMethod = false
     @State private var newPaymentMethodName = ""
+    @State private var showingSEPAQR = false
 
     var participants: [Participant] {
         store.participantsFor(campaign: campaign)
@@ -37,6 +38,13 @@ struct AddReimbursementView: View {
     var canSave: Bool {
         let val = Double(amount.replacingOccurrences(of: ",", with: ".")) ?? 0
         return val > 0 && fromID != nil && toID != nil && fromID != toID
+    }
+
+    var isTransferSelected: Bool {
+        guard let id = paymentMethodID,
+              let method = store.paymentMethods.first(where: { $0.id == id })
+        else { return false }
+        return method.icon == "arrow.left.arrow.right"
     }
 
     var body: some View {
@@ -110,6 +118,28 @@ struct AddReimbursementView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             sectionHeader(icon: "creditcard.fill", title: NSLocalizedString("payment_method_section", comment: ""), color: AppTheme.accent)
                             paymentMethodGrid
+
+                            if isTransferSelected && fromID != nil && toID != nil && fromID != toID {
+                                Button(action: { showingSEPAQR = true }) {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: "qrcode")
+                                            .font(.title3)
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(NSLocalizedString("qr_transfer_button", comment: ""))
+                                                .font(.subheadline).fontWeight(.bold)
+                                            Text(NSLocalizedString("qr_transfer_hint", comment: ""))
+                                                .font(.caption2).opacity(0.8)
+                                        }
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption)
+                                    }
+                                    .foregroundColor(.white)
+                                    .padding(14)
+                                    .background(AppTheme.reimbursementGradient)
+                                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                }
+                            }
                         }
                         .cardStyle()
                         .animatedAppear(delay: 0.2)
@@ -195,6 +225,20 @@ struct AddReimbursementView: View {
                     }
                 }
                 Button(NSLocalizedString("cancel", comment: ""), role: .cancel) { }
+            }
+            .sheet(isPresented: $showingSEPAQR) {
+                if let from = fromID, let to = toID,
+                   let fromP = participants.first(where: { $0.id == from }),
+                   let toP = participants.first(where: { $0.id == to }) {
+                    let val = Double(amount.replacingOccurrences(of: ",", with: ".")) ?? debtAmount
+                    SEPAQRCodeView(
+                        fromName: fromP.name,
+                        toName: toP.name,
+                        amount: val > 0 ? val : debtAmount,
+                        currency: campaign.currency,
+                        toEmoji: toP.avatarEmoji
+                    )
+                }
             }
         }
     }

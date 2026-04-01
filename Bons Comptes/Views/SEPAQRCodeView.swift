@@ -18,6 +18,8 @@ struct SEPAQRCodeView: View {
     @State private var beneficiaryName = ""
     @State private var reference = ""
     @State private var showQR = false
+    @State private var showingShareSheet = false
+    @State private var qrImage: UIImage?
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -43,7 +45,7 @@ struct SEPAQRCodeView: View {
                         }
                         .padding(.horizontal)
 
-                        if showQR, let qr = generateEPCQRCode() {
+                        if showQR, let qr = qrImage {
                             VStack(spacing: 16) {
                                 Image(uiImage: qr)
                                     .interpolation(.none)
@@ -59,6 +61,24 @@ struct SEPAQRCodeView: View {
                                     .font(.caption).foregroundColor(.secondary)
                                     .multilineTextAlignment(.center)
                                     .padding(.horizontal, 32)
+
+                                Button(action: { showingShareSheet = true }) {
+                                    HStack {
+                                        Image(systemName: "square.and.arrow.up")
+                                        Text(NSLocalizedString("qr_share", comment: ""))
+                                            .fontWeight(.bold)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .background(AppTheme.headerGradient)
+                                    .foregroundColor(.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                }
+                                .padding(.horizontal)
+                                .sheet(isPresented: $showingShareSheet) {
+                                    let text = String(format: NSLocalizedString("qr_share_message", comment: ""), fromName, String(format: "%.2f %@", amount, currency), toName)
+                                    ShareSheet(items: [qr, text])
+                                }
                             }
                             .animatedAppear()
                         } else {
@@ -107,7 +127,10 @@ struct SEPAQRCodeView: View {
                                         .clipShape(RoundedRectangle(cornerRadius: 10))
                                 }
 
-                                Button(action: { withAnimation { showQR = true } }) {
+                                Button(action: {
+                                    qrImage = generateEPCQRCode()
+                                    withAnimation { showQR = true }
+                                }) {
                                     HStack {
                                         Image(systemName: "qrcode")
                                         Text(NSLocalizedString("qr_generate", comment: ""))
@@ -172,4 +195,16 @@ struct SEPAQRCodeView: View {
         guard let cgImage = context.createCGImage(scaled, from: scaled.extent) else { return nil }
         return UIImage(cgImage: cgImage)
     }
+}
+
+// MARK: - Share Sheet
+
+private struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }

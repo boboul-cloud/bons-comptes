@@ -254,6 +254,10 @@
 "qr_generate" = "Generate QR Code";
 "qr_save" = "Save Image";
 "qr_saved" = "Image saved!";
+"qr_share" = "Share QR Code";
+"qr_share_message" = "%@ needs to transfer %@ to %@";
+"qr_transfer_button" = "Transfer via QR Code";
+"qr_transfer_hint" = "Generate a SEPA QR code for the transfer";
 
 /* Receipt Scanner (OCR) */
 "scan_receipt" = "Scan Receipt";
