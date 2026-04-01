@@ -376,11 +376,19 @@ class CampaignStore: ObservableObject {
 
     // MARK: - Smart Settlement (minimize transactions)
 
-    struct Settlement: Identifiable {
+    struct Settlement: Identifiable, Hashable {
         let id = UUID()
         let from: Participant
         let to: Participant
         let amount: Double
+
+        nonisolated func hash(into hasher: inout Hasher) {
+            hasher.combine(id)
+        }
+
+        nonisolated static func == (lhs: Settlement, rhs: Settlement) -> Bool {
+            lhs.id == rhs.id
+        }
     }
 
     func computeSettlements(for campaign: Campaign) -> [Settlement] {
