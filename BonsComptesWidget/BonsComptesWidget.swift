@@ -151,6 +151,7 @@ struct BonsComptesHomeWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: BonsComptesWidgetProvider()) { entry in
             BonsComptesWidgetEntryView(entry: entry)
+                .containerBackground(.fill.tertiary, for: .widget)
         }
         .configurationDisplayName("Bons Comptes")
         .description("Campaign expense summary")
