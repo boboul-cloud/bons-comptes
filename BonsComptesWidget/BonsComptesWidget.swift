@@ -11,7 +11,7 @@ import AppIntents
 
 // MARK: - App Group Helper
 
-private let appGroupID = "group.com.bonscomptes.shared"
+nonisolated(unsafe) private let appGroupID = "group.com.bonscomptes.shared"
 
 nonisolated private func loadAllCampaigns() -> [WidgetCampaignData] {
     guard let defaults = UserDefaults(suiteName: appGroupID),
