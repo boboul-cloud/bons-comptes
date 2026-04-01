@@ -257,6 +257,31 @@ body {
       <h3 data-i18n="f6_title">100% privé</h3>
       <p data-i18n="f6_desc">Toutes vos données restent sur votre appareil. Aucun compte, aucun serveur, aucune collecte de données.</p>
     </div>
+    <div class="feature-card fade-in">
+      <div class="feature-icon" style="background:rgba(0,206,201,0.1)">📱</div>
+      <h3 data-i18n="f7_title">QR Code SEPA</h3>
+      <p data-i18n="f7_desc">Générez un QR code bancaire EPC pour chaque remboursement. Le débiteur n'a qu'à scanner pour payer, IBAN pré-rempli.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-icon" style="background:rgba(108,92,231,0.1)">🧾</div>
+      <h3 data-i18n="f8_title">Scanner de tickets</h3>
+      <p data-i18n="f8_desc">Photographiez un ticket de caisse et l'OCR détecte automatiquement les articles et montants. Plus besoin de saisir à la main.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-icon" style="background:rgba(0,184,148,0.1)">📡</div>
+      <h3 data-i18n="f9_title">Partage de proximité</h3>
+      <p data-i18n="f9_desc">Envoyez une campagne directement aux appareils autour de vous via Bluetooth/Wi-Fi, sans avoir besoin d'internet.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-icon" style="background:rgba(225,112,85,0.1)">🏝️</div>
+      <h3 data-i18n="f10_title">Live Activity & Dynamic Island</h3>
+      <p data-i18n="f10_desc">Suivez vos dépenses en direct sur l'écran de verrouillage et dans la Dynamic Island, sans ouvrir l'app.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-icon" style="background:rgba(116,185,255,0.1)">🧩</div>
+      <h3 data-i18n="f11_title">Widget iOS</h3>
+      <p data-i18n="f11_desc">Ajoutez un widget sur votre écran d'accueil pour voir d'un coup d'œil le résumé de votre campagne en cours.</p>
+    </div>
   </div>
 </section>
 
@@ -363,6 +388,39 @@ body {
         </div>
       </div>
     </div>
+
+    <!-- Mockup 3: Smart Features -->
+    <div class="phone-mockup">
+      <div class="phone-screen">
+        <div class="mock-header" style="background:linear-gradient(135deg, #E17055, #D35B45)">
+          <div class="mock-title">🚀 Fonctions avancées</div>
+          <div class="mock-amount" style="font-size:22px">Smart Tools</div>
+          <div class="mock-meta">QR · OCR · Widget · Live</div>
+        </div>
+        <div class="mock-body">
+          <div class="mock-card">
+            <div class="mock-dot" style="background:rgba(0,206,201,0.12)">📱</div>
+            <div class="mock-card-info"><div class="mock-card-title">QR Code SEPA</div><div class="mock-card-sub">Alice → David · 45,20 €</div></div>
+            <div class="mock-card-amount" style="color:var(--accent)">Scan ✓</div>
+          </div>
+          <div class="mock-card">
+            <div class="mock-dot" style="background:rgba(108,92,231,0.12)">🧾</div>
+            <div class="mock-card-info"><div class="mock-card-title">Ticket scanné</div><div class="mock-card-sub">3 articles détectés</div></div>
+            <div class="mock-card-amount" style="color:var(--primary)">OCR</div>
+          </div>
+          <div class="mock-card">
+            <div class="mock-dot" style="background:rgba(0,184,148,0.12)">📡</div>
+            <div class="mock-card-info"><div class="mock-card-title">Partage en cours…</div><div class="mock-card-sub">iPhone de Bob trouvé</div></div>
+            <div class="mock-card-amount" style="color:var(--positive)">●</div>
+          </div>
+          <div class="mock-card" style="background:linear-gradient(135deg, rgba(108,92,231,0.08), rgba(225,112,85,0.08)); border: 1px solid rgba(108,92,231,0.15)">
+            <div class="mock-dot" style="background:linear-gradient(135deg, var(--primary), var(--negative))">🏝️</div>
+            <div class="mock-card-info"><div class="mock-card-title">Dynamic Island</div><div class="mock-card-sub">Vacances Été · 1 247,50 €</div></div>
+            <div class="mock-card-amount" style="color:var(--primary)">LIVE</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -402,6 +460,11 @@ const T = {
     f4_title: "Catégories & moyens de paiement", f4_desc: "Classez vos dépenses par catégorie et suivez les remboursements par moyen de paiement.",
     f5_title: "Partage facile", f5_desc: "Partagez vos campagnes via un code, un lien web ou un export JSON. Accessible depuis n'importe quel navigateur.",
     f6_title: "100% privé", f6_desc: "Toutes vos données restent sur votre appareil. Aucun compte, aucun serveur, aucune collecte de données.",
+    f7_title: "QR Code SEPA", f7_desc: "Générez un QR code bancaire EPC pour chaque remboursement. Le débiteur n'a qu'à scanner pour payer, IBAN pré-rempli.",
+    f8_title: "Scanner de tickets", f8_desc: "Photographiez un ticket de caisse et l'OCR détecte automatiquement les articles et montants. Plus besoin de saisir à la main.",
+    f9_title: "Partage de proximité", f9_desc: "Envoyez une campagne directement aux appareils autour de vous via Bluetooth/Wi-Fi, sans avoir besoin d'internet.",
+    f10_title: "Live Activity & Dynamic Island", f10_desc: "Suivez vos dépenses en direct sur l'écran de verrouillage et dans la Dynamic Island, sans ouvrir l'app.",
+    f11_title: "Widget iOS", f11_desc: "Ajoutez un widget sur votre écran d'accueil pour voir d'un coup d'œil le résumé de votre campagne en cours.",
     how_title: "Comment ça marche", how_desc: "3 étapes pour en finir avec les comptes entre amis.",
     step1_title: "Créez une campagne", step1_desc: "Donnez un nom, ajoutez les participants et c'est parti.",
     step2_title: "Ajoutez les dépenses", step2_desc: "Chaque participant enregistre ses dépenses et choisit la répartition.",
@@ -424,6 +487,11 @@ const T = {
     f4_title: "Categories & payment methods", f4_desc: "Organize expenses by category and track reimbursements by payment method.",
     f5_title: "Easy sharing", f5_desc: "Share campaigns via a code, a web link, or a JSON export. Accessible from any browser.",
     f6_title: "100% private", f6_desc: "All your data stays on your device. No account, no server, no data collection.",
+    f7_title: "SEPA QR Code", f7_desc: "Generate an EPC banking QR code for each settlement. The debtor just scans to pay — IBAN pre-filled.",
+    f8_title: "Receipt scanner", f8_desc: "Snap a photo of a receipt and OCR automatically detects items and amounts. No more manual entry.",
+    f9_title: "Proximity sharing", f9_desc: "Send a campaign directly to nearby devices via Bluetooth/Wi-Fi, no internet required.",
+    f10_title: "Live Activity & Dynamic Island", f10_desc: "Track your expenses live on the lock screen and Dynamic Island, without opening the app.",
+    f11_title: "iOS Widget", f11_desc: "Add a home screen widget to see your current campaign summary at a glance.",
     how_title: "How it works", how_desc: "3 steps to settle expenses with friends.",
     step1_title: "Create a campaign", step1_desc: "Name it, add participants, and you're set.",
     step2_title: "Add expenses", step2_desc: "Each participant logs their expenses and chooses how to split.",
