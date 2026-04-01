@@ -16,6 +16,8 @@ struct CampaignDetailView: View {
     @State private var showingCloseAlert = false
     @State private var selectedTab = 0
     @State private var editingExpense: Expense?
+    @State private var showingReceiptScanner = false
+    @State private var isLiveActivityOn = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -71,6 +73,9 @@ struct CampaignDetailView: View {
         .sheet(item: $editingExpense) { expense in
             EditExpenseView(campaign: campaign, expense: expense).onDisappear { refreshCampaign() }
         }
+        .sheet(isPresented: $showingReceiptScanner) {
+            ReceiptScannerView(campaign: campaign).onDisappear { refreshCampaign() }
+        }
         .alert(NSLocalizedString("close_campaign_title", comment: ""), isPresented: $showingCloseAlert) {
             Button(NSLocalizedString("cancel", comment: ""), role: .cancel) {}
             Button(NSLocalizedString("close_confirm", comment: ""), role: .destructive) {
@@ -84,6 +89,7 @@ struct CampaignDetailView: View {
 
     func refreshCampaign() {
         if let updated = store.campaigns.first(where: { $0.id == campaign.id }) { campaign = updated }
+        if isLiveActivityOn { store.updateLiveActivity(for: campaign) }
     }
 
     var heroHeader: some View {
@@ -109,6 +115,25 @@ struct CampaignDetailView: View {
                 quickActionButton(icon: "person.3.fill", label: NSLocalizedString("participants_count", comment: ""), color: AppTheme.primary) { showingParticipants = true }
                 quickActionButton(icon: "chart.pie.fill", label: NSLocalizedString("balance_title", comment: ""), color: AppTheme.accent) { showingBalance = true }
                 quickActionButton(icon: "square.and.arrow.up.fill", label: NSLocalizedString("share_campaign", comment: ""), color: AppTheme.info) { showingShare = true }
+                if !campaign.isClosed {
+                    quickActionButton(
+                        icon: isLiveActivityOn ? "bolt.circle.fill" : "bolt.circle",
+                        label: NSLocalizedString(isLiveActivityOn ? "live_stop" : "live_start", comment: ""),
+                        color: AppTheme.warning
+                    ) {
+                        if isLiveActivityOn {
+                            store.stopLiveActivity(for: campaign)
+                        } else {
+                            store.startLiveActivity(for: campaign)
+                        }
+                        isLiveActivityOn.toggle()
+                    }
+                }
+                if !campaign.isClosed {
+                    quickActionButton(icon: "doc.text.viewfinder", label: NSLocalizedString("scan_receipt", comment: ""), color: AppTheme.warning) {
+                        showingReceiptScanner = true
+                    }
+                }
                 if campaign.isClosed {
                     quickActionButton(icon: "lock.open.fill", label: NSLocalizedString("reopen_campaign", comment: ""), color: AppTheme.positive) {
                         store.reopenCampaign(campaign)

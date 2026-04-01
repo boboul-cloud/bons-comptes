@@ -240,3 +240,52 @@
 "paste_clipboard" = "Coller depuis le presse-papier";
 "open_in_app" = "Ouvrir dans l'app";
 "closed_badge" = "CLÔTURÉE";
+
+/* QR Code SEPA */
+"qr_sepa_title" = "QR Code de virement";
+"qr_from_to" = "%@ doit %@ à %@";
+"qr_scan_hint" = "Scannez ce QR code avec votre application bancaire pour effectuer le virement.";
+"qr_bank_details" = "Coordonnées bancaires";
+"qr_beneficiary" = "Bénéficiaire";
+"qr_iban" = "IBAN";
+"qr_bic" = "BIC (optionnel)";
+"qr_reference" = "Référence";
+"qr_reference_placeholder" = "Remboursement campagne";
+"qr_generate" = "Générer le QR Code";
+"qr_save" = "Sauvegarder l'image";
+"qr_saved" = "Image sauvegardée !";
+
+/* Receipt Scanner (OCR) */
+"scan_receipt" = "Scanner un ticket";
+"scan_receipt_title" = "Scanner un ticket de caisse";
+"scan_receipt_desc" = "Prenez en photo un ticket de caisse pour détecter automatiquement les articles et leurs prix.";
+"scan_take_photo" = "Prendre en photo";
+"scan_processing" = "Analyse en cours…";
+"scan_total" = "Total sélectionné";
+"scan_item_name" = "Article";
+"scan_create_expenses" = "Créer les dépenses";
+"scan_from_receipt" = "Scanné depuis un ticket";
+
+/* Proximity Share */
+"proximity_share" = "Partage de proximité";
+"proximity_share_desc" = "Partagez directement avec un iPhone proche via Bluetooth/Wi-Fi, sans lien ni internet.";
+"proximity_start" = "Démarrer le partage";
+"proximity_choose" = "Choisissez si vous envoyez ou recevez une campagne.";
+"proximity_searching" = "Recherche d'appareils…";
+"proximity_keep_close" = "Gardez les appareils proches l'un de l'autre";
+"proximity_connecting" = "Connexion à %@…";
+"proximity_sending" = "Envoi en cours…";
+"proximity_receiving" = "Réception en cours…";
+"proximity_received" = "Campagne reçue !";
+"proximity_sent" = "Campagne envoyée !";
+"proximity_failed" = "Échec du transfert";
+"proximity_send" = "Envoyer";
+"proximity_send_desc" = "Envoyer cette campagne à un autre appareil";
+"proximity_receive" = "Recevoir";
+"proximity_receive_desc" = "Recevoir une campagne d'un autre appareil";
+"proximity_import" = "Importer la campagne";
+"close" = "Fermer";
+
+/* Live Activity */
+"live_start" = "Live Activity";
+"live_stop" = "Arrêter Live";

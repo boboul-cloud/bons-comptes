@@ -240,3 +240,52 @@
 "paste_clipboard" = "Paste from clipboard";
 "open_in_app" = "Open in app";
 "closed_badge" = "CLOSED";
+
+/* QR Code SEPA */
+"qr_sepa_title" = "Payment QR Code";
+"qr_from_to" = "%@ owes %@ to %@";
+"qr_scan_hint" = "Scan this QR code with your banking app to make the transfer.";
+"qr_bank_details" = "Bank Details";
+"qr_beneficiary" = "Beneficiary";
+"qr_iban" = "IBAN";
+"qr_bic" = "BIC (optional)";
+"qr_reference" = "Reference";
+"qr_reference_placeholder" = "Campaign settlement";
+"qr_generate" = "Generate QR Code";
+"qr_save" = "Save Image";
+"qr_saved" = "Image saved!";
+
+/* Receipt Scanner (OCR) */
+"scan_receipt" = "Scan Receipt";
+"scan_receipt_title" = "Scan a Receipt";
+"scan_receipt_desc" = "Take a photo of a receipt to automatically detect items and their prices.";
+"scan_take_photo" = "Take Photo";
+"scan_processing" = "Processing…";
+"scan_total" = "Selected Total";
+"scan_item_name" = "Item";
+"scan_create_expenses" = "Create Expenses";
+"scan_from_receipt" = "Scanned from receipt";
+
+/* Proximity Share */
+"proximity_share" = "Proximity Share";
+"proximity_share_desc" = "Share directly with a nearby iPhone via Bluetooth/Wi-Fi, no link or internet needed.";
+"proximity_start" = "Start Sharing";
+"proximity_choose" = "Choose whether you're sending or receiving a campaign.";
+"proximity_searching" = "Searching for devices…";
+"proximity_keep_close" = "Keep devices close to each other";
+"proximity_connecting" = "Connecting to %@…";
+"proximity_sending" = "Sending…";
+"proximity_receiving" = "Receiving…";
+"proximity_received" = "Campaign received!";
+"proximity_sent" = "Campaign sent!";
+"proximity_failed" = "Transfer failed";
+"proximity_send" = "Send";
+"proximity_send_desc" = "Send this campaign to another device";
+"proximity_receive" = "Receive";
+"proximity_receive_desc" = "Receive a campaign from another device";
+"proximity_import" = "Import Campaign";
+"close" = "Close";
+
+/* Live Activity */
+"live_start" = "Live Activity";
+"live_stop" = "Stop Live";

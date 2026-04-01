@@ -7,6 +7,8 @@ import Foundation
 import SwiftUI
 import Combine
 import Compression
+import ActivityKit
+import WidgetKit
 
 @MainActor
 class CampaignStore: ObservableObject {
@@ -17,6 +19,7 @@ class CampaignStore: ObservableObject {
     @Published var categories: [ExpenseCategory] = []
     @Published var paymentMethods: [PaymentMethod] = []
     var lastImportError = ""
+    private var liveActivities: [UUID: String] = [:] // campaignID -> activityID
 
     private let saveKey = "BonsComptes_Data"
 
@@ -61,6 +64,28 @@ class CampaignStore: ObservableObject {
         } catch {
             print("Save error: \(error)")
         }
+        updateWidgetData()
+    }
+
+    private func updateWidgetData() {
+        guard let campaign = campaigns.sorted(by: { ($0.isClosed ? 1 : 0) < ($1.isClosed ? 1 : 0) }).first else { return }
+        let total = totalExpenses(for: campaign)
+        let pCount = campaign.participantIDs.count
+        let eCount = campaign.expenseIDs.count
+        let widgetData = WidgetCampaignData(
+            title: campaign.title,
+            currency: campaign.currency,
+            totalExpenses: total,
+            perPerson: pCount > 0 ? total / Double(pCount) : 0,
+            participantCount: pCount,
+            expenseCount: eCount,
+            lastUpdate: Date()
+        )
+        if let defaults = UserDefaults(suiteName: "group.com.bonscomptes.shared"),
+           let encoded = try? JSONEncoder().encode(widgetData) {
+            defaults.set(encoded, forKey: "widgetCampaign")
+        }
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     func createBackup() -> URL? {
@@ -1041,5 +1066,74 @@ class CampaignStore: ObservableObject {
 
         saveData()
         return true
+    }
+
+    // MARK: - Live Activity
+
+    func startLiveActivity(for campaign: Campaign) {
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        let participants = participantsFor(campaign: campaign)
+        let total = totalExpenses(for: campaign)
+        let expenseList = expensesFor(campaign: campaign)
+        let perPerson = participants.count > 0 ? total / Double(participants.count) : 0
+
+        let attributes = BonsComptesActivityAttributes(
+            campaignTitle: campaign.title,
+            currency: campaign.currency,
+            participantCount: participants.count
+        )
+        let state = BonsComptesActivityAttributes.ContentState(
+            totalExpenses: total,
+            perPerson: perPerson,
+            expenseCount: expenseList.count,
+            lastExpenseTitle: expenseList.sorted(by: { $0.date > $1.date }).first?.title ?? ""
+        )
+
+        do {
+            let activity = try Activity.request(
+                attributes: attributes,
+                content: .init(state: state, staleDate: nil),
+                pushType: nil
+            )
+            liveActivities[campaign.id] = activity.id
+        } catch {
+            print("Live Activity start failed: \(error)")
+        }
+    }
+
+    func updateLiveActivity(for campaign: Campaign) {
+        guard let activityID = liveActivities[campaign.id] else { return }
+        let participants = participantsFor(campaign: campaign)
+        let total = totalExpenses(for: campaign)
+        let expenseList = expensesFor(campaign: campaign)
+        let perPerson = participants.count > 0 ? total / Double(participants.count) : 0
+
+        let state = BonsComptesActivityAttributes.ContentState(
+            totalExpenses: total,
+            perPerson: perPerson,
+            expenseCount: expenseList.count,
+            lastExpenseTitle: expenseList.sorted(by: { $0.date > $1.date }).first?.title ?? ""
+        )
+
+        Task {
+            for activity in Activity<BonsComptesActivityAttributes>.activities where activity.id == activityID {
+                await activity.update(.init(state: state, staleDate: nil))
+            }
+        }
+    }
+
+    func stopLiveActivity(for campaign: Campaign) {
+        guard let activityID = liveActivities[campaign.id] else { return }
+        Task {
+            for activity in Activity<BonsComptesActivityAttributes>.activities where activity.id == activityID {
+                await activity.end(nil, dismissalPolicy: .immediate)
+            }
+        }
+        liveActivities.removeValue(forKey: campaign.id)
+    }
+
+    func isLiveActivityActive(for campaign: Campaign) -> Bool {
+        guard let activityID = liveActivities[campaign.id] else { return false }
+        return Activity<BonsComptesActivityAttributes>.activities.contains { $0.id == activityID }
     }
 }

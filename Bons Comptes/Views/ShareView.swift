@@ -25,6 +25,7 @@ struct ShareView: View {
     @State private var copiedFeedback = false
     @State private var pdfURL: URL?
     @State private var syncDeletions = false
+    @State private var showingProximityShare = false
 
     var participantsWithPhone: [Participant] {
         store.participantsFor(campaign: campaign).filter { !$0.phone.isEmpty }
@@ -147,6 +148,22 @@ struct ShareView: View {
                         .cardStyle()
                         .animatedAppear(delay: 0.05)
 
+                        // Proximity sharing
+                        VStack(alignment: .leading, spacing: 12) {
+                            sectionHeader(icon: "antenna.radiowaves.left.and.right", title: NSLocalizedString("proximity_share", comment: ""), color: AppTheme.info)
+
+                            Text(NSLocalizedString("proximity_share_desc", comment: ""))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 12)
+
+                            Button(action: { showingProximityShare = true }) {
+                                shareRow(icon: "antenna.radiowaves.left.and.right", title: NSLocalizedString("proximity_start", comment: ""), color: AppTheme.info)
+                            }
+                        }
+                        .cardStyle()
+                        .animatedAppear(delay: 0.07)
+
                         VStack(alignment: .leading, spacing: 12) {
                             sectionHeader(icon: "square.and.arrow.up.fill", title: NSLocalizedString("export_data", comment: ""), color: AppTheme.info)
 
@@ -225,6 +242,9 @@ struct ShareView: View {
                 }
             })
             .quickLookPreview($pdfURL)
+            .sheet(isPresented: $showingProximityShare) {
+                ProximityShareView(campaign: campaign, syncDeletions: syncDeletions)
+            }
         }
     }
 

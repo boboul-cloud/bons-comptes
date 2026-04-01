@@ -11,6 +11,7 @@ struct BalanceView: View {
 
     let campaign: Campaign
     @State private var selectedSection = 0
+    @State private var selectedSettlement: CampaignStore.Settlement?
 
     var balances: [(participant: Participant, balance: Double)] {
         store.allBalances(for: campaign).sorted { $0.balance > $1.balance }
@@ -50,6 +51,15 @@ struct BalanceView: View {
                         .foregroundColor(AppTheme.primary)
                 }
             })
+            .sheet(item: $selectedSettlement) { s in
+                SEPAQRCodeView(
+                    fromName: s.from.name,
+                    toName: s.to.name,
+                    amount: s.amount,
+                    currency: campaign.currency,
+                    toEmoji: s.to.avatarEmoji
+                )
+            }
         }
     }
 
@@ -193,6 +203,13 @@ struct BalanceView: View {
                         VStack(spacing: 4) {
                             AvatarView(s.to.avatarEmoji, size: 40)
                             Text(s.to.name).font(.caption2).foregroundColor(.secondary).lineLimit(1)
+                        }
+
+                        Button(action: { selectedSettlement = s }) {
+                            ZStack {
+                                Circle().fill(AppTheme.accent.opacity(0.12)).frame(width: 36, height: 36)
+                                Image(systemName: "qrcode").font(.system(size: 14)).foregroundColor(AppTheme.accent)
+                            }
                         }
                     }
                     .frame(maxWidth: .infinity)
