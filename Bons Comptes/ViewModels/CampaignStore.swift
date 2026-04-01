@@ -197,6 +197,7 @@ class CampaignStore: ObservableObject {
         reimbursements = decoded.reimbursements
         categories = decoded.categories ?? ExpenseCategory.defaults
         paymentMethods = decoded.paymentMethods ?? PaymentMethod.defaults
+        updateWidgetData()
     }
 
     // MARK: - Campaign CRUD
