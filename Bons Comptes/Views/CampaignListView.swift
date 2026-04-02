@@ -12,6 +12,8 @@ struct CampaignListView: View {
     @State private var importCode = ""
     @State private var importResult: Bool?
     @State private var showingBackups = false
+    @State private var showingProximityReceive = false
+    @State private var showPremiumUpgrade = false
 
     var filteredCampaigns: [Campaign] {
         store.campaigns.sorted { $0.createdAt > $1.createdAt }
@@ -41,7 +43,14 @@ struct CampaignListView: View {
             .navigationTitle(NSLocalizedString("app_title", comment: ""))
             .toolbar(content: {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { showingAddCampaign = true }) {
+                    Button(action: {
+                        let activeCampaigns = store.campaigns.filter { !$0.isClosed && !$0.isArchived }
+                        if !PremiumManager.shared.isPremium && activeCampaigns.count >= PremiumManager.maxFreeCampaigns {
+                            showPremiumUpgrade = true
+                        } else {
+                            showingAddCampaign = true
+                        }
+                    }) {
                         Image(systemName: "plus.circle.fill")
                             .font(.title3)
                             .foregroundColor(AppTheme.primary)
@@ -56,6 +65,12 @@ struct CampaignListView: View {
             }
             .sheet(isPresented: $showingBackups) {
                 BackupListView()
+            }
+            .sheet(isPresented: $showingProximityReceive) {
+                ProximityShareView()
+            }
+            .sheet(isPresented: $showPremiumUpgrade) {
+                PremiumUpgradeView()
             }
             .alert(
                 importResult == true
@@ -89,11 +104,17 @@ struct CampaignListView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
                 actionCapsule(icon: "clock.arrow.circlepath", label: NSLocalizedString("backups_title", comment: ""), fg: AppTheme.primary, bg: AppTheme.primary.opacity(0.12)) {
+                    guard PremiumManager.shared.isPremium else { showPremiumUpgrade = true; return }
                     showingBackups = true
                 }
 
                 actionCapsule(icon: "square.and.arrow.down", label: NSLocalizedString("import_campaign", comment: ""), fg: AppTheme.accent, bg: AppTheme.accent.opacity(0.12)) {
                     showingImport = true
+                }
+
+                actionCapsule(icon: "antenna.radiowaves.left.and.right", label: NSLocalizedString("proximity_receive", comment: ""), fg: AppTheme.info, bg: AppTheme.info.opacity(0.12)) {
+                    guard PremiumManager.shared.isPremium else { showPremiumUpgrade = true; return }
+                    showingProximityReceive = true
                 }
             }
         }

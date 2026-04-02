@@ -8,7 +8,7 @@ import MultipeerConnectivity
 
 struct ProximityShareView: View {
     @EnvironmentObject var store: CampaignStore
-    let campaign: Campaign
+    let campaign: Campaign?
     let syncDeletions: Bool
     @Environment(\.dismiss) var dismiss
 
@@ -17,6 +17,17 @@ struct ProximityShareView: View {
 
     enum Mode {
         case choose, send, receive
+    }
+
+    init(campaign: Campaign, syncDeletions: Bool) {
+        self.campaign = campaign
+        self.syncDeletions = syncDeletions
+    }
+
+    /// Receive-only mode (no campaign needed)
+    init() {
+        self.campaign = nil
+        self.syncDeletions = false
     }
 
     var body: some View {
@@ -30,7 +41,11 @@ struct ProximityShareView: View {
                     Spacer()
 
                     if case .choose = mode {
-                        chooseButtons
+                        if campaign != nil {
+                            chooseButtons
+                        } else {
+                            receiveOnlyButton
+                        }
                     } else if case .completed(true) = manager.state {
                         importButton
                     }
@@ -48,6 +63,14 @@ struct ProximityShareView: View {
                     .foregroundColor(AppTheme.primary)
                 }
             }
+            .onChange(of: manager.state) {
+                if case .completed(false) = manager.state {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        manager.stop()
+                        dismiss()
+                    }
+                }
+            }
         }
     }
 
@@ -57,9 +80,7 @@ struct ProximityShareView: View {
         case .idle:
             VStack(spacing: 16) {
                 pulsingIcon("antenna.radiowaves.left.and.right", color: AppTheme.info)
-                Text(NSLocalizedString("proximity_choose", comment: ""))
-                    .font(.subheadline).foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
+                Text(NSLocalizedString(campaign == nil ? "proximity_receive_ready" : "proximity_choose", comment: ""))
             }
 
         case .searching:
@@ -136,7 +157,7 @@ struct ProximityShareView: View {
         VStack(spacing: 12) {
             Button(action: {
                 mode = .send
-                let data = store.encodeV2(for: campaign, syncDeletions: syncDeletions)
+                let data = store.encodeV2(for: campaign!, syncDeletions: syncDeletions)
                 manager.startSharing(campaignData: data)
             }) {
                 HStack(spacing: 12) {
@@ -176,6 +197,29 @@ struct ProximityShareView: View {
                 .foregroundColor(AppTheme.accent)
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
+        }
+    }
+
+    var receiveOnlyButton: some View {
+        Button(action: {
+            mode = .receive
+            manager.startReceiving()
+        }) {
+            HStack(spacing: 12) {
+                Image(systemName: "arrow.down.circle.fill")
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(NSLocalizedString("proximity_receive", comment: ""))
+                        .fontWeight(.bold)
+                    Text(NSLocalizedString("proximity_receive_desc", comment: ""))
+                        .font(.caption2).opacity(0.8)
+                }
+                Spacer()
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity)
+            .background(AppTheme.headerGradient)
+            .foregroundColor(.white)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
     }
 

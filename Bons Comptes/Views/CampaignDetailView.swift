@@ -18,6 +18,7 @@ struct CampaignDetailView: View {
     @State private var editingExpense: Expense?
     @State private var showingReceiptScanner = false
     @State private var isLiveActivityOn = false
+    @State private var showPremiumUpgrade = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -76,6 +77,9 @@ struct CampaignDetailView: View {
         .sheet(isPresented: $showingReceiptScanner) {
             ReceiptScannerView(campaign: campaign).onDisappear { refreshCampaign() }
         }
+        .sheet(isPresented: $showPremiumUpgrade) {
+            PremiumUpgradeView()
+        }
         .alert(NSLocalizedString("close_campaign_title", comment: ""), isPresented: $showingCloseAlert) {
             Button(NSLocalizedString("cancel", comment: ""), role: .cancel) {}
             Button(NSLocalizedString("close_confirm", comment: ""), role: .destructive) {
@@ -121,6 +125,7 @@ struct CampaignDetailView: View {
                         label: NSLocalizedString(isLiveActivityOn ? "live_stop" : "live_start", comment: ""),
                         color: AppTheme.warning
                     ) {
+                        guard PremiumManager.shared.isPremium else { showPremiumUpgrade = true; return }
                         if isLiveActivityOn {
                             store.stopLiveActivity(for: campaign)
                         } else {
@@ -131,6 +136,7 @@ struct CampaignDetailView: View {
                 }
                 if !campaign.isClosed {
                     quickActionButton(icon: "doc.text.viewfinder", label: NSLocalizedString("scan_receipt", comment: ""), color: AppTheme.warning) {
+                        guard PremiumManager.shared.isPremium else { showPremiumUpgrade = true; return }
                         showingReceiptScanner = true
                     }
                 }

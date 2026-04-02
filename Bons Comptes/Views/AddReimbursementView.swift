@@ -21,6 +21,7 @@ struct AddReimbursementView: View {
     @State private var showingNewPaymentMethod = false
     @State private var newPaymentMethodName = ""
     @State private var showingSEPAQR = false
+    @State private var showPremiumUpgrade = false
 
     var participants: [Participant] {
         store.participantsFor(campaign: campaign)
@@ -120,7 +121,10 @@ struct AddReimbursementView: View {
                             paymentMethodGrid
 
                             if isTransferSelected && fromID != nil && toID != nil && fromID != toID {
-                                Button(action: { showingSEPAQR = true }) {
+                                Button(action: {
+                                    guard PremiumManager.shared.isPremium else { showPremiumUpgrade = true; return }
+                                    showingSEPAQR = true
+                                }) {
                                     HStack(spacing: 10) {
                                         Image(systemName: "qrcode")
                                             .font(.title3)
@@ -239,6 +243,9 @@ struct AddReimbursementView: View {
                         toEmoji: toP.avatarEmoji
                     )
                 }
+            }
+            .sheet(isPresented: $showPremiumUpgrade) {
+                PremiumUpgradeView()
             }
         }
     }

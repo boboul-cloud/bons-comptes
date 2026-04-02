@@ -288,6 +288,7 @@
 "proximity_receive" = "Receive";
 "proximity_receive_desc" = "Receive a campaign from another device";
 "proximity_import" = "Import Campaign";
+"proximity_receive_ready" = "Ready to receive a campaign from a nearby device.";
 "close" = "Close";
 
 /* User Guide */
@@ -325,3 +326,35 @@
 /* Live Activity */
 "live_start" = "Live Activity";
 "live_stop" = "Stop Live";
+
+/* Premium */
+"premium_title" = "Bons Comptes Premium";
+"premium_subtitle" = "Unlock all features with a single purchase. No subscription.";
+"premium_buy_once" = "One-time purchase";
+"premium_restore" = "Restore purchase";
+"premium_unlimited_campaigns" = "Unlimited campaigns";
+"premium_unlimited_campaigns_desc" = "Create as many campaigns as you need.";
+"premium_pdf" = "PDF export";
+"premium_pdf_desc" = "Generate detailed PDF reports of your campaigns.";
+"premium_scanner" = "Receipt scanner";
+"premium_scanner_desc" = "Scan receipts to auto-fill expenses with OCR.";
+"premium_sepa" = "SEPA QR Code";
+"premium_sepa_desc" = "Generate QR codes for instant bank transfers.";
+"premium_proximity" = "Proximity sharing";
+"premium_proximity_desc" = "Share campaigns via Bluetooth/Wi-Fi, no internet needed.";
+"premium_backups" = "Backups";
+"premium_backups_desc" = "Create and restore internal backups of your data.";
+"premium_live_activity" = "Live Activity";
+"premium_live_activity_desc" = "Track your campaign in real-time from the Lock Screen.";
+"premium_active" = "Premium Active";
+"premium_active_desc" = "You have access to all features. Thank you for your support!";
+"premium_see_benefits" = "View my Premium benefits";
+"premium_unlock" = "Unlock Premium";
+"premium_unlock_desc" = "All features, one-time purchase, no subscription.";
+"premium_product_unavailable" = "Product temporarily unavailable. Please try again later.";
+"premium_purchase_pending" = "Purchase pending approval.";
+"premium_thankyou_title" = "Welcome to Premium!";
+"premium_thankyou_subtitle" = "Thank you for your support. All features are now unlocked — enjoy!";
+"premium_thankyou_badge" = "Premium Member";
+"premium_thankyou_unlocked" = "YOUR UNLOCKED FEATURES";
+"premium_thankyou_start" = "Start exploring";

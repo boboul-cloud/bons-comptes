@@ -288,6 +288,7 @@
 "proximity_receive" = "Recevoir";
 "proximity_receive_desc" = "Recevoir une campagne d'un autre appareil";
 "proximity_import" = "Importer la campagne";
+"proximity_receive_ready" = "Prêt à recevoir une campagne depuis un appareil à proximité.";
 "close" = "Fermer";
 
 /* User Guide */
@@ -325,3 +326,35 @@
 /* Live Activity */
 "live_start" = "Live Activity";
 "live_stop" = "Arrêter Live";
+
+/* Premium */
+"premium_title" = "Bons Comptes Premium";
+"premium_subtitle" = "Débloquez toutes les fonctionnalités en un seul achat. Sans abonnement.";
+"premium_buy_once" = "Achat unique";
+"premium_restore" = "Restaurer l'achat";
+"premium_unlimited_campaigns" = "Campagnes illimitées";
+"premium_unlimited_campaigns_desc" = "Créez autant de campagnes que nécessaire.";
+"premium_pdf" = "Export PDF";
+"premium_pdf_desc" = "Générez des rapports PDF détaillés de vos campagnes.";
+"premium_scanner" = "Scanner de tickets";
+"premium_scanner_desc" = "Scannez vos tickets pour remplir automatiquement les dépenses.";
+"premium_sepa" = "QR Code SEPA";
+"premium_sepa_desc" = "Générez des QR codes pour des virements bancaires instantanés.";
+"premium_proximity" = "Partage de proximité";
+"premium_proximity_desc" = "Partagez vos campagnes en Bluetooth/Wi-Fi, sans internet.";
+"premium_backups" = "Sauvegardes";
+"premium_backups_desc" = "Créez et restaurez des sauvegardes internes de vos données.";
+"premium_live_activity" = "Live Activity";
+"premium_live_activity_desc" = "Suivez votre campagne en temps réel depuis l'écran de verrouillage.";
+"premium_active" = "Premium actif";
+"premium_active_desc" = "Vous avez accès à toutes les fonctionnalités. Merci pour votre soutien !";
+"premium_see_benefits" = "Voir mes avantages Premium";
+"premium_unlock" = "Passer en Premium";
+"premium_unlock_desc" = "Toutes les fonctionnalités, achat unique, sans abonnement.";
+"premium_product_unavailable" = "Produit temporairement indisponible. Réessayez plus tard.";
+"premium_purchase_pending" = "Achat en attente de validation.";
+"premium_thankyou_title" = "Bienvenue en Premium !";
+"premium_thankyou_subtitle" = "Merci pour votre soutien. Toutes les fonctionnalités sont maintenant débloquées — profitez-en !";
+"premium_thankyou_badge" = "Membre Premium";
+"premium_thankyou_unlocked" = "VOS FONCTIONNALITÉS DÉBLOQUÉES";
+"premium_thankyou_start" = "Commencer à explorer";

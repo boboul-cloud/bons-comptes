@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		AA000010DEADBEEF00000010 /* BonsComptesWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AA000005DEADBEEF00000005 /* BonsComptesWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		BF2B71E22F7F148500C5E078 /* BonsComptes.storekit in Resources */ = {isa = PBXBuildFile; fileRef = BF2B71E12F7F148500C5E078 /* BonsComptes.storekit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,6 +37,8 @@
 
 /* Begin PBXFileReference section */
 		AA000005DEADBEEF00000005 /* BonsComptesWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BonsComptesWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BF2B71E12F7F148500C5E078 /* BonsComptes.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = BonsComptes.storekit; sourceTree = "<group>"; };
+		BF60F4132F7F17F200CC2E44 /* BonsComptes.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = BonsComptes.storekit; sourceTree = "<group>"; };
 		BFD75CF92F792E3800BB6C41 /* Bons Comptes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Bons Comptes.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -73,6 +76,8 @@
 		BFD75CF02F792E3800BB6C41 = {
 			isa = PBXGroup;
 			children = (
+				BF2B71E12F7F148500C5E078 /* BonsComptes.storekit */,
+				BF60F4132F7F17F200CC2E44 /* BonsComptes.storekit */,
 				BFD75CFB2F792E3800BB6C41 /* Bons Comptes */,
 				AA000006DEADBEEF00000006 /* BonsComptesWidget */,
 				BFD75CFA2F792E3800BB6C41 /* Products */,
@@ -188,6 +193,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BF2B71E22F7F148500C5E078 /* BonsComptes.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

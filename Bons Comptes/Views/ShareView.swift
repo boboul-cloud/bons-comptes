@@ -26,6 +26,7 @@ struct ShareView: View {
     @State private var pdfURL: URL?
     @State private var syncDeletions = false
     @State private var showingProximityShare = false
+    @State private var showPremiumUpgrade = false
 
     var participantsWithPhone: [Participant] {
         store.participantsFor(campaign: campaign).filter { !$0.phone.isEmpty }
@@ -157,7 +158,10 @@ struct ShareView: View {
                                 .foregroundColor(.secondary)
                                 .padding(.horizontal, 12)
 
-                            Button(action: { showingProximityShare = true }) {
+                            Button(action: {
+                                guard PremiumManager.shared.isPremium else { showPremiumUpgrade = true; return }
+                                showingProximityShare = true
+                            }) {
                                 shareRow(icon: "antenna.radiowaves.left.and.right", title: NSLocalizedString("proximity_start", comment: ""), color: AppTheme.info)
                             }
                         }
@@ -167,8 +171,14 @@ struct ShareView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             sectionHeader(icon: "square.and.arrow.up.fill", title: NSLocalizedString("export_data", comment: ""), color: AppTheme.info)
 
-                            ShareLink(item: PDFFile(url: generatePDFURL()), preview: SharePreview(campaign.title, image: Image(systemName: "doc.richtext"))) {
-                                shareRow(icon: "doc.richtext", title: NSLocalizedString("share_pdf", comment: ""), color: AppTheme.primary)
+                            if PremiumManager.shared.isPremium {
+                                ShareLink(item: PDFFile(url: generatePDFURL()), preview: SharePreview(campaign.title, image: Image(systemName: "doc.richtext"))) {
+                                    shareRow(icon: "doc.richtext", title: NSLocalizedString("share_pdf", comment: ""), color: AppTheme.primary)
+                                }
+                            } else {
+                                Button(action: { showPremiumUpgrade = true }) {
+                                    shareRow(icon: "doc.richtext", title: NSLocalizedString("share_pdf", comment: ""), color: AppTheme.primary)
+                                }
                             }
 
                             ShareLink(item: jsonExport) {
@@ -176,6 +186,7 @@ struct ShareView: View {
                             }
 
                             Button(action: {
+                                guard PremiumManager.shared.isPremium else { showPremiumUpgrade = true; return }
                                 pdfURL = generatePDFURL()
                             }) {
                                 shareRow(icon: "eye", title: NSLocalizedString("view_pdf", comment: ""), color: AppTheme.info)
@@ -244,6 +255,9 @@ struct ShareView: View {
             .quickLookPreview($pdfURL)
             .sheet(isPresented: $showingProximityShare) {
                 ProximityShareView(campaign: campaign, syncDeletions: syncDeletions)
+            }
+            .sheet(isPresented: $showPremiumUpgrade) {
+                PremiumUpgradeView()
             }
         }
     }

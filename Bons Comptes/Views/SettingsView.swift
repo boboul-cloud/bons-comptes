@@ -4,14 +4,18 @@
 //
 
 import SwiftUI
+import StoreKit
 
 struct SettingsView: View {
     @EnvironmentObject var store: CampaignStore
+    @ObservedObject private var premium = PremiumManager.shared
     @AppStorage("appLanguage") private var appLanguage: String = Locale.current.language.languageCode?.identifier ?? "fr"
     @State private var showingNewCategory = false
     @State private var showingNewPaymentMethod = false
     @State private var newCategoryName = ""
     @State private var newPaymentMethodName = ""
+    @State private var showPremiumUpgrade = false
+    @State private var showPremiumThankYou = false
 
     var body: some View {
         NavigationStack {
@@ -114,6 +118,76 @@ struct SettingsView: View {
                         .cardStyle()
                         .animatedAppear(delay: 0.1)
 
+                        // Premium
+                        VStack(alignment: .leading, spacing: 12) {
+                            sectionHeader(icon: "crown.fill", title: "Premium", color: AppTheme.warning)
+
+                            if premium.isPremium {
+                                Button(action: { showPremiumThankYou = true }) {
+                                    HStack(spacing: 12) {
+                                        Image(systemName: "checkmark.seal.fill")
+                                            .font(.title2)
+                                            .foregroundStyle(
+                                                LinearGradient(colors: [AppTheme.primary, AppTheme.accent], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                            )
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(NSLocalizedString("premium_active", comment: ""))
+                                                .font(.subheadline).fontWeight(.semibold)
+                                                .foregroundColor(.primary)
+                                            Text(NSLocalizedString("premium_see_benefits", comment: ""))
+                                                .font(.caption).foregroundColor(.secondary)
+                                        }
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption).foregroundColor(.secondary)
+                                    }
+                                }
+                                .padding(12)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(AppTheme.positive.opacity(0.08))
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            } else {
+                                Button(action: { showPremiumUpgrade = true }) {
+                                    HStack(spacing: 12) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(LinearGradient(colors: [AppTheme.primary, AppTheme.accent], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                                .frame(width: 44, height: 44)
+                                            Image(systemName: "crown.fill")
+                                                .foregroundColor(.white)
+                                        }
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(NSLocalizedString("premium_unlock", comment: ""))
+                                                .font(.subheadline).fontWeight(.semibold)
+                                                .foregroundColor(.primary)
+                                            Text(NSLocalizedString("premium_unlock_desc", comment: ""))
+                                                .font(.caption).foregroundColor(.secondary)
+                                        }
+                                        Spacer()
+                                        Text(premium.product?.displayPrice ?? "4,99 €")
+                                            .font(.subheadline).fontWeight(.bold)
+                                            .foregroundColor(.white)
+                                            .padding(.horizontal, 12).padding(.vertical, 6)
+                                            .background(AppTheme.headerGradient)
+                                            .clipShape(Capsule())
+                                    }
+                                    .padding(12)
+                                    .background(AppTheme.cardBackground)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                }
+
+                                Button(action: {
+                                    Task { await premium.restore() }
+                                }) {
+                                    Text(NSLocalizedString("premium_restore", comment: ""))
+                                        .font(.caption).foregroundColor(.secondary)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .center)
+                            }
+                        }
+                        .cardStyle()
+                        .animatedAppear(delay: 0.12)
+
                         // About & Legal
                         VStack(alignment: .leading, spacing: 12) {
                             sectionHeader(icon: "info.circle.fill", title: NSLocalizedString("about_section", comment: ""), color: AppTheme.warning)
@@ -173,6 +247,12 @@ struct SettingsView: View {
                     }
                 }
                 Button(NSLocalizedString("cancel", comment: ""), role: .cancel) { }
+            }
+            .sheet(isPresented: $showPremiumUpgrade) {
+                PremiumUpgradeView()
+            }
+            .fullScreenCover(isPresented: $showPremiumThankYou) {
+                PremiumThankYouView()
             }
         }
     }
