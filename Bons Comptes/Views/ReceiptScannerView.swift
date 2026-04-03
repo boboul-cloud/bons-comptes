@@ -230,10 +230,107 @@ struct ReceiptScannerView: View {
             var items: [ScannedItem] = []
             let allParticipantIDs = Set(store.participantsFor(campaign: campaign).map { $0.id })
 
+            // Collect all text blocks with their bounding boxes
+            struct TextBlock {
+                let text: String
+                let midY: CGFloat
+                let minX: CGFloat
+            }
+            var blocks: [TextBlock] = []
             for observation in results {
                 guard let text = observation.topCandidates(1).first?.string else { continue }
-                if let parsed = parseReceiptLine(text) {
+                let box = observation.boundingBox
+                blocks.append(TextBlock(text: text, midY: box.midY, minX: box.minX))
+            }
+
+            // Strategy 1: Try parsing each observation as a full line (name + price)
+            for block in blocks {
+                if let parsed = parseReceiptLine(block.text) {
                     items.append(ScannedItem(name: parsed.name, price: parsed.price, assignedTo: allParticipantIDs))
+                }
+            }
+
+            // Strategy 2: If no items found, group blocks by vertical position
+            // VisionKit often returns name and price as separate observations
+            if items.isEmpty && blocks.count >= 2 {
+                // Sort by Y descending (VN coordinates: 0=bottom, 1=top)
+                let sorted = blocks.sorted { $0.midY > $1.midY }
+                let yThreshold: CGFloat = 0.015 // ~1.5% of image height = same line
+
+                var lines: [[TextBlock]] = []
+                var currentLine: [TextBlock] = []
+                var currentY: CGFloat = sorted[0].midY
+
+                for block in sorted {
+                    if abs(block.midY - currentY) < yThreshold {
+                        currentLine.append(block)
+                    } else {
+                        if !currentLine.isEmpty { lines.append(currentLine) }
+                        currentLine = [block]
+                        currentY = block.midY
+                    }
+                }
+                if !currentLine.isEmpty { lines.append(currentLine) }
+
+                // For each grouped line, sort L→R and try to extract name + price
+                for line in lines {
+                    let sortedLine = line.sorted { $0.minX < $1.minX }
+                    // Combine all texts on this line
+                    let combined = sortedLine.map { $0.text }.joined(separator: "  ")
+                    if let parsed = parseReceiptLine(combined) {
+                        items.append(ScannedItem(name: parsed.name, price: parsed.price, assignedTo: allParticipantIDs))
+                        continue
+                    }
+                    // Try: rightmost block is the price, everything else is the name
+                    if sortedLine.count >= 2 {
+                        let priceText = sortedLine.last!.text
+                            .replacingOccurrences(of: ",", with: ".")
+                            .replacingOccurrences(of: "\u{00A0}", with: "")
+                            .trimmingCharacters(in: .whitespaces)
+                        // Extract price from the rightmost block
+                        let pricePattern = #"(\d+[.,]\d{1,2})"#
+                        if let regex = try? NSRegularExpression(pattern: pricePattern),
+                           let match = regex.firstMatch(in: priceText, range: NSRange(priceText.startIndex..., in: priceText)),
+                           let range = Range(match.range(at: 1), in: priceText) {
+                            let numStr = String(priceText[range]).replacingOccurrences(of: ",", with: ".")
+                            if let price = Double(numStr), price > 0, price < 10000 {
+                                let nameParts = sortedLine.dropLast().map { $0.text }
+                                let name = nameParts.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+                                if name.count > 1 && !isSkipLine(name) {
+                                    items.append(ScannedItem(name: name, price: price, assignedTo: allParticipantIDs))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Strategy 3: If still nothing, look for any standalone prices and pair with nearby text
+            if items.isEmpty {
+                let priceRegex = try? NSRegularExpression(pattern: #"^\d+[.,]\d{1,2}$"#)
+                var priceBlocks: [TextBlock] = []
+                var textBlocks: [TextBlock] = []
+                for block in blocks {
+                    let trimmed = block.text.trimmingCharacters(in: .whitespaces)
+                    if let regex = priceRegex,
+                       regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)) != nil {
+                        priceBlocks.append(block)
+                    } else if trimmed.count > 1 {
+                        textBlocks.append(block)
+                    }
+                }
+                // Pair each price with the closest text block at similar Y
+                for pb in priceBlocks {
+                    let numStr = pb.text.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: ",", with: ".")
+                    guard let price = Double(numStr), price > 0, price < 10000 else { continue }
+                    // Find text block closest in Y and to the left
+                    let candidates = textBlocks.filter { abs($0.midY - pb.midY) < 0.02 && $0.minX < pb.minX }
+                    if let best = candidates.min(by: { abs($0.midY - pb.midY) < abs($1.midY - pb.midY) }) {
+                        let name = best.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !isSkipLine(name) {
+                            items.append(ScannedItem(name: name, price: price, assignedTo: allParticipantIDs))
+                        }
+                    }
                 }
             }
 
@@ -256,6 +353,15 @@ struct ReceiptScannerView: View {
         }
     }
 
+    private func isSkipLine(_ name: String) -> Bool {
+        let lower = name.lowercased()
+        let skip = ["total", "subtotal", "sous-total", "tva", "tax", "cb ", "carte", "especes", "espèces",
+                    "change", "rendu", "date", "heure", "merci", "thank", "ticket", "facture", "numero",
+                    "visa", "mastercard", "paiement", "payment", "brasserie", "restaurant", "adresse",
+                    "tel", "siret", "siren", "serveur", "table", "couvert"]
+        return skip.contains(where: { lower.contains($0) })
+    }
+
     private func parseReceiptLine(_ line: String) -> (name: String, price: Double)? {
         // Normalize: replace common OCR artifacts
         let cleaned = line
@@ -263,7 +369,6 @@ struct ReceiptScannerView: View {
             .trimmingCharacters(in: .whitespaces)
 
         // Match patterns like "Cafe Latte    3.50" or "Pizza 12,90€" or "Dessert ........ 8.00"
-        // Allow any trailing chars after the price (OCR may garble € symbol)
         let patterns = [
             #"^(.+?)\s{2,}(\d+[.,]\d{1,2})"#,          // Name  (2+ spaces)  price
             #"^(.+?)\s*\.{2,}\s*(\d+[.,]\d{1,2})"#,    // Name.....price
@@ -281,13 +386,7 @@ struct ReceiptScannerView: View {
             guard let price = Double(priceStr), price > 0, price < 10000 else { continue }
             let name = nameRange.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !name.isEmpty, name.count > 1 else { continue }
-
-            // Skip common non-item lines
-            let lower = name.lowercased()
-            let skip = ["total", "subtotal", "sous-total", "tva", "tax", "cb ", "carte", "especes", "espèces",
-                        "change", "rendu", "date", "heure", "merci", "thank", "ticket", "facture", "numero",
-                        "visa", "mastercard", "paiement", "payment"]
-            if skip.contains(where: { lower.contains($0) }) { continue }
+            guard !isSkipLine(name) else { continue }
 
             return (name, price)
         }
