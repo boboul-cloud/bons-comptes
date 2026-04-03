@@ -281,6 +281,9 @@
 "scan_total" = "Total sélectionné";
 "scan_item_name" = "Article";
 "scan_create_expenses" = "Créer les dépenses";
+"scan_create_and_continue" = "Valider et passer au payeur suivant";
+"scan_pay_all" = "Tout régler (%@ %@)";
+"scan_receipt_expense" = "Ticket de caisse";
 "scan_from_receipt" = "Scanné depuis un ticket";
 
 /* Proximity Share */

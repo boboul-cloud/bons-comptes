@@ -153,7 +153,6 @@ struct ReceiptScannerView: View {
 
     private var defaultPayerID: UUID {
         let participants = store.participantsFor(campaign: campaign)
-        // Find participant matching campaign creator name
         if let creator = participants.first(where: { $0.name == campaign.creatorName }) {
             return creator.id
         }
@@ -163,7 +162,9 @@ struct ReceiptScannerView: View {
     var reviewView: some View {
         let participants = store.participantsFor(campaign: campaign)
         let selectedTotal = scannedItems.filter { $0.isSelected }.reduce(0.0) { $0 + $1.price }
+        let allTotal = scannedItems.reduce(0.0) { $0 + $1.price }
         let payerID = selectedPayerID ?? defaultPayerID
+        let hasUnselected = scannedItems.contains { !$0.isSelected }
 
         return VStack(spacing: 0) {
             // Payer picker
@@ -265,18 +266,40 @@ struct ReceiptScannerView: View {
                 .padding()
             }
 
-            // Bottom action
-            Button(action: createExpenses) {
-                HStack(spacing: 10) {
-                    Image(systemName: "plus.circle.fill")
-                    Text(NSLocalizedString("scan_create_expenses", comment: ""))
-                        .fontWeight(.bold)
+            // Bottom actions
+            VStack(spacing: 8) {
+                // Create selected items
+                Button(action: createSelectedExpenses) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "plus.circle.fill")
+                        Text(hasUnselected
+                            ? NSLocalizedString("scan_create_and_continue", comment: "")
+                            : NSLocalizedString("scan_create_expenses", comment: ""))
+                            .fontWeight(.bold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(AppTheme.headerGradient)
+                    .foregroundColor(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(AppTheme.headerGradient)
-                .foregroundColor(.white)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+                // Pay all at once (single expense with total)
+                if scannedItems.count > 1 {
+                    Button(action: createSingleExpense) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "bolt.circle.fill")
+                            Text(String(format: NSLocalizedString("scan_pay_all", comment: ""),
+                                        String(format: "%.2f", allTotal), campaign.currency))
+                                .fontWeight(.semibold)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.gray.opacity(0.15))
+                        .foregroundColor(AppTheme.primary)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    }
+                }
             }
             .padding()
         }
@@ -458,7 +481,7 @@ struct ReceiptScannerView: View {
         return nil
     }
 
-    private func createExpenses() {
+    private func createSelectedExpenses() {
         let selected = scannedItems.filter { $0.isSelected && $0.price > 0 }
         guard !selected.isEmpty else { return }
 
@@ -477,6 +500,38 @@ struct ReceiptScannerView: View {
             )
             store.addExpense(expense)
         }
+
+        // Remove selected items, keep unselected for next payer
+        let remaining = scannedItems.filter { !$0.isSelected && $0.price > 0 }
+        if remaining.isEmpty {
+            dismiss()
+        } else {
+            // Reset for next payer: remaining items become selected
+            scannedItems = remaining.map { item in
+                var newItem = ScannedItem(name: item.name, price: item.price, assignedTo: item.assignedTo)
+                newItem.isSelected = true
+                return newItem
+            }
+            selectedPayerID = nil // Reset payer to default
+        }
+    }
+
+    private func createSingleExpense() {
+        let allTotal = scannedItems.reduce(0.0) { $0 + $1.price }
+        guard allTotal > 0 else { return }
+
+        let participants = store.participantsFor(campaign: campaign)
+        let payerID = selectedPayerID ?? defaultPayerID
+
+        let expense = Expense(
+            title: NSLocalizedString("scan_receipt_expense", comment: ""),
+            amount: (allTotal * 100).rounded() / 100,
+            paidByID: payerID,
+            splitAmongIDs: participants.map { $0.id },
+            notes: NSLocalizedString("scan_from_receipt", comment: ""),
+            campaignID: campaign.id
+        )
+        store.addExpense(expense)
         dismiss()
     }
 }

@@ -281,6 +281,9 @@
 "scan_total" = "Selected Total";
 "scan_item_name" = "Item";
 "scan_create_expenses" = "Create Expenses";
+"scan_create_and_continue" = "Confirm & next payer";
+"scan_pay_all" = "Pay all (%@ %@)";
+"scan_receipt_expense" = "Receipt";
 "scan_from_receipt" = "Scanned from receipt";
 
 /* Proximity Share */
