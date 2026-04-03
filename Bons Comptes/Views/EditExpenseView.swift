@@ -48,12 +48,35 @@ struct EditExpenseView: View {
         store.participantsFor(campaign: campaign)
     }
 
+    var parsedAmount: Double {
+        Double(amount.replacingOccurrences(of: ",", with: ".")) ?? 0
+    }
+
+    var splitTotal: Double {
+        selectedParticipantIDs.reduce(0) { sum, id in
+            sum + (Double((customSplits[id] ?? "").replacingOccurrences(of: ",", with: ".")) ?? 0)
+        }
+    }
+
+    var splitTarget: Double {
+        splitType == .percentage ? 100 : parsedAmount
+    }
+
+    var splitRemaining: Double {
+        splitTarget - splitTotal
+    }
+
+    var isSplitValid: Bool {
+        if splitType == .equal { return true }
+        return abs(splitRemaining) < 0.01
+    }
+
     var canSave: Bool {
         !title.trimmingCharacters(in: .whitespaces).isEmpty &&
-        Double(amount.replacingOccurrences(of: ",", with: ".")) != nil &&
-        (Double(amount.replacingOccurrences(of: ",", with: ".")) ?? 0) > 0 &&
+        parsedAmount > 0 &&
         paidByID != nil &&
-        !selectedParticipantIDs.isEmpty
+        !selectedParticipantIDs.isEmpty &&
+        isSplitValid
     }
 
     var body: some View {
@@ -144,6 +167,9 @@ struct EditExpenseView: View {
                                             .clipShape(RoundedRectangle(cornerRadius: 8))
                                     }
                                 }
+
+                                // Split total indicator
+                                splitTotalIndicator
                             }
                         }
                         .cardStyle()
@@ -297,9 +323,69 @@ struct EditExpenseView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
+    var splitTotalIndicator: some View {
+        let unit = splitType == .percentage ? "%" : campaign.currency
+        let isValid = abs(splitRemaining) < 0.01
+        let color: Color = isValid ? AppTheme.positive : (splitRemaining < 0 ? AppTheme.negative : AppTheme.warning)
+
+        return VStack(spacing: 8) {
+            HStack {
+                Text(NSLocalizedString("split_total", comment: ""))
+                    .font(.subheadline).fontWeight(.medium)
+                Spacer()
+                Text(String(format: "%.2f / %.2f %@", splitTotal, splitTarget, unit))
+                    .font(.subheadline).fontWeight(.bold)
+                    .foregroundColor(color)
+            }
+
+            if !isValid {
+                HStack {
+                    Image(systemName: splitRemaining > 0 ? "exclamationmark.triangle.fill" : "xmark.circle.fill")
+                        .foregroundColor(color)
+                    Text(String(format: NSLocalizedString(splitRemaining > 0 ? "split_remaining" : "split_exceeded", comment: ""), abs(splitRemaining), unit))
+                        .font(.caption).foregroundColor(color)
+                    Spacer()
+                    if splitRemaining > 0.01 {
+                        Button(action: autoFillLastParticipant) {
+                            Text(NSLocalizedString("split_auto_fill", comment: ""))
+                                .font(.caption).fontWeight(.semibold)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 10).padding(.vertical, 4)
+                                .background(AppTheme.primary)
+                                .clipShape(Capsule())
+                        }
+                    }
+                }
+            } else {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill").foregroundColor(AppTheme.positive)
+                    Text(NSLocalizedString("split_valid", comment: ""))
+                        .font(.caption).foregroundColor(AppTheme.positive)
+                    Spacer()
+                }
+            }
+        }
+        .padding(12)
+        .background(color.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    func autoFillLastParticipant() {
+        let selected = participants.filter { selectedParticipantIDs.contains($0.id) }
+        let emptyParticipant = selected.last { p in
+            let val = Double((customSplits[p.id] ?? "").replacingOccurrences(of: ",", with: ".")) ?? 0
+            return val == 0
+        } ?? selected.last
+        guard let target = emptyParticipant else { return }
+        let remaining = splitRemaining
+        guard remaining > 0.01 else { return }
+        customSplits[target.id] = String(format: "%.2f", remaining)
+    }
+
     func saveExpense() {
-        guard let paidBy = paidByID,
-              let amountValue = Double(amount.replacingOccurrences(of: ",", with: ".")) else { return }
+        guard let paidBy = paidByID else { return }
+        let amountValue = parsedAmount
+        guard amountValue > 0 else { return }
 
         var splits: [UUID: Double] = [:]
         if splitType != .equal {

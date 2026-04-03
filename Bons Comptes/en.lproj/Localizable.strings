@@ -17,6 +17,8 @@
 "restore_confirm" = "Restore";
 "restore_success" = "Backup restored successfully";
 "restore_error" = "Error restoring backup";
+"export_to_files" = "Export";
+"import_from_files" = "Import file";
 "paste_json" = "Paste JSON data";
 "paste_json_or_url" = "Paste JSON or web link";
 "import_button" = "Import";
@@ -91,6 +93,11 @@
 "split_equal" = "Equal";
 "split_custom" = "Custom amounts";
 "split_percentage" = "Percentage";
+"split_total" = "Total";
+"split_remaining" = "%.2f %@ remaining to allocate";
+"split_exceeded" = "%.2f %@ over the expected total";
+"split_auto_fill" = "Auto-fill";
+"split_valid" = "Split is correct";
 "save" = "Save";
 "add" = "Add";
 

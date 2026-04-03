@@ -172,8 +172,12 @@ class CampaignStore: ObservableObject {
     }
 
     func restoreBackup(_ backup: BackupInfo) -> Bool {
-        guard let data = try? Data(contentsOf: backup.url),
-              let decoded = try? JSONDecoder().decode(AppData.self, from: data) else { return false }
+        guard let data = try? Data(contentsOf: backup.url) else { return false }
+        return restoreFromData(data)
+    }
+
+    func restoreFromData(_ data: Data) -> Bool {
+        guard let decoded = try? JSONDecoder().decode(AppData.self, from: data) else { return false }
         campaigns = decoded.campaigns
         participants = decoded.participants
         expenses = decoded.expenses

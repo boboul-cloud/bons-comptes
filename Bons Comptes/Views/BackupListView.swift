@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct BackupListView: View {
     @EnvironmentObject var store: CampaignStore
@@ -13,6 +14,14 @@ struct BackupListView: View {
     @State private var selectedBackup: CampaignStore.BackupInfo?
     @State private var restoreResult: Bool?
     @State private var savedFeedback = false
+    @State private var showingImporter = false
+    @State private var exportItem: ShareableURL?
+    @State private var importFeedback = false
+
+    struct ShareableURL: Identifiable {
+        let id = UUID()
+        let url: URL
+    }
 
     var body: some View {
         NavigationStack {
@@ -59,6 +68,23 @@ struct BackupListView: View {
                 createBackupButton
                     .padding(.horizontal)
 
+                // Import from Files
+                Button(action: { showingImporter = true }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "square.and.arrow.down")
+                            .font(.subheadline)
+                        Text(NSLocalizedString("import_from_files", comment: ""))
+                            .fontWeight(.semibold)
+                            .font(.subheadline)
+                    }
+                    .foregroundColor(AppTheme.primary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(AppTheme.primary.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .padding(.horizontal)
+
                 if backups.isEmpty {
                     emptyBackupState
                 } else {
@@ -70,6 +96,16 @@ struct BackupListView: View {
             }
             .padding(.top, 8)
             .padding(.bottom, 20)
+        }
+        .sheet(item: $exportItem) { item in
+            ShareSheetView(items: [item.url])
+        }
+        .fileImporter(
+            isPresented: $showingImporter,
+            allowedContentTypes: [.json],
+            allowsMultipleSelection: false
+        ) { result in
+            handleFileImport(result)
         }
     }
 
@@ -131,6 +167,14 @@ struct BackupListView: View {
             Spacer()
 
             Button(action: {
+                exportItem = ShareableURL(url: backup.url)
+            }) {
+                Image(systemName: "square.and.arrow.up.circle.fill")
+                    .font(.title3)
+                    .foregroundColor(AppTheme.primary)
+            }
+
+            Button(action: {
                 selectedBackup = backup
                 showingRestoreAlert = true
             }) {
@@ -154,6 +198,27 @@ struct BackupListView: View {
         .background(AppTheme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .shadow(color: .black.opacity(0.04), radius: 4, y: 2)
+    }
+
+    func handleFileImport(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            guard url.startAccessingSecurityScopedResource() else { return }
+            defer { url.stopAccessingSecurityScopedResource() }
+            guard let data = try? Data(contentsOf: url) else { return }
+            let success = store.restoreFromData(data)
+            if success {
+                withAnimation(.spring(response: 0.3)) { importFeedback = true }
+                backups = store.listBackups()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    withAnimation { importFeedback = false }
+                    dismiss()
+                }
+            }
+        case .failure:
+            break
+        }
     }
 
     func formatSize(_ bytes: Int64) -> String {
