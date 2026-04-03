@@ -283,6 +283,7 @@
 "scan_create_expenses" = "Créer les dépenses";
 "scan_create_and_continue" = "Valider et passer au payeur suivant";
 "scan_pay_all" = "Tout régler (%@ %@)";
+"scan_pay_selected_single" = "En une note (%@ %@)";
 "scan_receipt_expense" = "Ticket de caisse";
 "scan_from_receipt" = "Scanné depuis un ticket";
 
