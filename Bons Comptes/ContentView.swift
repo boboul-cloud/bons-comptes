@@ -13,11 +13,12 @@ struct ContentView: View {
     @State private var showLaunch = true
     @State private var showImportResult = false
     @State private var importSuccess = false
+    @State private var deepLinkCampaignID: String?
 
     var body: some View {
         ZStack {
             TabView(selection: $selectedTab) {
-                CampaignListView()
+                CampaignListView(deepLinkCampaignID: $deepLinkCampaignID)
                     .tabItem {
                         Image(systemName: selectedTab == 0 ? "creditcard.fill" : "creditcard")
                         Text(NSLocalizedString("tab_campaigns", comment: ""))
@@ -49,6 +50,13 @@ struct ContentView: View {
             }
         }
         .onOpenURL { url in
+            if url.host == "campaign",
+               let id = url.pathComponents.dropFirst().first {
+                // Widget deep link: bonscomptes://campaign/<id>
+                selectedTab = 0
+                deepLinkCampaignID = id
+                return
+            }
             if url.host == "paste" || url.path == "paste" {
                 // Web "Open in app" copies JSON to clipboard then opens bonscomptes://paste
                 if let clipboard = UIPasteboard.general.string {

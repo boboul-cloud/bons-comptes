@@ -7,6 +7,8 @@ import SwiftUI
 
 struct CampaignListView: View {
     @EnvironmentObject var store: CampaignStore
+    @Binding var deepLinkCampaignID: String?
+    @State private var navigationPath = NavigationPath()
     @State private var showingAddCampaign = false
     @State private var showingImport = false
     @State private var importCode = ""
@@ -20,7 +22,7 @@ struct CampaignListView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ZStack {
                 AppTheme.backgroundGradient.ignoresSafeArea()
 
@@ -80,12 +82,28 @@ struct CampaignListView: View {
             ) {
                 Button("OK") { importResult = nil }
             }
+            .navigationDestination(for: Campaign.ID.self) { campaignID in
+                if let campaign = store.campaigns.first(where: { $0.id == campaignID }) {
+                    CampaignDetailView(campaign: campaign)
+                }
+            }
+            .onChange(of: deepLinkCampaignID) { _, newID in
+                guard let idString = newID,
+                      let uuid = UUID(uuidString: idString),
+                      store.campaigns.contains(where: { $0.id == uuid })
+                else { return }
+                navigationPath = NavigationPath()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    navigationPath.append(uuid)
+                }
+                deepLinkCampaignID = nil
+            }
         }
     }
 
     var campaignList: some View {
         ForEach(Array(filteredCampaigns.enumerated()), id: \.element.id) { index, campaign in
-            NavigationLink(destination: CampaignDetailView(campaign: campaign)) {
+            NavigationLink(value: campaign.id) {
                 CampaignCardView(campaign: campaign)
             }
             .buttonStyle(.plain)

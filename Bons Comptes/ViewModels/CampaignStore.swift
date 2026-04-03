@@ -297,6 +297,13 @@ class CampaignStore: ObservableObject {
         saveData()
     }
 
+    func updateReimbursement(_ reimbursement: Reimbursement) {
+        if let idx = reimbursements.firstIndex(where: { $0.id == reimbursement.id }) {
+            reimbursements[idx] = reimbursement
+            saveData()
+        }
+    }
+
     func deleteReimbursement(_ reimbursement: Reimbursement) {
         reimbursements.removeAll { $0.id == reimbursement.id }
         if let idx = campaigns.firstIndex(where: { $0.id == reimbursement.campaignID }) {
@@ -519,6 +526,15 @@ class CampaignStore: ObservableObject {
         df.dateFormat = "yyMMdd"
         df.locale = Locale(identifier: "en_US_POSIX")
 
+        // Collect used categories and payment methods, build index maps
+        let usedCatIDs = Set(exps.compactMap { $0.categoryID })
+        let usedCats = categories.filter { usedCatIDs.contains($0.id) }
+        let catIdx: [UUID: Int] = Dictionary(uniqueKeysWithValues: usedCats.enumerated().map { ($1.id, $0) })
+
+        let usedPMIDs = Set(reimbs.compactMap { $0.paymentMethodID })
+        let usedPMs = paymentMethods.filter { usedPMIDs.contains($0.id) }
+        let pmIdx: [UUID: Int] = Dictionary(uniqueKeysWithValues: usedPMs.enumerated().map { ($1.id, $0) })
+
         var lines: [String] = [syncDeletions ? "v3s" : "v3"]
 
         // Campaign: id|title[|currency[|description[|location[|phone]]]]
@@ -537,7 +553,7 @@ class CampaignStore: ObservableObject {
             return "\(Self.dashlessUUID(p.id))|\(base)"
         }.joined(separator: "\t"))
 
-        // Expenses: id|title|amount|YYMMDD|payerIdx|splitIdxs[|splitType[|customSplits[|location[|notes]]]]
+        // Expenses: id|title|amount|YYMMDD|payerIdx|splitIdxs[|splitType[|customSplits[|location[|notes[|catIdx]]]]]
         lines.append(exps.map { e -> String in
             var f = [Self.dashlessUUID(e.id), Self.escV2(e.title), Self.fmtNum(e.amount), df.string(from: e.date), String(pIdx[e.paidByID] ?? 0)]
             if Set(e.splitAmongIDs) == allPIDs {
@@ -550,21 +566,31 @@ class CampaignStore: ObservableObject {
                 .sorted(by: { (pIdx[$0.key] ?? 0) < (pIdx[$1.key] ?? 0) })
                 .map { "\(pIdx[$0.key] ?? 0):\(Self.fmtNum($0.value))" }
                 .joined(separator: ",")
-            f.append(contentsOf: [st, cs, Self.escV2(e.location), Self.escV2(e.notes)])
+            let ci = e.categoryID.flatMap { catIdx[$0] }.map { String($0) } ?? ""
+            f.append(contentsOf: [st, cs, Self.escV2(e.location), Self.escV2(e.notes), ci])
             return Self.trimV2(f)
         }.joined(separator: "\t"))
 
-        // Reimbursements (if any)
-        if !reimbs.isEmpty {
-            lines.append(reimbs.map { r -> String in
-                Self.trimV2([
-                    Self.dashlessUUID(r.id),
-                    String(pIdx[r.fromID] ?? 0), String(pIdx[r.toID] ?? 0),
-                    Self.fmtNum(r.amount), df.string(from: r.date),
-                    Self.escV2(r.notes), r.isPartial ? "1" : ""
-                ])
-            }.joined(separator: "\t"))
-        }
+        // Reimbursements (always emit line, empty if none): id|fromIdx|toIdx|amount|YYMMDD[|notes[|isPartial[|pmIdx]]]
+        lines.append(reimbs.map { r -> String in
+            let mi = r.paymentMethodID.flatMap { pmIdx[$0] }.map { String($0) } ?? ""
+            return Self.trimV2([
+                Self.dashlessUUID(r.id),
+                String(pIdx[r.fromID] ?? 0), String(pIdx[r.toID] ?? 0),
+                Self.fmtNum(r.amount), df.string(from: r.date),
+                Self.escV2(r.notes), r.isPartial ? "1" : "", mi
+            ])
+        }.joined(separator: "\t"))
+
+        // Categories (used by expenses): id|name[|icon[|isDefault]]
+        lines.append(usedCats.map { cat in
+            Self.trimV2([Self.dashlessUUID(cat.id), Self.escV2(cat.name), cat.icon == "tag" ? "" : cat.icon, cat.isDefault ? "1" : ""])
+        }.joined(separator: "\t"))
+
+        // Payment methods (used by reimbursements): id|name[|icon[|isDefault]]
+        lines.append(usedPMs.map { pm in
+            Self.trimV2([Self.dashlessUUID(pm.id), Self.escV2(pm.name), pm.icon == "banknote" ? "" : pm.icon, pm.isDefault ? "1" : ""])
+        }.joined(separator: "\t"))
 
         return lines.joined(separator: "\n")
     }
@@ -605,6 +631,38 @@ class CampaignStore: ObservableObject {
             campaign.creatorName = first.name
         }
 
+        // Categories (line 5, if present): id|name[|icon[|isDefault]]
+        var importedCats: [ExpenseCategory] = []
+        if lines.count > 5 && !lines[5].isEmpty {
+            importedCats = lines[5].components(separatedBy: "\t").filter { !$0.isEmpty }.compactMap { item in
+                let cf = item.components(separatedBy: "|")
+                guard cf.count >= 2 else { return nil }
+                let catID = Self.uuidFromDashless(cf[0]) ?? UUID()
+                return ExpenseCategory(
+                    id: catID,
+                    name: cf[1],
+                    icon: (cf.count > 2 && !cf[2].isEmpty) ? cf[2] : "tag",
+                    isDefault: cf.count > 3 && cf[3] == "1"
+                )
+            }
+        }
+
+        // Payment methods (line 6, if present): id|name[|icon[|isDefault]]
+        var importedPMs: [PaymentMethod] = []
+        if lines.count > 6 && !lines[6].isEmpty {
+            importedPMs = lines[6].components(separatedBy: "\t").filter { !$0.isEmpty }.compactMap { item in
+                let pf = item.components(separatedBy: "|")
+                guard pf.count >= 2 else { return nil }
+                let pmID = Self.uuidFromDashless(pf[0]) ?? UUID()
+                return PaymentMethod(
+                    id: pmID,
+                    name: pf[1],
+                    icon: (pf.count > 2 && !pf[2].isEmpty) ? pf[2] : "banknote",
+                    isDefault: pf.count > 3 && pf[3] == "1"
+                )
+            }
+        }
+
         // Expenses
         let df = DateFormatter()
         df.dateFormat = "yyMMdd"
@@ -636,11 +694,17 @@ class CampaignStore: ObservableObject {
                     }
                 }
             }
+            // Category index (field o+9)
+            var categoryID: UUID? = nil
+            if ef.count > o + 9 && !ef[o + 9].isEmpty, let ci = Int(ef[o + 9]), ci < importedCats.count {
+                categoryID = importedCats[ci].id
+            }
             return Expense(
                 id: expID, title: ef[o], amount: amount, date: date,
                 paidByID: parts[payerIdx].id,
                 splitAmongIDs: splitIdxs.filter { $0 < parts.count }.map { parts[$0].id },
                 splitType: splitType, customSplits: customSplits,
+                categoryID: categoryID,
                 location: ef.count > o + 7 ? ef[o + 7] : "",
                 notes: ef.count > o + 8 ? ef[o + 8] : "",
                 campaignID: campaignID
@@ -657,9 +721,15 @@ class CampaignStore: ObservableObject {
                 let fromIdx = Int(rf[o]) ?? 0
                 let toIdx = Int(rf[o + 1]) ?? 0
                 guard fromIdx < parts.count, toIdx < parts.count else { return nil }
+                // Payment method index (field o+6)
+                var paymentMethodID: UUID? = nil
+                if rf.count > o + 6 && !rf[o + 6].isEmpty, let mi = Int(rf[o + 6]), mi < importedPMs.count {
+                    paymentMethodID = importedPMs[mi].id
+                }
                 return Reimbursement(
                     id: rID, amount: amount, date: df.date(from: rf[o + 3]) ?? Date(),
                     fromID: parts[fromIdx].id, toID: parts[toIdx].id,
+                    paymentMethodID: paymentMethodID,
                     notes: rf.count > o + 4 ? rf[o + 4] : "",
                     campaignID: campaignID,
                     isPartial: rf.count > o + 5 && rf[o + 5] == "1"
@@ -671,7 +741,7 @@ class CampaignStore: ObservableObject {
         campaign.expenseIDs = exps.map { $0.id }
         campaign.reimbursementIDs = reimbs.map { $0.id }
 
-        let appData = AppData(campaigns: [campaign], participants: parts, expenses: exps, reimbursements: reimbs)
+        let appData = AppData(campaigns: [campaign], participants: parts, expenses: exps, reimbursements: reimbs, categories: importedCats.isEmpty ? nil : importedCats, paymentMethods: importedPMs.isEmpty ? nil : importedPMs)
         return mergeAppData(appData, syncDeletions: syncDeletions)
     }
 

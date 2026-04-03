@@ -114,6 +114,7 @@
 "edit" = "Edit";
 "edit_participant" = "Edit participant";
 "edit_expense" = "Edit expense";
+"edit_reimbursement" = "Edit reimbursement";
 
 /* Balance */
 "summary" = "Summary";

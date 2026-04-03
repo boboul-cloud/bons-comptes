@@ -114,6 +114,7 @@
 "edit" = "Modifier";
 "edit_participant" = "Modifier le participant";
 "edit_expense" = "Modifier la dépense";
+"edit_reimbursement" = "Modifier le remboursement";
 
 /* Balance */
 "summary" = "Résumé";

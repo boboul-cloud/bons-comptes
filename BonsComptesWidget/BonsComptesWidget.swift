@@ -147,6 +147,7 @@ struct BonsComptesWidgetEntryView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .widgetURL(URL(string: "bonscomptes://campaign/\(c.id)"))
     }
 
     func mediumView(_ c: WidgetCampaignData) -> some View {
@@ -178,6 +179,7 @@ struct BonsComptesWidgetEntryView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .widgetURL(URL(string: "bonscomptes://campaign/\(c.id)"))
     }
 
     func statBubble(icon: String, value: String) -> some View {

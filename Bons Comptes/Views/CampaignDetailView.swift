@@ -16,6 +16,7 @@ struct CampaignDetailView: View {
     @State private var showingCloseAlert = false
     @State private var selectedTab = 0
     @State private var editingExpense: Expense?
+    @State private var editingReimbursement: Reimbursement?
     @State private var showingReceiptScanner = false
     @State private var isLiveActivityOn = false
     @State private var showPremiumUpgrade = false
@@ -73,6 +74,9 @@ struct CampaignDetailView: View {
         .sheet(isPresented: $showingShare) { ShareView(campaign: campaign) }
         .sheet(item: $editingExpense) { expense in
             EditExpenseView(campaign: campaign, expense: expense).onDisappear { refreshCampaign() }
+        }
+        .sheet(item: $editingReimbursement) { reimbursement in
+            EditReimbursementView(campaign: campaign, reimbursement: reimbursement).onDisappear { refreshCampaign() }
         }
         .sheet(isPresented: $showingReceiptScanner) {
             ReceiptScannerView(campaign: campaign).onDisappear { refreshCampaign() }
@@ -211,7 +215,11 @@ struct CampaignDetailView: View {
                 ForEach(Array(items.enumerated()), id: \.element.id) { i, r in
                     ReimbursementCardView(reimbursement: r, currency: campaign.currency)
                         .animatedAppear(delay: Double(i) * 0.05)
+                        .onTapGesture { editingReimbursement = r }
                         .contextMenu {
+                            Button { editingReimbursement = r } label: {
+                                Label(NSLocalizedString("edit_reimbursement", comment: ""), systemImage: "pencil")
+                            }
                             Button(role: .destructive) { withAnimation { store.deleteReimbursement(r); refreshCampaign() } } label: {
                                 Label(NSLocalizedString("delete", comment: ""), systemImage: "trash")
                             }

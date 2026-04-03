@@ -735,6 +735,15 @@ function stateToV2() {
   const allPIDs = new Set(parts.map(p => p.id));
   const dl = id => id.replace(/-/g, '').toLowerCase(); // dashless UUID
 
+  // Collect used categories and payment methods, build index maps
+  const usedCatIDs = new Set(exps.map(e => e.categoryID).filter(Boolean));
+  const usedCats = (state.categories || []).filter(cat => usedCatIDs.has(cat.id));
+  const catIdx = {}; usedCats.forEach((cat, i) => catIdx[cat.id] = i);
+
+  const usedPMIDs = new Set(reimbs.map(r => r.paymentMethodID).filter(Boolean));
+  const usedPMs = (state.paymentMethods || []).filter(pm => usedPMIDs.has(pm.id));
+  const pmIdx = {}; usedPMs.forEach((pm, i) => pmIdx[pm.id] = i);
+
   const lines = ['v3'];
 
   // Campaign: id|title[|currency[|description[|location[|phone]]]]
@@ -747,7 +756,7 @@ function stateToV2() {
     return dl(p.id) + '|' + base;
   }).join('\t'));
 
-  // Expenses: id|title|amount|YYMMDD|payerIdx|splitIdxs[|splitType[|customSplits[|location[|notes]]]]
+  // Expenses: id|title|amount|YYMMDD|payerIdx|splitIdxs[|splitType[|customSplits[|location[|notes[|catIdx]]]]]
   lines.push(exps.map(e => {
     const d = new Date(e.date);
     const yy = String(d.getFullYear()).slice(2);
@@ -763,20 +772,31 @@ function stateToV2() {
     const st = (!e.splitType || e.splitType==='equal') ? '' : (e.splitType==='custom' ? 'c' : 'p');
     const cs = (e.customSplits && Object.keys(e.customSplits).length>0)
       ? Object.entries(e.customSplits).map(([k,v]) => (pIdx[k]!==undefined?pIdx[k]:k)+':'+fmtNum(v)).join(',') : '';
-    f.push(st, cs, escV2(e.location||''), escV2(e.notes||''));
+    const ci = (e.categoryID && catIdx[e.categoryID] !== undefined) ? String(catIdx[e.categoryID]) : '';
+    f.push(st, cs, escV2(e.location||''), escV2(e.notes||''), ci);
     return trimV2(f);
   }).join('\t'));
 
-  // Reimbursements (if any)
-  if (reimbs.length > 0) {
-    lines.push(reimbs.map(r => {
-      const d = new Date(r.date);
-      const yy = String(d.getFullYear()).slice(2);
-      const mm = String(d.getMonth()+1).padStart(2,'0');
-      const dd = String(d.getDate()).padStart(2,'0');
-      return trimV2([dl(r.id), String(pIdx[r.fromID]??0), String(pIdx[r.toID]??0), fmtNum(r.amount), yy+mm+dd, escV2(r.notes||''), r.isPartial?'1':'']);
-    }).join('\t'));
-  }
+  // Reimbursements (always emit line, empty if none): id|fromIdx|toIdx|amount|YYMMDD[|notes[|isPartial[|pmIdx]]]
+  lines.push(reimbs.map(r => {
+    const d = new Date(r.date);
+    const yy = String(d.getFullYear()).slice(2);
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mi = (r.paymentMethodID && pmIdx[r.paymentMethodID] !== undefined) ? String(pmIdx[r.paymentMethodID]) : '';
+    return trimV2([dl(r.id), String(pIdx[r.fromID]??0), String(pIdx[r.toID]??0), fmtNum(r.amount), yy+mm+dd, escV2(r.notes||''), r.isPartial?'1':'', mi]);
+  }).join('\t'));
+
+  // Categories (used by expenses): id|name[|icon[|isDefault]]
+  lines.push(usedCats.map(cat => {
+    return trimV2([dl(cat.id), escV2(cat.name), (!cat.icon || cat.icon === 'tag') ? '' : cat.icon, cat.isDefault ? '1' : '']);
+  }).join('\t'));
+
+  // Payment methods (used by reimbursements): id|name[|icon[|isDefault]]
+  lines.push(usedPMs.map(pm => {
+    return trimV2([dl(pm.id), escV2(pm.name), (!pm.icon || pm.icon === 'banknote') ? '' : pm.icon, pm.isDefault ? '1' : '']);
+  }).join('\t'));
+
   return lines.join('\n');
 }
 
@@ -803,6 +823,28 @@ function loadV2(text) {
       }
       return { id:generateUUID(), name:pf[0]||'', avatarEmoji:pf[1]||'🧑', isActive:true, email:'', phone:'' };
     });
+    // (expenses parsed after categories below)
+    // Categories (line 5, if present): id|name[|icon[|isDefault]]
+    state.categories = [];
+    if (lines.length > 5 && lines[5]) {
+      state.categories = lines[5].split('\t').filter(s=>s).map(item => {
+        const cf = item.split('|');
+        if (cf.length < 2) return null;
+        const catID = parseID(cf[0]) || generateUUID();
+        return { id:catID, name:cf[1]||'', icon:(cf.length>2 && cf[2]) ? cf[2] : 'tag', isDefault: cf.length>3 && cf[3]==='1' };
+      }).filter(Boolean);
+    }
+    // Payment methods (line 6, if present): id|name[|icon[|isDefault]]
+    state.paymentMethods = [];
+    if (lines.length > 6 && lines[6]) {
+      state.paymentMethods = lines[6].split('\t').filter(s=>s).map(item => {
+        const pf = item.split('|');
+        if (pf.length < 2) return null;
+        const pmID = parseID(pf[0]) || generateUUID();
+        return { id:pmID, name:pf[1]||'', icon:(pf.length>2 && pf[2]) ? pf[2] : 'banknote', isDefault: pf.length>3 && pf[3]==='1' };
+      }).filter(Boolean);
+    }
+    // Now parse expenses (needs categories for catIdx resolution)
     state.expenses = lines[3].split('\t').filter(s=>s).map(item => {
       const ef = item.split('|');
       const expID = hasIDs && parseID(ef[0]) ? parseID(ef[0]) : generateUUID();
@@ -819,11 +861,17 @@ function loadV2(text) {
           if (idx < state.participants.length) customSplits[state.participants[idx].id] = parseFloat(v);
         });
       }
+      let categoryID = null;
+      if (ef.length>o+9 && ef[o+9]) {
+        const ci = parseInt(ef[o+9]);
+        if (!isNaN(ci) && ci < state.categories.length) categoryID = state.categories[ci].id;
+      }
       return {
         id:expID, title:ef[o]||'', amount:parseFloat(ef[o+1])||0, date:date,
         paidByID: state.participants[payerIdx]?.id||state.participants[0]?.id,
         splitAmongIDs: splitIdxs.filter(i=>i<state.participants.length).map(i=>state.participants[i].id),
-        splitType:splitType, customSplits:customSplits, campaignID:campaignID,
+        splitType:splitType, customSplits:customSplits, categoryID:categoryID,
+        campaignID:campaignID,
         location: ef[o+7]||'', notes: ef[o+8]||''
       };
     });
@@ -834,16 +882,21 @@ function loadV2(text) {
         const rID = hasIDs && parseID(rf[0]) ? parseID(rf[0]) : generateUUID();
         const fromIdx=parseInt(rf[o])||0, toIdx=parseInt(rf[o+1])||0;
         const ds = rf[o+3]||'';
+        let paymentMethodID = null;
+        if (rf.length>o+6 && rf[o+6]) {
+          const mi = parseInt(rf[o+6]);
+          if (!isNaN(mi) && mi < state.paymentMethods.length) paymentMethodID = state.paymentMethods[mi].id;
+        }
         return {
           id:rID, amount:parseFloat(rf[o+2])||0,
           date: `${2000+parseInt(ds.slice(0,2))}-${ds.slice(2,4)}-${ds.slice(4,6)}`,
           fromID: state.participants[fromIdx]?.id||state.participants[0]?.id,
           toID: state.participants[toIdx]?.id||state.participants[0]?.id,
+          paymentMethodID: paymentMethodID,
           notes: rf[o+4]||'', isPartial: rf[o+5]==='1', campaignID:campaignID
         };
       });
     }
-    state.categories = []; state.paymentMethods = [];
     state.campaign.participantIDs = state.participants.map(p=>p.id);
     state.campaign.expenseIDs = state.expenses.map(e=>e.id);
     state.campaign.reimbursementIDs = state.reimbursements.map(r=>r.id);
@@ -1320,20 +1373,22 @@ async function sendUpdate() {
   const phone = state.campaign.managerPhone;
   if (!phone) return;
   try {
-    const urlParams = new URLSearchParams(window.location.search);
-    const data = urlParams.get('d') || window.location.hash.slice(1);
-    if (!data) return;
-    const appURL = 'bonscomptes://import#' + data;
+    const v2 = stateToV2();
+    const encoded = await encodeData(v2);
+    if (!encoded) return;
+    const appURL = 'bonscomptes://import#' + encoded;
     const body = encodeURIComponent(t('send_update_body') + state.campaign.title + ' :\n' + appURL);
-    window.location.href = `sms:${phone}&body=${body}`;
+    // Android uses ?body=, iOS uses &body= — use ? for broader compatibility
+    const sep = /iPhone|iPad|iPod/.test(navigator.userAgent) ? '&' : '?';
+    window.location.href = `sms:${phone}${sep}body=${body}`;
   } catch(e) { alert('Erreur: ' + e.message); }
 }
 
-function openDirectInApp() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const data = urlParams.get('d') || window.location.hash.slice(1);
-  if (!data) return;
-  window.location.href = 'bonscomptes://import#' + data;
+async function openDirectInApp() {
+  const v2 = stateToV2();
+  const encoded = await encodeData(v2);
+  if (!encoded) return;
+  window.location.href = 'bonscomptes://import#' + encoded;
 }
 
 function isIOS() {
