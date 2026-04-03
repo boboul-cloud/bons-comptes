@@ -15,12 +15,14 @@ struct ReceiptScannerView: View {
 
     @State private var scannedItems: [ScannedItem] = []
     @State private var showingCamera = false
+    @State private var showingDocumentScanner = false
     @State private var showingPhotosPicker = false
     @State private var showingReview = false
     @State private var scannedImage: UIImage?
     @State private var isProcessing = false
     @State private var showNoItemsAlert = false
     @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var selectedPayerID: UUID?
 
     struct ScannedItem: Identifiable {
         let id = UUID()
@@ -51,6 +53,12 @@ struct ReceiptScannerView: View {
             }
             .sheet(isPresented: $showingCamera) {
                 CameraView { image in
+                    scannedImage = image
+                    processImage(image)
+                }
+            }
+            .sheet(isPresented: $showingDocumentScanner) {
+                DocumentScannerView { image in
                     scannedImage = image
                     processImage(image)
                 }
@@ -96,6 +104,20 @@ struct ReceiptScannerView: View {
                 ProgressView(NSLocalizedString("scan_processing", comment: ""))
                     .padding()
             } else {
+                Button(action: { showingDocumentScanner = true }) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "doc.text.viewfinder")
+                        Text(NSLocalizedString("scan_document", comment: ""))
+                            .fontWeight(.bold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(AppTheme.headerGradient)
+                    .foregroundColor(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .padding(.horizontal, 48)
+
                 Button(action: { showingCamera = true }) {
                     HStack(spacing: 10) {
                         Image(systemName: "camera.fill")
@@ -104,8 +126,8 @@ struct ReceiptScannerView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(AppTheme.headerGradient)
-                    .foregroundColor(.white)
+                    .background(Color.gray.opacity(0.15))
+                    .foregroundColor(AppTheme.primary)
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
                 .padding(.horizontal, 48)
@@ -129,11 +151,54 @@ struct ReceiptScannerView: View {
         }
     }
 
+    private var defaultPayerID: UUID {
+        let participants = store.participantsFor(campaign: campaign)
+        // Find participant matching campaign creator name
+        if let creator = participants.first(where: { $0.name == campaign.creatorName }) {
+            return creator.id
+        }
+        return participants.first?.id ?? UUID()
+    }
+
     var reviewView: some View {
         let participants = store.participantsFor(campaign: campaign)
         let selectedTotal = scannedItems.filter { $0.isSelected }.reduce(0.0) { $0 + $1.price }
+        let payerID = selectedPayerID ?? defaultPayerID
 
         return VStack(spacing: 0) {
+            // Payer picker
+            HStack {
+                Text(NSLocalizedString("scan_paid_by", comment: ""))
+                    .font(.subheadline).foregroundColor(.secondary)
+                Spacer()
+                Menu {
+                    ForEach(participants) { p in
+                        Button(action: { selectedPayerID = p.id }) {
+                            HStack {
+                                Text("\(p.avatarEmoji) \(p.name)")
+                                if p.id == payerID {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        if let payer = participants.first(where: { $0.id == payerID }) {
+                            Text(payer.avatarEmoji)
+                            Text(payer.name).fontWeight(.medium)
+                        }
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.caption2).foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 6)
+                    .background(AppTheme.primary.opacity(0.1))
+                    .clipShape(Capsule())
+                }
+            }
+            .padding(.horizontal).padding(.vertical, 10)
+            .background(AppTheme.cardBackground)
+
             // Total bar
             HStack {
                 Text(NSLocalizedString("scan_total", comment: ""))
@@ -398,14 +463,14 @@ struct ReceiptScannerView: View {
         guard !selected.isEmpty else { return }
 
         let participants = store.participantsFor(campaign: campaign)
-        guard let firstParticipant = participants.first else { return }
+        let payerID = selectedPayerID ?? defaultPayerID
 
         for item in selected {
             let splitIDs = item.assignedTo.isEmpty ? participants.map { $0.id } : Array(item.assignedTo)
             let expense = Expense(
                 title: item.name,
                 amount: item.price,
-                paidByID: firstParticipant.id,
+                paidByID: payerID,
                 splitAmongIDs: splitIDs,
                 notes: NSLocalizedString("scan_from_receipt", comment: ""),
                 campaignID: campaign.id
@@ -444,6 +509,44 @@ struct CameraView: UIViewControllerRepresentable {
         }
 
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
+        }
+    }
+}
+
+// MARK: - Document Scanner (VNDocumentCameraViewController)
+struct DocumentScannerView: UIViewControllerRepresentable {
+    let onScan: (UIImage) -> Void
+    @Environment(\.dismiss) var dismiss
+
+    func makeUIViewController(context: Context) -> VNDocumentCameraViewController {
+        let scanner = VNDocumentCameraViewController()
+        scanner.delegate = context.coordinator
+        return scanner
+    }
+
+    func updateUIViewController(_ uiViewController: VNDocumentCameraViewController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    class Coordinator: NSObject, VNDocumentCameraViewControllerDelegate {
+        let parent: DocumentScannerView
+        init(_ parent: DocumentScannerView) { self.parent = parent }
+
+        func documentCameraViewController(_ controller: VNDocumentCameraViewController, didFinishWith scan: VNDocumentCameraScan) {
+            // Use the first scanned page
+            if scan.pageCount > 0 {
+                let image = scan.imageOfPage(at: 0)
+                parent.onScan(image)
+            }
+            parent.dismiss()
+        }
+
+        func documentCameraViewControllerDidCancel(_ controller: VNDocumentCameraViewController) {
+            parent.dismiss()
+        }
+
+        func documentCameraViewController(_ controller: VNDocumentCameraViewController, didFailWithError error: Error) {
             parent.dismiss()
         }
     }
