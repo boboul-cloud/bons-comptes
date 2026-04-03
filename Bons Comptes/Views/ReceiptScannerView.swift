@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import PhotosUI
 import VisionKit
 import Vision
 
@@ -14,9 +15,12 @@ struct ReceiptScannerView: View {
 
     @State private var scannedItems: [ScannedItem] = []
     @State private var showingCamera = false
+    @State private var showingPhotosPicker = false
     @State private var showingReview = false
     @State private var scannedImage: UIImage?
     @State private var isProcessing = false
+    @State private var showNoItemsAlert = false
+    @State private var selectedPhotoItem: PhotosPickerItem?
 
     struct ScannedItem: Identifiable {
         let id = UUID()
@@ -50,6 +54,22 @@ struct ReceiptScannerView: View {
                     scannedImage = image
                     processImage(image)
                 }
+            }
+            .onChange(of: selectedPhotoItem) { _, newItem in
+                guard let newItem else { return }
+                Task {
+                    if let data = try? await newItem.loadTransferable(type: Data.self),
+                       let image = UIImage(data: data) {
+                        scannedImage = image
+                        processImage(image)
+                    }
+                    selectedPhotoItem = nil
+                }
+            }
+            .alert(NSLocalizedString("scan_no_items_title", comment: ""), isPresented: $showNoItemsAlert) {
+                Button(NSLocalizedString("ok", comment: ""), role: .cancel) {}
+            } message: {
+                Text(NSLocalizedString("scan_no_items_message", comment: ""))
             }
         }
     }
@@ -86,6 +106,20 @@ struct ReceiptScannerView: View {
                     .padding(.vertical, 14)
                     .background(AppTheme.headerGradient)
                     .foregroundColor(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .padding(.horizontal, 48)
+
+                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "photo.on.rectangle")
+                        Text(NSLocalizedString("scan_from_library", comment: ""))
+                            .fontWeight(.bold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color.gray.opacity(0.15))
+                    .foregroundColor(AppTheme.primary)
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
                 .padding(.horizontal, 48)
@@ -206,7 +240,11 @@ struct ReceiptScannerView: View {
             DispatchQueue.main.async {
                 scannedItems = items
                 isProcessing = false
-                if !items.isEmpty { showingReview = true }
+                if !items.isEmpty {
+                    showingReview = true
+                } else {
+                    showNoItemsAlert = true
+                }
             }
         }
         request.recognitionLevel = .accurate

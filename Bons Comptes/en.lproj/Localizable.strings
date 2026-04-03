@@ -272,7 +272,10 @@
 "scan_receipt_title" = "Scan a Receipt";
 "scan_receipt_desc" = "Take a photo of a receipt to automatically detect items and their prices.";
 "scan_take_photo" = "Take Photo";
+"scan_from_library" = "Choose from Library";
 "scan_processing" = "Processing…";
+"scan_no_items_title" = "No Items Found";
+"scan_no_items_message" = "No items could be detected on this receipt. Try with a clearer photo or better lighting.";
 "scan_total" = "Selected Total";
 "scan_item_name" = "Item";
 "scan_create_expenses" = "Create Expenses";

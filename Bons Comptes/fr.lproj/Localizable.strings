@@ -272,7 +272,10 @@
 "scan_receipt_title" = "Scanner un ticket de caisse";
 "scan_receipt_desc" = "Prenez en photo un ticket de caisse pour détecter automatiquement les articles et leurs prix.";
 "scan_take_photo" = "Prendre en photo";
+"scan_from_library" = "Choisir dans la galerie";
 "scan_processing" = "Analyse en cours…";
+"scan_no_items_title" = "Aucun article détecté";
+"scan_no_items_message" = "Aucun article n'a été détecté sur ce ticket. Essayez avec une photo plus nette ou un meilleur éclairage.";
 "scan_total" = "Total sélectionné";
 "scan_item_name" = "Article";
 "scan_create_expenses" = "Créer les dépenses";
