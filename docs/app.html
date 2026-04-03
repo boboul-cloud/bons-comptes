@@ -165,15 +165,21 @@ body {
 .webapp .btn:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.2); }
 
 /* Testimonials */
-.testimonials { padding: 80px 24px; background: linear-gradient(180deg, var(--bg) 0%, #fff 100%); overflow: hidden; }
+.testimonials { padding: 80px 24px; background: linear-gradient(180deg, var(--bg) 0%, #fff 100%); overflow: hidden; position: relative; }
 .testimonials-track {
   display: flex; gap: 24px; width: max-content;
   animation: scroll-testimonials 40s linear infinite;
+  cursor: grab; user-select: none; -webkit-user-select: none;
 }
-.testimonials-track:hover { animation-play-state: paused; }
+.testimonials-track.paused { animation-play-state: paused; cursor: default; }
+.testimonials-track:active { cursor: grabbing; }
 @keyframes scroll-testimonials {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
+}
+.testimonials-hint {
+  text-align: center; margin-top: 16px; font-size: 12px; color: var(--text2);
+  transition: opacity 0.3s;
 }
 .testimonial-card {
   flex-shrink: 0; width: 320px; background: var(--card); border-radius: 20px;
@@ -626,6 +632,7 @@ body {
       <span class="testimonial-tag" style="background:rgba(0,206,201,0.1);color:var(--accent)" data-i18n="t8_tag">🌍 International</span>
     </div>
   </div>
+  <div class="testimonials-hint" id="testimonialHint" data-i18n="testimonials_hint">Cliquez pour arrêter · Glissez pour reprendre</div>
   <div class="testimonial-stats fade-in">
     <div class="testimonial-stat">
       <div class="testimonial-stat-value" data-i18n="stat1_value">50 000+</div>
@@ -704,6 +711,7 @@ const T = {
     t7_name: "Antoine G.", t7_role: "Road trip USA", t7_text: "Le truc génial c'est que ça marche sans internet. On a créé la campagne hors ligne dans le van et synchronisé en arrivant au motel. Zéro serveur, zéro compte, j'adore le concept.", t7_tag: "🚐 Road trip",
     t8_name: "Emma K.", t8_role: "Coloc Erasmus", t8_text: "Avec des euros, des couronnes et chacun qui avance des frais différents… L'app gère tout. Et la Dynamic Island me rappelle combien j'ai dépensé sans même ouvrir l'app.", t8_tag: "🌍 International",
     stat1_value: "50 000+", stat1_label: "dépenses enregistrées", stat2_value: "12 000+", stat2_label: "campagnes créées", stat3_label: "note moyenne", stat4_value: "0 €", stat4_label: "c'est gratuit !",
+    testimonials_hint: "Cliquez pour arrêter · Glissez pour reprendre",
     footer_privacy: "Confidentialité", footer_terms: "Conditions d'utilisation", footer_legal: "Mentions légales",
   },
   en: {
@@ -741,6 +749,7 @@ const T = {
     t7_name: "Antoine G.", t7_role: "US road trip", t7_text: "The genius part is it works offline. We set up the campaign in the van with no signal and synced at the motel. No server, no account — love the concept.", t7_tag: "🚐 Road trip",
     t8_name: "Emma K.", t8_role: "Erasmus flatshare", t8_text: "With euros, kroner, and everyone fronting different costs… The app handles it all. And the Dynamic Island reminds me how much I've spent without even opening the app.", t8_tag: "🌍 International",
     stat1_value: "50,000+", stat1_label: "expenses logged", stat2_value: "12,000+", stat2_label: "campaigns created", stat3_label: "average rating", stat4_value: "€0", stat4_label: "it's free!",
+    testimonials_hint: "Click to pause · Swipe to resume",
     footer_privacy: "Privacy Policy", footer_terms: "Terms of Use", footer_legal: "Legal Notices",
   }
 };
@@ -781,6 +790,31 @@ const observer = new IntersectionObserver((entries) => {
 document.addEventListener('DOMContentLoaded', () => {
   applyLang();
   document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+  // Testimonials: click to pause, swipe to resume
+  const track = document.getElementById('testimonialsTrack');
+  const hint = document.getElementById('testimonialHint');
+  if (track) {
+    let startX = 0, dragged = false;
+    track.addEventListener('click', (e) => {
+      if (dragged) return;
+      track.classList.toggle('paused');
+    });
+    track.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; dragged = false; }, { passive: true });
+    track.addEventListener('touchmove', (e) => {
+      if (Math.abs(e.touches[0].clientX - startX) > 20) dragged = true;
+    }, { passive: true });
+    track.addEventListener('touchend', () => {
+      if (dragged && track.classList.contains('paused')) track.classList.remove('paused');
+    });
+    track.addEventListener('mousedown', (e) => { startX = e.clientX; dragged = false; });
+    track.addEventListener('mousemove', (e) => {
+      if (e.buttons === 1 && Math.abs(e.clientX - startX) > 20) dragged = true;
+    });
+    track.addEventListener('mouseup', () => {
+      if (dragged && track.classList.contains('paused')) track.classList.remove('paused');
+    });
+  }
 });
 </script>
 </body>
