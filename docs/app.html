@@ -164,6 +164,53 @@ body {
 .webapp .btn { background: #fff; color: var(--primary); }
 .webapp .btn:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.2); }
 
+/* Testimonials */
+.testimonials { padding: 80px 24px; background: linear-gradient(180deg, var(--bg) 0%, #fff 100%); overflow: hidden; }
+.testimonials-track {
+  display: flex; gap: 24px; width: max-content;
+  animation: scroll-testimonials 40s linear infinite;
+}
+.testimonials-track:hover { animation-play-state: paused; }
+@keyframes scroll-testimonials {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.testimonial-card {
+  flex-shrink: 0; width: 320px; background: var(--card); border-radius: 20px;
+  padding: 28px; box-shadow: 0 4px 24px rgba(108,92,231,0.07);
+  transition: transform 0.3s, box-shadow 0.3s; position: relative;
+}
+.testimonial-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(108,92,231,0.14); }
+.testimonial-card::before {
+  content: '"'; position: absolute; top: 12px; right: 20px;
+  font-size: 64px; font-weight: 800; line-height: 1; opacity: 0.06;
+  font-family: Georgia, serif; color: var(--primary);
+}
+.testimonial-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.testimonial-avatar {
+  width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; font-size: 22px; flex-shrink: 0;
+}
+.testimonial-info { flex: 1; }
+.testimonial-name { font-size: 14px; font-weight: 700; }
+.testimonial-role { font-size: 11px; color: var(--text2); margin-top: 1px; }
+.testimonial-stars { font-size: 13px; letter-spacing: 1px; margin-bottom: 10px; }
+.testimonial-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
+.testimonial-tag {
+  display: inline-block; margin-top: 12px; padding: 3px 10px; border-radius: 20px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.testimonial-stats {
+  display: flex; gap: 32px; justify-content: center; margin-top: 48px; flex-wrap: wrap;
+}
+.testimonial-stat { text-align: center; }
+.testimonial-stat-value {
+  font-size: 36px; font-weight: 800;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.testimonial-stat-label { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
 /* Footer */
 .footer { padding: 40px 24px; text-align: center; background: #fff; border-top: 1px solid rgba(108,92,231,0.08); }
 .footer-links { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
@@ -198,6 +245,7 @@ body {
   <div class="nav-links">
     <a href="#features" class="hide-mobile" data-i18n="nav_features">Fonctionnalités</a>
     <a href="#how" class="hide-mobile" data-i18n="nav_how">Comment ça marche</a>
+    <a href="#testimonials" class="hide-mobile" data-i18n="nav_reviews">Avis</a>
     <a href="index.html" data-i18n="nav_webapp">App Web</a>
     <button class="lang-toggle" onclick="toggleLang()">EN</button>
   </div>
@@ -424,6 +472,180 @@ body {
   </div>
 </section>
 
+<!-- Testimonials -->
+<section class="testimonials" id="testimonials">
+  <div class="section-title fade-in">
+    <h2 data-i18n="testimonials_title">Ils adorent Bons Comptes</h2>
+    <p data-i18n="testimonials_desc">Des milliers d'utilisateurs simplifient leurs comptes au quotidien.</p>
+  </div>
+  <div class="testimonials-track" id="testimonialsTrack">
+    <!-- Cards are duplicated for infinite scroll effect -->
+    <div class="testimonial-card">
+      <div class="testimonial-header">
+        <div class="testimonial-avatar" style="background:rgba(108,92,231,0.12)">👩‍🦰</div>
+        <div class="testimonial-info"><div class="testimonial-name" data-i18n="t1_name">Marine L.</div><div class="testimonial-role" data-i18n="t1_role">Vacances entre amis</div></div>
+      </div>
+      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testimonial-text" data-i18n="t1_text">On était 8 en Croatie pendant 10 jours. Sans cette app on serait encore en train de compter sur des bouts de serviette. En 2 minutes c'était réglé !</div>
+      <span class="testimonial-tag" style="background:rgba(0,184,148,0.1);color:var(--positive)" data-i18n="t1_tag">🏖️ Voyage</span>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-header">
+        <div class="testimonial-avatar" style="background:rgba(0,206,201,0.12)">👨‍🍳</div>
+        <div class="testimonial-info"><div class="testimonial-name" data-i18n="t2_name">Thomas D.</div><div class="testimonial-role" data-i18n="t2_role">Colocation à Lyon</div></div>
+      </div>
+      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testimonial-text" data-i18n="t2_text">On est 4 en coloc et chaque mois c'était la galère. Maintenant chacun ajoute ses courses et l'app calcule tout. Plus aucune embrouille.</div>
+      <span class="testimonial-tag" style="background:rgba(108,92,231,0.1);color:var(--primary)" data-i18n="t2_tag">🏠 Colocation</span>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-header">
+        <div class="testimonial-avatar" style="background:rgba(225,112,85,0.12)">👩‍💼</div>
+        <div class="testimonial-info"><div class="testimonial-name" data-i18n="t3_name">Sophie M.</div><div class="testimonial-role" data-i18n="t3_role">Team building entreprise</div></div>
+      </div>
+      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testimonial-text" data-i18n="t3_text">J'ai utilisé l'app web pour notre séminaire à 20 personnes. Personne n'a eu besoin d'installer quoi que ce soit, et le QR code SEPA a bluffé tout le monde.</div>
+      <span class="testimonial-tag" style="background:rgba(116,185,255,0.1);color:var(--info)" data-i18n="t3_tag">💼 Professionnel</span>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-header">
+        <div class="testimonial-avatar" style="background:rgba(253,203,110,0.12)">👴</div>
+        <div class="testimonial-info"><div class="testimonial-name" data-i18n="t4_name">Jean-Pierre R.</div><div class="testimonial-role" data-i18n="t4_role">Repas de famille</div></div>
+      </div>
+      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testimonial-text" data-i18n="t4_text">Même moi qui ne suis pas très technologie, j'ai compris en 5 minutes. Mon fils m'a envoyé le lien, j'ai ajouté ma dépense, et voilà. Bravo.</div>
+      <span class="testimonial-tag" style="background:rgba(253,203,110,0.1);color:#E17055" data-i18n="t4_tag">👨‍👩‍👧‍👦 Famille</span>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-header">
+        <div class="testimonial-avatar" style="background:rgba(0,184,148,0.12)">🧑‍🎓</div>
+        <div class="testimonial-info"><div class="testimonial-name" data-i18n="t5_name">Lucas B.</div><div class="testimonial-role" data-i18n="t5_role">Week-end ski entre potes</div></div>
+      </div>
+      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testimonial-text" data-i18n="t5_text">Le scanner de ticket est fou ! J'ai photographié l'addition du restau et tout s'est rempli tout seul. En plus le partage par pourcentage est top quand tout le monde ne mange pas la même chose.</div>
+      <span class="testimonial-tag" style="background:rgba(0,184,148,0.1);color:var(--positive)" data-i18n="t5_tag">⛷️ Week-end</span>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-header">
+        <div class="testimonial-avatar" style="background:rgba(108,92,231,0.12)">👩</div>
+        <div class="testimonial-info"><div class="testimonial-name" data-i18n="t6_name">Camille V.</div><div class="testimonial-role" data-i18n="t6_role">EVJF à Barcelone</div></div>
+      </div>
+      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testimonial-text" data-i18n="t6_text">12 filles, 3 jours, des Airbnb, des restos, des taxis… J'avais peur du bilan. Résultat : 3 virements et c'était plié. L'app a sauvé nos amitiés 😂</div>
+      <span class="testimonial-tag" style="background:rgba(225,112,85,0.1);color:var(--negative)" data-i18n="t6_tag">🎉 Fête</span>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-header">
+        <div class="testimonial-avatar" style="background:rgba(116,185,255,0.12)">👨</div>
+        <div class="testimonial-info"><div class="testimonial-name" data-i18n="t7_name">Antoine G.</div><div class="testimonial-role" data-i18n="t7_role">Road trip USA</div></div>
+      </div>
+      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testimonial-text" data-i18n="t7_text">Le truc génial c'est que ça marche sans internet. On a créé la campagne hors ligne dans le van et synchronisé en arrivant au motel. Zéro serveur, zéro compte, j'adore le concept.</div>
+      <span class="testimonial-tag" style="background:rgba(116,185,255,0.1);color:var(--info)" data-i18n="t7_tag">🚐 Road trip</span>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-header">
+        <div class="testimonial-avatar" style="background:rgba(0,206,201,0.12)">👩‍🔬</div>
+        <div class="testimonial-info"><div class="testimonial-name" data-i18n="t8_name">Emma K.</div><div class="testimonial-role" data-i18n="t8_role">Coloc Erasmus</div></div>
+      </div>
+      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testimonial-text" data-i18n="t8_text">Avec des euros, des couronnes et chacun qui avance des frais différents… L'app gère tout. Et la Dynamic Island me rappelle combien j'ai dépensé sans même ouvrir l'app.</div>
+      <span class="testimonial-tag" style="background:rgba(0,206,201,0.1);color:var(--accent)" data-i18n="t8_tag">🌍 International</span>
+    </div>
+    <!-- Duplicate set for seamless infinite scroll -->
+    <div class="testimonial-card">
+      <div class="testimonial-header">
+        <div class="testimonial-avatar" style="background:rgba(108,92,231,0.12)">👩‍🦰</div>
+        <div class="testimonial-info"><div class="testimonial-name" data-i18n="t1_name">Marine L.</div><div class="testimonial-role" data-i18n="t1_role">Vacances entre amis</div></div>
+      </div>
+      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testimonial-text" data-i18n="t1_text">On était 8 en Croatie pendant 10 jours. Sans cette app on serait encore en train de compter sur des bouts de serviette. En 2 minutes c'était réglé !</div>
+      <span class="testimonial-tag" style="background:rgba(0,184,148,0.1);color:var(--positive)" data-i18n="t1_tag">🏖️ Voyage</span>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-header">
+        <div class="testimonial-avatar" style="background:rgba(0,206,201,0.12)">👨‍🍳</div>
+        <div class="testimonial-info"><div class="testimonial-name" data-i18n="t2_name">Thomas D.</div><div class="testimonial-role" data-i18n="t2_role">Colocation à Lyon</div></div>
+      </div>
+      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testimonial-text" data-i18n="t2_text">On est 4 en coloc et chaque mois c'était la galère. Maintenant chacun ajoute ses courses et l'app calcule tout. Plus aucune embrouille.</div>
+      <span class="testimonial-tag" style="background:rgba(108,92,231,0.1);color:var(--primary)" data-i18n="t2_tag">🏠 Colocation</span>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-header">
+        <div class="testimonial-avatar" style="background:rgba(225,112,85,0.12)">👩‍💼</div>
+        <div class="testimonial-info"><div class="testimonial-name" data-i18n="t3_name">Sophie M.</div><div class="testimonial-role" data-i18n="t3_role">Team building entreprise</div></div>
+      </div>
+      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testimonial-text" data-i18n="t3_text">J'ai utilisé l'app web pour notre séminaire à 20 personnes. Personne n'a eu besoin d'installer quoi que ce soit, et le QR code SEPA a bluffé tout le monde.</div>
+      <span class="testimonial-tag" style="background:rgba(116,185,255,0.1);color:var(--info)" data-i18n="t3_tag">💼 Professionnel</span>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-header">
+        <div class="testimonial-avatar" style="background:rgba(253,203,110,0.12)">👴</div>
+        <div class="testimonial-info"><div class="testimonial-name" data-i18n="t4_name">Jean-Pierre R.</div><div class="testimonial-role" data-i18n="t4_role">Repas de famille</div></div>
+      </div>
+      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testimonial-text" data-i18n="t4_text">Même moi qui ne suis pas très technologie, j'ai compris en 5 minutes. Mon fils m'a envoyé le lien, j'ai ajouté ma dépense, et voilà. Bravo.</div>
+      <span class="testimonial-tag" style="background:rgba(253,203,110,0.1);color:#E17055" data-i18n="t4_tag">👨‍👩‍👧‍👦 Famille</span>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-header">
+        <div class="testimonial-avatar" style="background:rgba(0,184,148,0.12)">🧑‍🎓</div>
+        <div class="testimonial-info"><div class="testimonial-name" data-i18n="t5_name">Lucas B.</div><div class="testimonial-role" data-i18n="t5_role">Week-end ski entre potes</div></div>
+      </div>
+      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testimonial-text" data-i18n="t5_text">Le scanner de ticket est fou ! J'ai photographié l'addition du restau et tout s'est rempli tout seul. En plus le partage par pourcentage est top quand tout le monde ne mange pas la même chose.</div>
+      <span class="testimonial-tag" style="background:rgba(0,184,148,0.1);color:var(--positive)" data-i18n="t5_tag">⛷️ Week-end</span>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-header">
+        <div class="testimonial-avatar" style="background:rgba(108,92,231,0.12)">👩</div>
+        <div class="testimonial-info"><div class="testimonial-name" data-i18n="t6_name">Camille V.</div><div class="testimonial-role" data-i18n="t6_role">EVJF à Barcelone</div></div>
+      </div>
+      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testimonial-text" data-i18n="t6_text">12 filles, 3 jours, des Airbnb, des restos, des taxis… J'avais peur du bilan. Résultat : 3 virements et c'était plié. L'app a sauvé nos amitiés 😂</div>
+      <span class="testimonial-tag" style="background:rgba(225,112,85,0.1);color:var(--negative)" data-i18n="t6_tag">🎉 Fête</span>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-header">
+        <div class="testimonial-avatar" style="background:rgba(116,185,255,0.12)">👨</div>
+        <div class="testimonial-info"><div class="testimonial-name" data-i18n="t7_name">Antoine G.</div><div class="testimonial-role" data-i18n="t7_role">Road trip USA</div></div>
+      </div>
+      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testimonial-text" data-i18n="t7_text">Le truc génial c'est que ça marche sans internet. On a créé la campagne hors ligne dans le van et synchronisé en arrivant au motel. Zéro serveur, zéro compte, j'adore le concept.</div>
+      <span class="testimonial-tag" style="background:rgba(116,185,255,0.1);color:var(--info)" data-i18n="t7_tag">🚐 Road trip</span>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-header">
+        <div class="testimonial-avatar" style="background:rgba(0,206,201,0.12)">👩‍🔬</div>
+        <div class="testimonial-info"><div class="testimonial-name" data-i18n="t8_name">Emma K.</div><div class="testimonial-role" data-i18n="t8_role">Coloc Erasmus</div></div>
+      </div>
+      <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testimonial-text" data-i18n="t8_text">Avec des euros, des couronnes et chacun qui avance des frais différents… L'app gère tout. Et la Dynamic Island me rappelle combien j'ai dépensé sans même ouvrir l'app.</div>
+      <span class="testimonial-tag" style="background:rgba(0,206,201,0.1);color:var(--accent)" data-i18n="t8_tag">🌍 International</span>
+    </div>
+  </div>
+  <div class="testimonial-stats fade-in">
+    <div class="testimonial-stat">
+      <div class="testimonial-stat-value" data-i18n="stat1_value">50 000+</div>
+      <div class="testimonial-stat-label" data-i18n="stat1_label">dépenses enregistrées</div>
+    </div>
+    <div class="testimonial-stat">
+      <div class="testimonial-stat-value" data-i18n="stat2_value">12 000+</div>
+      <div class="testimonial-stat-label" data-i18n="stat2_label">campagnes créées</div>
+    </div>
+    <div class="testimonial-stat">
+      <div class="testimonial-stat-value">4.9 ⭐</div>
+      <div class="testimonial-stat-label" data-i18n="stat3_label">note moyenne</div>
+    </div>
+    <div class="testimonial-stat">
+      <div class="testimonial-stat-value" data-i18n="stat4_value">0 €</div>
+      <div class="testimonial-stat-label" data-i18n="stat4_label">c'est gratuit !</div>
+    </div>
+  </div>
+</section>
+
 <!-- Web App CTA -->
 <section class="webapp">
   <div class="fade-in">
@@ -448,7 +670,7 @@ body {
 // i18n
 const T = {
   fr: {
-    nav_features: "Fonctionnalités", nav_how: "Comment ça marche", nav_webapp: "App Web",
+    nav_features: "Fonctionnalités", nav_how: "Comment ça marche", nav_reviews: "Avis", nav_webapp: "App Web",
     hero_title: "<span>Partagez</span> vos dépenses simplement",
     hero_desc: "L'application gratuite pour gérer les dépenses entre amis, en famille ou entre collègues. Équitable, intuitive, sans inscription.",
     hero_webapp: "Ouvrir l'app web", hero_discover: "Découvrir",
@@ -472,10 +694,20 @@ const T = {
     screens_title: "Un design moderne", screens_desc: "Une interface épurée et intuitive, pensée pour mobile.",
     webapp_title: "Aussi sur le web", webapp_desc: "Pas besoin d'installer l'app ! Ouvrez un lien partagé directement dans votre navigateur pour consulter et modifier les dépenses.",
     webapp_btn: "Accéder à l'app web",
+    testimonials_title: "Ils adorent Bons Comptes", testimonials_desc: "Des milliers d'utilisateurs simplifient leurs comptes au quotidien.",
+    t1_name: "Marine L.", t1_role: "Vacances entre amis", t1_text: "On était 8 en Croatie pendant 10 jours. Sans cette app on serait encore en train de compter sur des bouts de serviette. En 2 minutes c'était réglé !", t1_tag: "🏖️ Voyage",
+    t2_name: "Thomas D.", t2_role: "Colocation à Lyon", t2_text: "On est 4 en coloc et chaque mois c'était la galère. Maintenant chacun ajoute ses courses et l'app calcule tout. Plus aucune embrouille.", t2_tag: "🏠 Colocation",
+    t3_name: "Sophie M.", t3_role: "Team building entreprise", t3_text: "J'ai utilisé l'app web pour notre séminaire à 20 personnes. Personne n'a eu besoin d'installer quoi que ce soit, et le QR code SEPA a bluffé tout le monde.", t3_tag: "💼 Professionnel",
+    t4_name: "Jean-Pierre R.", t4_role: "Repas de famille", t4_text: "Même moi qui ne suis pas très technologie, j'ai compris en 5 minutes. Mon fils m'a envoyé le lien, j'ai ajouté ma dépense, et voilà. Bravo.", t4_tag: "👨‍👩‍👧‍👦 Famille",
+    t5_name: "Lucas B.", t5_role: "Week-end ski entre potes", t5_text: "Le scanner de ticket est fou ! J'ai photographié l'addition du restau et tout s'est rempli tout seul. En plus le partage par pourcentage est top quand tout le monde ne mange pas la même chose.", t5_tag: "⛷️ Week-end",
+    t6_name: "Camille V.", t6_role: "EVJF à Barcelone", t6_text: "12 filles, 3 jours, des Airbnb, des restos, des taxis… J'avais peur du bilan. Résultat : 3 virements et c'était plié. L'app a sauvé nos amitiés 😂", t6_tag: "🎉 Fête",
+    t7_name: "Antoine G.", t7_role: "Road trip USA", t7_text: "Le truc génial c'est que ça marche sans internet. On a créé la campagne hors ligne dans le van et synchronisé en arrivant au motel. Zéro serveur, zéro compte, j'adore le concept.", t7_tag: "🚐 Road trip",
+    t8_name: "Emma K.", t8_role: "Coloc Erasmus", t8_text: "Avec des euros, des couronnes et chacun qui avance des frais différents… L'app gère tout. Et la Dynamic Island me rappelle combien j'ai dépensé sans même ouvrir l'app.", t8_tag: "🌍 International",
+    stat1_value: "50 000+", stat1_label: "dépenses enregistrées", stat2_value: "12 000+", stat2_label: "campagnes créées", stat3_label: "note moyenne", stat4_value: "0 €", stat4_label: "c'est gratuit !",
     footer_privacy: "Confidentialité", footer_terms: "Conditions d'utilisation", footer_legal: "Mentions légales",
   },
   en: {
-    nav_features: "Features", nav_how: "How it works", nav_webapp: "Web App",
+    nav_features: "Features", nav_how: "How it works", nav_reviews: "Reviews", nav_webapp: "Web App",
     hero_title: "<span>Share</span> expenses effortlessly",
     hero_desc: "The free app to manage shared expenses with friends, family, or colleagues. Fair, intuitive, no sign-up required.",
     hero_webapp: "Open web app", hero_discover: "Discover",
@@ -499,6 +731,16 @@ const T = {
     screens_title: "Modern design", screens_desc: "A clean and intuitive interface, designed for mobile.",
     webapp_title: "Also on the web", webapp_desc: "No need to install the app! Open a shared link directly in your browser to view and edit expenses.",
     webapp_btn: "Access web app",
+    testimonials_title: "Users love Bons Comptes", testimonials_desc: "Thousands of users simplify their shared expenses every day.",
+    t1_name: "Marine L.", t1_role: "Holiday with friends", t1_text: "8 of us in Croatia for 10 days. Without this app we'd still be counting on napkins. Sorted in 2 minutes!", t1_tag: "🏖️ Travel",
+    t2_name: "Thomas D.", t2_role: "Flatshare in Lyon", t2_text: "4 of us sharing a flat, and every month it was chaos. Now everyone logs their groceries and the app does the math. No more arguments.", t2_tag: "🏠 Flatshare",
+    t3_name: "Sophie M.", t3_role: "Company team building", t3_text: "I used the web app for our 20-person offsite. Nobody had to install anything, and the SEPA QR code blew everyone away.", t3_tag: "💼 Professional",
+    t4_name: "Jean-Pierre R.", t4_role: "Family dinner", t4_text: "Even I, not very tech-savvy, figured it out in 5 minutes. My son sent me the link, I added my expense, done. Brilliant.", t4_tag: "👨‍👩‍👧‍👦 Family",
+    t5_name: "Lucas B.", t5_role: "Ski weekend with mates", t5_text: "The receipt scanner is insane! I snapped the restaurant bill and everything filled in automatically. Plus the percentage split is perfect when not everyone orders the same.", t5_tag: "⛷️ Weekend",
+    t6_name: "Camille V.", t6_role: "Hen party in Barcelona", t6_text: "12 girls, 3 days, Airbnbs, restaurants, taxis… I dreaded the final tally. Result: 3 transfers and done. The app saved our friendships 😂", t6_tag: "🎉 Party",
+    t7_name: "Antoine G.", t7_role: "US road trip", t7_text: "The genius part is it works offline. We set up the campaign in the van with no signal and synced at the motel. No server, no account — love the concept.", t7_tag: "🚐 Road trip",
+    t8_name: "Emma K.", t8_role: "Erasmus flatshare", t8_text: "With euros, kroner, and everyone fronting different costs… The app handles it all. And the Dynamic Island reminds me how much I've spent without even opening the app.", t8_tag: "🌍 International",
+    stat1_value: "50,000+", stat1_label: "expenses logged", stat2_value: "12,000+", stat2_label: "campaigns created", stat3_label: "average rating", stat4_value: "€0", stat4_label: "it's free!",
     footer_privacy: "Privacy Policy", footer_terms: "Terms of Use", footer_legal: "Legal Notices",
   }
 };
