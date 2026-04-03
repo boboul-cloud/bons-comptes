@@ -435,6 +435,17 @@ const pmIcons = {
   'Autre': '📦', 'Other': '📦'
 };
 
+function defaultPaymentMethods() {
+  const isFR = lang === 'fr';
+  return [
+    { id: generateUUID(), name: isFR ? 'Espèces' : 'Cash', icon: 'banknote', isDefault: true },
+    { id: generateUUID(), name: isFR ? 'Carte' : 'Card', icon: 'creditcard', isDefault: true },
+    { id: generateUUID(), name: isFR ? 'Chèque' : 'Check', icon: 'doc.text', isDefault: true },
+    { id: generateUUID(), name: isFR ? 'Virement' : 'Transfer', icon: 'arrow.left.arrow.right', isDefault: true },
+    { id: generateUUID(), name: isFR ? 'Autre' : 'Other', icon: 'ellipsis.circle', isDefault: true },
+  ];
+}
+
 // ===== URL Encoding (with zlib compression) =====
 async function compressBytes(bytes) {
   try {
@@ -846,6 +857,7 @@ function loadV2(text) {
         return { id:pmID, name:pf[1]||'', icon:(pf.length>2 && pf[2]) ? pf[2] : 'banknote', isDefault: pf.length>3 && pf[3]==='1' };
       }).filter(Boolean);
     }
+    if (!state.paymentMethods.length) state.paymentMethods = defaultPaymentMethods();
     // Now parse expenses (needs categories for catIdx resolution)
     state.expenses = lines[3].split('\t').filter(s=>s).map(item => {
       const ef = item.split('|');
@@ -982,6 +994,7 @@ function loadData(jsonStr) {
     }));
     state.categories = data.categories || [];
     state.paymentMethods = data.paymentMethods || [];
+    if (!state.paymentMethods.length) state.paymentMethods = defaultPaymentMethods();
     // Reconstruct missing ID arrays from actual data
     if (!state.campaign.participantIDs) state.campaign.participantIDs = state.participants.map(p => p.id);
     if (!state.campaign.expenseIDs) state.campaign.expenseIDs = state.expenses.map(e => e.id);
@@ -1314,8 +1327,8 @@ function showAddReimbursement() {
         <label>${t('amount')} (${esc(state.campaign.currency)})</label>
         <input type="number" step="0.01" class="form-input-hero" id="reimbAmount" placeholder="0.00" inputmode="decimal">
       </div>
-      ${setts.length ? `<div style="margin-bottom:16px"><label class="form-label">${t('settlements')}</label>
-        ${setts.filter(s => !identityLocked || s.from.id === currentUserID).map(s => `<div class="card" style="margin:0 0 8px;cursor:pointer;padding:12px" onclick="fillReimb('${s.from.id}','${s.to.id}',${s.amount})">
+      ${(() => { const filtered = setts.filter(s => !identityLocked || s.from.id === currentUserID); return filtered.length ? `<div style="margin-bottom:16px"><label class="form-label">${t('settlements')}</label>
+        ${filtered.map(s => `<div class="card" style="margin:0 0 8px;cursor:pointer;padding:12px" onclick="fillReimb('${s.from.id}','${s.to.id}',${s.amount})">
           <div style="display:flex;align-items:center;gap:8px;justify-content:center">
             <span>${s.from.avatarEmoji||'👤'} ${esc(s.from.name)}</span>
             <span style="color:var(--negative);font-weight:700">→</span>
@@ -1323,7 +1336,7 @@ function showAddReimbursement() {
             <span style="font-weight:700;color:var(--negative)">${s.amount.toFixed(2)}</span>
           </div>
         </div>`).join('')}
-      </div>` : ''}
+      </div>` : ''; })()}
       <div class="form-group">
         <label class="form-label">${t('from')}</label>
         <div class="chips" id="reimbFrom">
