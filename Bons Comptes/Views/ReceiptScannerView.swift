@@ -257,28 +257,37 @@ struct ReceiptScannerView: View {
     }
 
     private func parseReceiptLine(_ line: String) -> (name: String, price: Double)? {
+        // Normalize: replace common OCR artifacts
+        let cleaned = line
+            .replacingOccurrences(of: "\u{00A0}", with: " ") // non-breaking space
+            .trimmingCharacters(in: .whitespaces)
+
         // Match patterns like "Cafe Latte    3.50" or "Pizza 12,90€" or "Dessert ........ 8.00"
+        // Allow any trailing chars after the price (OCR may garble € symbol)
         let patterns = [
-            #"^(.+?)\s+(\d+[.,]\d{2})\s*[€$]?\s*$"#,
-            #"^(.+?)\s*\.{2,}\s*(\d+[.,]\d{2})"#,
-            #"^(.+?)\s+(\d+[.,]\d{2})\s*[€$]"#
+            #"^(.+?)\s{2,}(\d+[.,]\d{1,2})"#,          // Name  (2+ spaces)  price
+            #"^(.+?)\s*\.{2,}\s*(\d+[.,]\d{1,2})"#,    // Name.....price
+            #"^(.+?)\s+(\d+[.,]\d{1,2})\s*[€$£]"#,     // Name price€
+            #"^(.+?)\s+(\d+[.,]\d{1,2})\s*$"#,          // Name price (end of line)
         ]
         for pattern in patterns {
             guard let regex = try? NSRegularExpression(pattern: pattern),
-                  let match = regex.firstMatch(in: line, range: NSRange(line.startIndex..., in: line)),
+                  let match = regex.firstMatch(in: cleaned, range: NSRange(cleaned.startIndex..., in: cleaned)),
                   match.numberOfRanges >= 3 else { continue }
 
-            let nameRange = Range(match.range(at: 1), in: line).map { String(line[$0]) } ?? ""
-            let priceStr = Range(match.range(at: 2), in: line).map { String(line[$0]).replacingOccurrences(of: ",", with: ".") } ?? ""
+            let nameRange = Range(match.range(at: 1), in: cleaned).map { String(cleaned[$0]) } ?? ""
+            let priceStr = Range(match.range(at: 2), in: cleaned).map { String(cleaned[$0]).replacingOccurrences(of: ",", with: ".") } ?? ""
 
             guard let price = Double(priceStr), price > 0, price < 10000 else { continue }
-            let name = nameRange.trimmingCharacters(in: .whitespaces)
+            let name = nameRange.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !name.isEmpty, name.count > 1 else { continue }
 
             // Skip common non-item lines
-            let skip = ["total", "subtotal", "sous-total", "tva", "tax", "cb", "carte", "especes", "change",
-                        "date", "heure", "merci", "thank", "ticket", "facture", "numero"]
-            if skip.contains(where: { name.lowercased().contains($0) }) { continue }
+            let lower = name.lowercased()
+            let skip = ["total", "subtotal", "sous-total", "tva", "tax", "cb ", "carte", "especes", "espèces",
+                        "change", "rendu", "date", "heure", "merci", "thank", "ticket", "facture", "numero",
+                        "visa", "mastercard", "paiement", "payment"]
+            if skip.contains(where: { lower.contains($0) }) { continue }
 
             return (name, price)
         }
