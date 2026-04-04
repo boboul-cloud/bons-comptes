@@ -320,7 +320,7 @@ body {
 <div class="app" id="app">
   <div class="app-banner" id="appBanner" style="display:none">
     <div class="app-banner-text">📲 <span id="appBannerLabel"></span></div>
-    <button class="app-banner-btn" onclick="openDirectInApp()">Ouvrir</button>
+    <button class="app-banner-btn" onclick="openDirectInApp()" data-i18n="open">Ouvrir</button>
     <button class="app-banner-close" onclick="document.getElementById('appBanner').style.display='none'">✕</button>
   </div>
   <div class="header" id="header"></div>
@@ -376,6 +376,16 @@ const T = {
     open_in_app_banner: "Importer dans Bons Comptes",
     confirm_delete_expense: "Attention : si vous supprimez cette dépense, vous ne serez pas remboursé. Confirmer la suppression ?",
     split_total: "Total", split_remaining: "restant à répartir", split_exceeded: "de trop", split_valid: "Répartition correcte", split_auto_fill: "Compléter", split_invalid: "La répartition ne correspond pas au montant", split_invalid_pct: "Les pourcentages ne totalisent pas 100%",
+    invalid_json: "JSON invalide. Vérifiez le format.",
+    fill_all_fields: "Remplissez tous les champs",
+    select_at_least_one: "Sélectionnez au moins un participant",
+    select_two_different: "Sélectionnez deux personnes différentes",
+    error_generic: "Erreur",
+    error_share: "Erreur partage",
+    error_expense: "Erreur dépense",
+    error_json: "Erreur JSON",
+    copy_failed: "Copie échouée",
+    open: "Ouvrir",
   },
   en: {
     load_campaign: "Load campaign",
@@ -410,6 +420,16 @@ const T = {
     open_in_app_banner: "Import in Bons Comptes",
     confirm_delete_expense: "Warning: if you delete this expense, you will not be reimbursed. Confirm deletion?",
     split_total: "Total", split_remaining: "remaining to allocate", split_exceeded: "over the total", split_valid: "Split is correct", split_auto_fill: "Auto-fill", split_invalid: "Split doesn't match the amount", split_invalid_pct: "Percentages don't add up to 100%",
+    invalid_json: "Invalid JSON. Check the format.",
+    fill_all_fields: "Fill in all fields",
+    select_at_least_one: "Select at least one participant",
+    select_two_different: "Select two different people",
+    error_generic: "Error",
+    error_share: "Share error",
+    error_expense: "Expense error",
+    error_json: "JSON error",
+    copy_failed: "Copy failed",
+    open: "Open",
   }
 };
 
@@ -1013,7 +1033,7 @@ function loadFromInput() {
     showApp();
   } else {
     const el = document.getElementById('errorMsg');
-    el.textContent = 'JSON invalide. Vérifiez le format.';
+    el.textContent = t('invalid_json');
     el.style.display = 'block';
   }
 }
@@ -1396,7 +1416,7 @@ async function sendUpdate() {
     // Android uses ?body=, iOS uses &body= — use ? for broader compatibility
     const sep = /iPhone|iPad|iPod/.test(navigator.userAgent) ? '&' : '?';
     window.location.href = `sms:${phone}${sep}body=${body}`;
-  } catch(e) { alert('Erreur: ' + e.message); }
+  } catch(e) { alert(t('error_generic') + ': ' + e.message); }
 }
 
 async function openDirectInApp() {
@@ -1431,7 +1451,7 @@ async function showShareModal() {
       </div>
     `;
     openModal();
-  } catch(e) { alert('Erreur partage: ' + e.message); }
+  } catch(e) { alert(t('error_share') + ': ' + e.message); }
 }
 
 // ===== Modal Helpers =====
@@ -1565,10 +1585,10 @@ function saveExpense() {
   try {
   const amount = parseFloat(document.getElementById('expAmount').value.replace(',', '.'));
   const title = document.getElementById('expTitle').value.trim();
-  if (!amount || amount <= 0 || !title || !selectedPaidByID) return showToast('Remplissez tous les champs');
+  if (!amount || amount <= 0 || !title || !selectedPaidByID) return showToast(t('fill_all_fields'));
 
   const splitAmongIDs = [...document.querySelectorAll('#expSplitAmong .chip.selected')].map(e => e.dataset.id);
-  if (!splitAmongIDs.length) return showToast('Sélectionnez au moins un participant');
+  if (!splitAmongIDs.length) return showToast(t('select_at_least_one'));
 
   let customSplits = {};
   if (selectedSplitType !== 'equal') {
@@ -1609,7 +1629,7 @@ function saveExpense() {
   updateURLHash();
   render();
   showToast(t('new_expense_added'));
-  } catch(e) { alert('Erreur dépense: ' + e.message + '\n' + e.stack); }
+  } catch(e) { alert(t('error_expense') + ': ' + e.message + '\n' + e.stack); }
 }
 
 function saveReimbursement() {
@@ -1618,8 +1638,8 @@ function saveReimbursement() {
   const toEl = document.querySelector('#reimbTo .selected-to');
   const methodEl = document.querySelector('#reimbMethod .selected');
 
-  if (!amount || amount <= 0 || !fromEl || !toEl) return showToast('Remplissez tous les champs');
-  if (fromEl.dataset.id === toEl.dataset.id) return showToast('Sélectionnez deux personnes différentes');
+  if (!amount || amount <= 0 || !fromEl || !toEl) return showToast(t('fill_all_fields'));
+  if (fromEl.dataset.id === toEl.dataset.id) return showToast(t('select_two_different'));
 
   const reimb = {
     id: generateUUID(),
@@ -1689,19 +1709,23 @@ function showToast(msg) {
 }
 
 function copyToClipboard(text, msg) {
-  navigator.clipboard.writeText(text).then(() => showToast(msg)).catch(e => alert('Copie échouée: ' + e.message));
+  navigator.clipboard.writeText(text).then(() => showToast(msg)).catch(e => alert(t('copy_failed') + ': ' + e.message));
 }
 
 function copyJSON() {
   try {
     const json = stateToJSON();
-    navigator.clipboard.writeText(json).then(() => showToast(t('json_copied'))).catch(e => alert('Copie JSON échouée: ' + e.message));
-  } catch(e) { alert('Erreur JSON: ' + e.message); }
+    navigator.clipboard.writeText(json).then(() => showToast(t('json_copied'))).catch(e => alert(t('copy_failed') + ': ' + e.message));
+  } catch(e) { alert(t('error_json') + ': ' + e.message); }
 }
 
 // ===== Init =====
 window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('landingDesc').textContent = t('landing_desc');
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (T[lang][key]) el.textContent = T[lang][key];
+  });
   const urlParams = new URLSearchParams(window.location.search);
   const meParam = urlParams.get('me');
   if (meParam) {

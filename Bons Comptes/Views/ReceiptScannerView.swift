@@ -151,6 +151,17 @@ struct ReceiptScannerView: View {
         }
     }
 
+    private func bindingForItem(_ item: ScannedItem) -> Binding<ScannedItem> {
+        Binding(
+            get: { scannedItems.first { $0.id == item.id } ?? item },
+            set: { newValue in
+                if let idx = scannedItems.firstIndex(where: { $0.id == item.id }) {
+                    scannedItems[idx] = newValue
+                }
+            }
+        )
+    }
+
     private var defaultPayerID: UUID {
         let participants = store.participantsFor(campaign: campaign)
         if let creator = participants.first(where: { $0.name == campaign.creatorName }) {
@@ -213,26 +224,40 @@ struct ReceiptScannerView: View {
 
             ScrollView {
                 LazyVStack(spacing: 8) {
-                    ForEach($scannedItems) { $item in
+                    ForEach(scannedItems) { item in
+                        let itemBinding = bindingForItem(item)
                         VStack(spacing: 8) {
                             HStack {
-                                Button(action: { item.isSelected.toggle() }) {
+                                Button(action: { itemBinding.wrappedValue.isSelected.toggle() }) {
                                     Image(systemName: item.isSelected ? "checkmark.circle.fill" : "circle")
                                         .foregroundColor(item.isSelected ? AppTheme.positive : .secondary)
                                 }
 
-                                TextField(NSLocalizedString("scan_item_name", comment: ""), text: $item.name)
+                                TextField(NSLocalizedString("scan_item_name", comment: ""), text: itemBinding.name)
                                     .font(.subheadline)
 
                                 Spacer()
 
-                                TextField("0.00", value: $item.price, format: .number)
+                                TextField("0.00", value: itemBinding.price, format: .number)
                                     .font(.subheadline).fontWeight(.bold)
                                     .frame(width: 80)
                                     .multilineTextAlignment(.trailing)
                                     .keyboardType(.decimalPad)
 
                                 Text(campaign.currency).font(.caption).foregroundColor(.secondary)
+
+                                Button(role: .destructive) {
+                                    let idToRemove = item.id
+                                    withAnimation {
+                                        scannedItems.removeAll { $0.id == idToRemove }
+                                    }
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .font(.subheadline)
+                                        .foregroundColor(.red.opacity(0.7))
+                                }
+                                .buttonStyle(.plain)
+                                .padding(.leading, 4)
                             }
 
                             if item.isSelected {
@@ -241,8 +266,8 @@ struct ReceiptScannerView: View {
                                         ForEach(participants) { p in
                                             let isAssigned = item.assignedTo.contains(p.id)
                                             Button(action: {
-                                                if isAssigned { item.assignedTo.remove(p.id) }
-                                                else { item.assignedTo.insert(p.id) }
+                                                if isAssigned { itemBinding.wrappedValue.assignedTo.remove(p.id) }
+                                                else { itemBinding.wrappedValue.assignedTo.insert(p.id) }
                                             }) {
                                                 HStack(spacing: 4) {
                                                     Text(p.avatarEmoji).font(.caption)
