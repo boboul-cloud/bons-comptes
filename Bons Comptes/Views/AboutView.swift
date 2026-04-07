@@ -30,7 +30,7 @@ struct AboutView: View {
                 )
             Text("Bons Comptes")
                 .font(.title).fontWeight(.bold)
-            Text("v1.0.0")
+            Text("v1.0 (2)")
                 .font(.subheadline).foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)

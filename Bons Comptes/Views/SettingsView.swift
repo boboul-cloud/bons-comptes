@@ -195,7 +195,7 @@ struct SettingsView: View {
                             HStack {
                                 Text(NSLocalizedString("version_label", comment: "")).font(.subheadline)
                                 Spacer()
-                                Text("1.0.0").font(.subheadline).foregroundColor(.secondary)
+                                Text("1.0 (2)").font(.subheadline).foregroundColor(.secondary)
                             }
                             Divider()
                             HStack {
