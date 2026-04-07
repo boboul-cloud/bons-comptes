@@ -375,3 +375,6 @@
 "premium_thankyou_badge" = "Membre Premium";
 "premium_thankyou_unlocked" = "VOS FONCTIONNALITÉS DÉBLOQUÉES";
 "premium_thankyou_start" = "Commencer à explorer";
+
+// Général
+"ok" = "OK";

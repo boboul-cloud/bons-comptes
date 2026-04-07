@@ -375,3 +375,6 @@
 "premium_thankyou_badge" = "Premium Member";
 "premium_thankyou_unlocked" = "YOUR UNLOCKED FEATURES";
 "premium_thankyou_start" = "Start exploring";
+
+// General
+"ok" = "OK";

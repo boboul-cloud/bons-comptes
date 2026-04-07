@@ -32,7 +32,7 @@
       ],
       "productID" : "com.bonscomptes.premium",
       "referenceName" : "Premium Upgrade",
-      "type" : "Consumable"
+      "type" : "NonConsumable"
     }
   ],
   "settings" : {
