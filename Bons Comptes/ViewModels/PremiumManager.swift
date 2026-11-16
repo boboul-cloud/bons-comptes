@@ -34,23 +34,32 @@ class PremiumManager: ObservableObject {
 
     func loadProduct() async {
         do {
+            print("[StoreKit] Loading product: \(Self.productID)")
             let products = try await Product.products(for: [Self.productID])
             product = products.first
+            if let p = product {
+                print("[StoreKit] Product loaded: \(p.displayName) — \(p.displayPrice) (\(p.id))")
+            } else {
+                print("[StoreKit] No product found for ID: \(Self.productID)")
+            }
         } catch {
-            print("Failed to load products: \(error)")
+            print("[StoreKit] Failed to load products: \(error)")
         }
     }
 
     // MARK: - Purchase
 
     func purchase() async {
+        print("[StoreKit] Purchase requested, product loaded: \(product != nil)")
         if product == nil {
             await loadProduct()
         }
         guard let product else {
+            print("[StoreKit] Purchase failed: product still nil after reload")
             purchaseError = NSLocalizedString("premium_product_unavailable", comment: "")
             return
         }
+        print("[StoreKit] Purchasing: \(product.displayName)")
         do {
             let result = try await product.purchase()
             switch result {
